@@ -1,14 +1,34 @@
 #include <Windows.h>
 #include <winuser.h>
+#include "WindowsMessageMap.h"
 
 
 //自定义1个消息处理机制
 LRESULT CALLBACK cusWndProc(HWND hWnd,/*处理消息的窗口句柄*/ UINT msg,/*消息ID号*/ WPARAM wParam, LPARAM lParam)
 {
+	//创建静态窗口消息map
+	static WindowsMessageMap mm;
+	//对于收到的每一条消息,都用字符串形式打印出来
+	OutputDebugString(
+		mm(msg, lParam, wParam).c_str()//这里的括号在WindowsMessageMap类里进行的重载，效果是拿到格式化字符串
+	);
+
 	switch (msg)//根据消息ID来抉择
 	{
 	case WM_CLOSE:
 		PostQuitMessage(69);
+		break;
+	case WM_KEYDOWN:
+		if ( wParam=='F' )
+		{
+			SetWindowText( hWnd, "i have changed the title of this HWND");
+		}
+		break;
+	case WM_KEYUP:
+		if (wParam == 'F')
+		{
+			SetWindowText(hWnd, "the title of this HWND has recoverd");
+		}
 		break;
 	}
 
@@ -31,7 +51,7 @@ int CALLBACK WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
 	wc.hCursor = nullptr;
 	wc.hbrBackground = nullptr;
 	wc.lpszMenuName = nullptr;
-	const auto pClassName = "hw3dbutts";
+	const auto pClassName = "hw3d_className";
 	wc.lpszClassName = pClassName;
 	RegisterClassEx(&wc);
 	//创建窗口实例
@@ -47,10 +67,10 @@ int CALLBACK WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
 	//while (true)
 	//	;
 	
-	//消息结构体构造
+	///消息结构体构造
 	MSG msg;
 	BOOL gResult;
-	while ( (gResult=GetMessage( &msg, nullptr, 0 , 0)) > 0 )//大于0就是收到消息，=0是退出,-1是出错
+	while ( (gResult=GetMessage(&msg,nullptr,0,0)) > 0 )//大于0就是收到消息，=0是退出,-1是出错
 	{
 		TranslateMessage(&msg);
 		DispatchMessage(&msg);
