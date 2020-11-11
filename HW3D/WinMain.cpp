@@ -1,6 +1,8 @@
 #include <Windows.h>
 #include <winuser.h>
 #include "WindowsMessageMap.h"
+#include <iosfwd>
+#include <sstream>
 
 
 //自定义1个消息处理机制
@@ -18,7 +20,7 @@ LRESULT CALLBACK cusWndProc(HWND hWnd,/*处理消息的窗口句柄*/ UINT msg,/*消息ID号
 	case WM_CLOSE:
 		PostQuitMessage(69);
 		break;
-	case WM_KEYDOWN:
+	case WM_KEYDOWN://对大小写不敏感
 		if ( wParam=='F' )
 		{
 			SetWindowText( hWnd, "i have changed the title of this HWND");
@@ -30,6 +32,20 @@ LRESULT CALLBACK cusWndProc(HWND hWnd,/*处理消息的窗口句柄*/ UINT msg,/*消息ID号
 			SetWindowText(hWnd, "the title of this HWND has recoverd");
 		}
 		break;
+	case WM_CHAR:///大小写敏感,当想输入一段文字的时候，所用到的键就会出现WM_CHAR
+		{
+			static std::string title;
+			title.push_back((char)wParam);
+			SetWindowText(hWnd, title.c_str());/*此时窗口标题显示键盘上任意以Keydowm WParam的字*/
+		}
+		break;
+	case WM_LBUTTONDOWN:
+		{
+			POINTS pt = MAKEPOINTS(lParam);//拿一个Point结构体
+			std::ostringstream oss;//这里意思是把鼠标坐标结构体输出为文本
+			oss << "(" << pt.x << "," << pt.y << ")";
+			SetWindowText(hWnd, oss.str().c_str());
+		}
 	}
 
 	return DefWindowProc(hWnd, msg, wParam, lParam);//调用标准库里的默认函数DefWindowsProc;
@@ -72,7 +88,7 @@ int CALLBACK WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
 	BOOL gResult;
 	while ( (gResult=GetMessage(&msg,nullptr,0,0)) > 0 )//大于0就是收到消息，=0是退出,-1是出错
 	{
-		TranslateMessage(&msg);
+		TranslateMessage(&msg);//TranslateMessage适当条件下可以把wm_keydown同时转成wm_char
 		DispatchMessage(&msg);
 	}
 	if (gResult==-1)
