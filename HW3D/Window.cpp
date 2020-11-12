@@ -1,0 +1,114 @@
+#include "Window.h"
+
+Window::WindowClass Window::WindowClass::wndClass;
+
+const char* Window::WindowClass::GetName() noexcept
+{
+	return wndClassName;
+}
+
+HINSTANCE Window::WindowClass::GetInstance() noexcept
+{
+	return wndClass.hInst;
+}
+
+//Window::WindowClass::WindowClass() noexcept
+
+Window::WindowClass::WindowClass() noexcept
+	:
+	hInst( GetModuleHandle(nullptr) )//调用GetModuleHandle（）获取该实例的handle并保存在成员里
+{
+	WNDCLASSEX wc = { 0 };
+	wc.cbSize = sizeof(wc);
+	wc.style = CS_OWNDC;
+	wc.lpfnWndProc = Window::HandleMsgSetup;
+	wc.cbClsExtra = 0;
+	wc.cbWndExtra = 0;
+	wc.hInstance = Window::WindowClass::GetInstance();
+	wc.hIcon = nullptr;
+	wc.hCursor = nullptr;
+	wc.hbrBackground = nullptr;
+	wc.lpszMenuName = nullptr;
+	wc.lpszClassName = Window::WindowClass::GetName();
+	wc.hIconSm = nullptr;
+	RegisterClassEx(&wc);
+}
+
+Window::WindowClass::~WindowClass()
+{
+	UnregisterClass(Window::WindowClass::wndClassName, Window::WindowClass::GetInstance());
+}
+
+Window::Window(int width, int height, const char* argname) noexcept
+{
+	//计算窗口尺寸
+	RECT wr;
+	wr.left = 100;
+	wr.right = width + wr.left;
+	wr.top = 100;
+	wr.bottom = height + wr.top;
+	//用于传递矩形、传递样式、传递是否有菜单之后的自适应窗口函数
+	AdjustWindowRect(&wr, 
+		(WS_CAPTION | WS_MINIMIZEBOX | WS_SYSMENU), 
+		FALSE);
+	//创建窗口或者拿取窗口
+	hWnd = CreateWindow(
+		WindowClass::GetName(),
+		argname,
+		WS_CAPTION | WS_MINIMIZEBOX | WS_SYSMENU,
+		CW_USEDEFAULT,
+		CW_USEDEFAULT,
+		wr.right-wr.left,
+		wr.bottom-wr.top,
+		nullptr,nullptr,WindowClass::GetInstance(),
+		this
+	);
+	//展示窗口
+	ShowWindow(hWnd, SW_SHOWDEFAULT);
+}
+
+Window::~Window()
+{
+	DestroyWindow(hWnd);
+}
+
+//两个静态回调函数都是使用了WINAPI调用约定为了对pWnd进行消息处理后映射为窗口指针
+LRESULT WINAPI/*WINAPI*/ Window::HandleMsgSetup(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) noexcept
+{
+	if (msg == WM_NCCREATE/*非客户区就包括标题栏、窗口边框、最大、最小按钮、滚动条等;从WM_NCCREATE可以得到WM_CREATE，它对应的结构体就是上个函数的this参数*/)
+	{
+		//先把参数转成CREATESTRUCTW结构体,之后再利用其lpCreateParams成员将它自己映射为窗口实例的指针
+		const CREATESTRUCTW* const pCreate = reinterpret_cast<CREATESTRUCTW*>(lParam);
+		Window* const pWnd = static_cast<Window*>(pCreate->lpCreateParams);
+
+		// set WinAPI-managed user data to store ptr to window class
+		//允许在winapi端存储数据
+		SetWindowLongPtr(hWnd, GWLP_USERDATA/*根据特定的窗口设置用户数据*/, reinterpret_cast<LONG_PTR>(pWnd));
+		// set message proc to normal (non-setup) handler now that setup is finished
+		SetWindowLongPtr(hWnd, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(&Window::HandleMsgThunk));
+		// forward message to window class handler
+		return pWnd->HandleMsg(hWnd, msg, wParam, lParam);
+	}
+	// if we get a message before the WM_NCCREATE message, handle with default handler
+	return DefWindowProc(hWnd, msg, wParam, lParam);
+}
+
+//两个静态回调函数都是为了对pWnd进行消息处理后映射为窗口指针
+LRESULT WINAPI/*WINAPI*/ Window::HandleMsgThunk(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) noexcept
+{
+	//接受Window类的指针，并重定向 窗口指针 指向Window类
+	Window* const pWnd = reinterpret_cast<Window*>(GetWindowLongPtr(hWnd, GWLP_USERDATA));
+	return pWnd->HandleMsg(hWnd, msg, wParam, lParam);
+}
+
+LRESULT Window::HandleMsg(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) noexcept
+{
+	switch (msg)
+	{
+		case WM_CLOSE:
+			PostQuitMessage(0);
+			return 0;
+	}
+	return DefWindowProc(hWnd, msg, wParam, lParam);
+}
+

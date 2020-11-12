@@ -4,6 +4,7 @@
 #include <iosfwd>
 #include <sstream>
 
+#include "Window.h"
 
 //自定义1个消息处理机制
 LRESULT CALLBACK cusWndProc(HWND hWnd,/*处理消息的窗口句柄*/ UINT msg,/*消息ID号*/ WPARAM wParam, LPARAM lParam)
@@ -51,37 +52,45 @@ LRESULT CALLBACK cusWndProc(HWND hWnd,/*处理消息的窗口句柄*/ UINT msg,/*消息ID号
 	return DefWindowProc(hWnd, msg, wParam, lParam);//调用标准库里的默认函数DefWindowsProc;
 }
 
+
 int CALLBACK WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPSTR lpCmdLine, _In_ int nCmdShow)
 {
 	
-	//注册窗口类
-	WNDCLASSEX wc = { 0 };
-	wc.cbSize = sizeof(wc);
-	wc.style = CS_OWNDC;
-	wc.lpfnWndProc = ::cusWndProc; //定义windowsProcedure指针
-	wc.cbClsExtra = 0;
-	wc.cbWndExtra = 0;
-	wc.hInstance = hInstance;
-	wc.hIcon = nullptr;
-	wc.hIconSm = nullptr;
-	wc.hCursor = nullptr;
-	wc.hbrBackground = nullptr;
-	wc.lpszMenuName = nullptr;
-	const auto pClassName = "hw3d_className";
-	wc.lpszClassName = pClassName;
-	RegisterClassEx(&wc);
-	//创建窗口实例
-	HWND hWnd = CreateWindowEx(
-		0,pClassName,
-		"babababa,this is a chuangkou",
-		WS_CAPTION | WS_MINIMIZEBOX | WS_SYSMENU,
-		200,200,
-		640,480,
-		nullptr,nullptr, hInstance,nullptr
-	);
-	ShowWindow(hWnd, SW_SHOW);
-	//while (true)
-	//	;
+#pragma region 弃用ver1.0.5
+	////注册窗口类
+	//WNDCLASSEX wc = { 0 };
+	//wc.cbSize = sizeof(wc);
+	//wc.style = CS_OWNDC;
+	//wc.lpfnWndProc = ::cusWndProc; //定义windowsProcedure指针
+	//wc.cbClsExtra = 0;
+	//wc.cbWndExtra = 0;
+	//wc.hInstance = hInstance;
+	//wc.hIcon = nullptr;
+	//wc.hIconSm = nullptr;
+	//wc.hCursor = nullptr;
+	//wc.hbrBackground = nullptr;
+	//wc.lpszMenuName = nullptr;
+	//const auto pClassName = "hw3d_className";
+	//wc.lpszClassName = pClassName;
+	//RegisterClassEx(&wc);
+	////创建窗口实例
+	//HWND hWnd = CreateWindowEx(
+	//	0,pClassName,
+	//	"babababa,this is a chuangkou",
+	//	WS_CAPTION | WS_MINIMIZEBOX | WS_SYSMENU,
+	//	200,200,
+	//	640,480,
+	//	nullptr,nullptr, hInstance,nullptr
+	//);
+	//ShowWindow(hWnd, SW_SHOW);
+	////while (true)
+	////	;
+#pragma endregion 弃用ver1.0.5
+
+	/// 利用Window框架类的带参构造可以创造出1个类的多个窗口实例，均可以工作
+	Window wnd1(800, 300, "chuang kou wenben");
+	Window wnd2(300, 800, "chuang kou 2 wen ben");
+
 	
 	///消息结构体构造
 	MSG msg;
@@ -91,7 +100,7 @@ int CALLBACK WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
 		TranslateMessage(&msg);//TranslateMessage适当条件下可以把wm_keydown同时转成wm_char
 		DispatchMessage(&msg);
 	}
-	if (gResult==-1)
+	if (gResult == -1)
 	{
 		return -1;
 	}
