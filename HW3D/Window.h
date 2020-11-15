@@ -1,8 +1,25 @@
 #pragma once
 #include "GrbWin.h"
+#include "GrbException.h"
 
 class Window
 {
+public:///继承异常处理类GrbException
+	class Exception : public GrbException
+	{
+	public:
+		Exception(int line, const char* file, HRESULT hr) noexcept;
+		const char* what() const noexcept override;
+		virtual const char* GetType() const noexcept;
+		static std::string TranslateErrorCode(HRESULT hr) noexcept;
+		/*拿取错误消息*/
+		HRESULT GetErrorCode() const noexcept;
+		/**/
+		std::string GetErrorString() const noexcept;
+	private:
+		HRESULT hr;
+	};
+
 private:///单例类WindowClass
 	//单例，管理window 类的注册和清理
 	class WindowClass
@@ -41,5 +58,6 @@ private:
 	int width;
 	int height;
 	HWND hWnd;
-
 };
+//工具宏
+#define CHWND_EXCEPT( hr ) Window::Exception( __LINE__,__FILE__,hr ) 

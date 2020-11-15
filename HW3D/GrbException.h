@@ -14,10 +14,11 @@ public:
 
 	/*把错误信息格式化成字符串 然后输出打印*/
 	std::string GetOriginString() const noexcept;
-protected:
-	mutable std::string whatBuffer;//被mutable修饰的变量，将永远处于可变的状态
 private:
 	int line;//错误的行数
 	std::string file;//错误出现的具体文件
+protected:
+	mutable std::string whatBuffer;//被mutable修饰的变量，将永远处于可变的状态
+
 
 };
