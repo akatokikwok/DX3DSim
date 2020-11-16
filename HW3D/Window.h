@@ -5,7 +5,7 @@
 class Window
 {
 public:///继承异常处理类GrbException
-	class Exception : public GrbException
+class Exception : public GrbException
 	{
 	public:
 		Exception(int line, const char* file, HRESULT hr) noexcept;
