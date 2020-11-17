@@ -1,5 +1,6 @@
 #include "Window.h"
 #include <sstream>
+#include "resource.h"
 
 Window::WindowClass Window::WindowClass::wndClass;
 
@@ -26,12 +27,20 @@ Window::WindowClass::WindowClass() noexcept
 	wc.cbClsExtra = 0;
 	wc.cbWndExtra = 0;
 	wc.hInstance = Window::WindowClass::GetInstance();
-	wc.hIcon = nullptr;
+	wc.hIcon = static_cast<HICON>(
+		LoadImage(hInst/*哪个程序需要图标*/, 
+			MAKEINTRESOURCE(IDI_ICON1)/*图标资源的标志*/,
+			IMAGE_ICON, 32, 32, 0)
+	);
+	wc.hIconSm = static_cast<HICON>(
+		LoadImage(hInst/*哪个程序需要图标*/,
+			MAKEINTRESOURCE(IDI_ICON1)/*图标资源的标志*/,
+			IMAGE_ICON, 16, 16, 0)
+		);
 	wc.hCursor = nullptr;
 	wc.hbrBackground = nullptr;
 	wc.lpszMenuName = nullptr;
 	wc.lpszClassName = Window::WindowClass::GetName();
-	wc.hIconSm = nullptr;
 	RegisterClassEx(&wc);
 }
 
@@ -48,10 +57,19 @@ Window::Window(int width, int height, const char* argname) noexcept
 	wr.right = width + wr.left;
 	wr.top = 100;
 	wr.bottom = height + wr.top;
-	//用于传递矩形、传递样式、传递是否有菜单之后的自适应窗口函数
-	AdjustWindowRect(&wr, 
-		(WS_CAPTION | WS_MINIMIZEBOX | WS_SYSMENU), 
-		FALSE);
+
+	if (/*检查窗口大小调整是否失败,失败则抛出异常*/
+		FAILED(
+			//用于传递矩形、传递样式、传递是否有菜单之后的自适应窗口函数	
+			AdjustWindowRect(&wr,
+				(WS_CAPTION | WS_MINIMIZEBOX | WS_SYSMENU),
+				FALSE)
+		)
+		)
+	{
+		throw CHWND_LAST_EXCEPT();
+	};
+	
 	//创建窗口或者拿取窗口
 	hWnd = CreateWindow(
 		WindowClass::GetName(),
@@ -64,6 +82,11 @@ Window::Window(int width, int height, const char* argname) noexcept
 		nullptr,nullptr,WindowClass::GetInstance(),
 		this
 	);
+	if (hWnd==nullptr)
+	{
+		throw CHWND_LAST_EXCEPT();
+	}
+
 	//展示窗口
 	ShowWindow(hWnd, SW_SHOWDEFAULT);
 }

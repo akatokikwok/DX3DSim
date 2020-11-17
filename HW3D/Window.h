@@ -49,7 +49,7 @@ public:
 	Window(const Window&) = delete;
 	Window& operator=(const Window&) = delete;
 private:
-	/**2个静态回调函数，为了解决winapi不能直接调用成员函数*********/
+	/**消息处理程序函数;2个静态回调函数，为了解决winapi不能直接调用成员函数*********/
 	static LRESULT CALLBACK HandleMsgSetup(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) noexcept;
 	static LRESULT CALLBACK HandleMsgThunk(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) noexcept;
 	/*调用这个成员函数来处理消息*/
@@ -61,3 +61,5 @@ private:
 };
 //工具宏
 #define CHWND_EXCEPT( hr ) Window::Exception( __LINE__,__FILE__,hr ) 
+/*GetLastError可以捕捉一些windows无法发现的错误*/
+#define CHWND_LAST_EXCEPT() Window::Exception(__LINE__, __FILE__, GetLastError())
