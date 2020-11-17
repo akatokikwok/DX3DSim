@@ -53,7 +53,12 @@ LRESULT CALLBACK cusWndProc(HWND hWnd,/*处理消息的窗口句柄*/ UINT msg,/*消息ID号
 }
 
 
-int CALLBACK WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPSTR lpCmdLine, _In_ int nCmdShow)
+int CALLBACK WinMain(
+	_In_ HINSTANCE hInstance,
+	_In_opt_ HINSTANCE hPrevInstance, 
+	_In_ LPSTR lpCmdLine, 
+	_In_ int nCmdShow
+)
 {
 	
 #pragma region 弃用ver1.0.5
@@ -87,28 +92,42 @@ int CALLBACK WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
 	////	;
 #pragma endregion 弃用ver1.0.5
 
-	/// 利用Window框架类的带参构造可以创造出1个类的多个窗口实例，均可以工作
-	Window wnd1(800, 300, "chuang kou wenben");
-	Window wnd2(300, 800, "chuang kou 2 wen ben");
+	try
+	{
+		/// 利用Window框架类的带参构造可以创造出1个类的多个窗口实例，均可以工作
+		Window wnd1(800, 300, "chuang kou wenben");
+		//Window wnd2(300, 800, "chuang kou 2 wen ben");
 
-	
-	///消息结构体构造
-	MSG msg;
-	BOOL gResult;
-	while ( (gResult=GetMessage(&msg,nullptr,0,0)) > 0 )//大于0就是收到消息，=0是退出,-1是出错
-	{
-		TranslateMessage(&msg);//TranslateMessage适当条件下可以把wm_keydown同时转成wm_char
-		DispatchMessage(&msg);
+		///消息结构体构造
+		MSG msg;
+		BOOL gResult;
+		while ((gResult = GetMessage(&msg, nullptr, 0, 0)) > 0)//大于0就是收到消息，=0是退出,-1是出错
+		{
+			TranslateMessage(&msg);//TranslateMessage适当条件下可以把wm_keydown同时转成wm_char
+			DispatchMessage(&msg);
+		}
+		if (gResult == -1)
+		{
+			return -1;
+		}
+		else if (gResult == 0)
+		{
+			return msg.wParam;//msg.wParam是PostQuitMessage退出时候显示的code通知
+		}
 	}
-	if (gResult == -1)
+	catch (const GrbException& e)
 	{
-		return -1;
+		MessageBox(nullptr, e.what(), e.GetType(), MB_OK | MB_ICONEXCLAMATION);
 	}
-	else if (gResult == 0)
+	catch (const std::exception& e)
 	{
-		return msg.wParam;//msg.wParam是PostQuitMessage退出时候显示的code通知
+		MessageBox(nullptr, e.what(), "Standard Exception", MB_OK | MB_ICONEXCLAMATION);
 	}
+	catch (...)
+	{
+		MessageBox(nullptr, "No details available", "Unknown Exception", MB_OK | MB_ICONEXCLAMATION);
+	}
+	return -1;
 
-	/*return 0;*/
 }
 

@@ -167,8 +167,15 @@
   <ItemGroup>
     <ClInclude Include="GrbException.h" />
     <ClInclude Include="GrbWin.h" />
+    <ClInclude Include="resource.h" />
     <ClInclude Include="Window.h" />
     <ClInclude Include="WindowsMessageMap.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="HW3D.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="The Cat.ico" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
