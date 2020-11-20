@@ -1,4 +1,4 @@
-#include "Window.h"
+ï»¿#include "Window.h"
 #include <sstream>
 #include "resource.h"
 
@@ -18,7 +18,7 @@ HINSTANCE Window::WindowClass::GetInstance() noexcept
 
 Window::WindowClass::WindowClass() noexcept
 	:
-	hInst( GetModuleHandle(nullptr) )//µ÷ÓÃGetModuleHandle£¨£©»ñÈ¡¸ÃÊµÀıµÄhandle²¢±£´æÔÚ³ÉÔ±Àï
+	hInst( GetModuleHandle(nullptr) )//è°ƒç”¨GetModuleHandleï¼ˆï¼‰è·å–è¯¥å®ä¾‹çš„handleå¹¶ä¿å­˜åœ¨æˆå‘˜é‡Œ
 {
 	WNDCLASSEX wc = { 0 };
 	wc.cbSize = sizeof(wc);
@@ -28,13 +28,13 @@ Window::WindowClass::WindowClass() noexcept
 	wc.cbWndExtra = 0;
 	wc.hInstance = Window::WindowClass::GetInstance();
 	wc.hIcon = static_cast<HICON>(
-		LoadImage(hInst/*ÄÄ¸ö³ÌĞòĞèÒªÍ¼±ê*/, 
-			MAKEINTRESOURCE(IDI_ICON1)/*Í¼±ê×ÊÔ´µÄ±êÖ¾*/,
+		LoadImage(hInst/*å“ªä¸ªç¨‹åºéœ€è¦å›¾æ ‡*/, 
+			MAKEINTRESOURCE(IDI_ICON1)/*å›¾æ ‡èµ„æºçš„æ ‡å¿—*/,
 			IMAGE_ICON, 32, 32, 0)
 	);
 	wc.hIconSm = static_cast<HICON>(
-		LoadImage(hInst/*ÄÄ¸ö³ÌĞòĞèÒªÍ¼±ê*/,
-			MAKEINTRESOURCE(IDI_ICON1)/*Í¼±ê×ÊÔ´µÄ±êÖ¾*/,
+		LoadImage(hInst/*å“ªä¸ªç¨‹åºéœ€è¦å›¾æ ‡*/,
+			MAKEINTRESOURCE(IDI_ICON1)/*å›¾æ ‡èµ„æºçš„æ ‡å¿—*/,
 			IMAGE_ICON, 16, 16, 0)
 		);
 	wc.hCursor = nullptr;
@@ -51,16 +51,16 @@ Window::WindowClass::~WindowClass()
 
 Window::Window(int width, int height, const char* argname) noexcept
 {
-	//¼ÆËã´°¿Ú³ß´ç
+	//è®¡ç®—çª—å£å°ºå¯¸
 	RECT wr;
 	wr.left = 100;
 	wr.right = width + wr.left;
 	wr.top = 100;
 	wr.bottom = height + wr.top;
 
-	if (/*¼ì²é´°¿Ú´óĞ¡µ÷ÕûÊÇ·ñÊ§°Ü,Ê§°ÜÔòÅ×³öÒì³£*/
+	if (/*æ£€æŸ¥çª—å£å¤§å°è°ƒæ•´æ˜¯å¦å¤±è´¥,å¤±è´¥åˆ™æŠ›å‡ºå¼‚å¸¸*/
 		FAILED(
-			//ÓÃÓÚ´«µİ¾ØĞÎ¡¢´«µİÑùÊ½¡¢´«µİÊÇ·ñÓĞ²Ëµ¥Ö®ºóµÄ×ÔÊÊÓ¦´°¿Úº¯Êı	
+			//ç”¨äºä¼ é€’çŸ©å½¢ã€ä¼ é€’æ ·å¼ã€ä¼ é€’æ˜¯å¦æœ‰èœå•ä¹‹åçš„è‡ªé€‚åº”çª—å£å‡½æ•°	
 			AdjustWindowRect(&wr,
 				(WS_CAPTION | WS_MINIMIZEBOX | WS_SYSMENU),
 				FALSE)
@@ -70,7 +70,7 @@ Window::Window(int width, int height, const char* argname) noexcept
 		throw CHWND_LAST_EXCEPT();
 	};
 	
-	//´´½¨´°¿Ú»òÕßÄÃÈ¡´°¿Ú
+	//åˆ›å»ºçª—å£æˆ–è€…æ‹¿å–çª—å£
 	hWnd = CreateWindow(
 		WindowClass::GetName(),
 		argname,
@@ -87,7 +87,7 @@ Window::Window(int width, int height, const char* argname) noexcept
 		throw CHWND_LAST_EXCEPT();
 	}
 
-	//Õ¹Ê¾´°¿Ú
+	//å±•ç¤ºçª—å£
 	ShowWindow(hWnd, SW_SHOWDEFAULT);
 }
 
@@ -96,18 +96,18 @@ Window::~Window()
 	DestroyWindow(hWnd);
 }
 
-//Á½¸ö¾²Ì¬»Øµ÷º¯Êı¶¼ÊÇÊ¹ÓÃÁËWINAPIµ÷ÓÃÔ¼¶¨ÎªÁË¶ÔpWnd½øĞĞÏûÏ¢´¦ÀíºóÓ³ÉäÎª´°¿ÚÖ¸Õë
+//ä¸¤ä¸ªé™æ€å›è°ƒå‡½æ•°éƒ½æ˜¯ä½¿ç”¨äº†WINAPIè°ƒç”¨çº¦å®šä¸ºäº†å¯¹pWndè¿›è¡Œæ¶ˆæ¯å¤„ç†åæ˜ å°„ä¸ºçª—å£æŒ‡é’ˆ
 LRESULT WINAPI/*WINAPI*/ Window::HandleMsgSetup(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) noexcept
 {
-	if (msg == WM_NCCREATE/*·Ç¿Í»§Çø¾Í°üÀ¨±êÌâÀ¸¡¢´°¿Ú±ß¿ò¡¢×î´ó¡¢×îĞ¡°´Å¥¡¢¹ö¶¯ÌõµÈ;´ÓWM_NCCREATE¿ÉÒÔµÃµ½WM_CREATE£¬Ëü¶ÔÓ¦µÄ½á¹¹Ìå¾ÍÊÇÉÏ¸öº¯ÊıµÄthis²ÎÊı*/)
+	if (msg == WM_NCCREATE/*éå®¢æˆ·åŒºå°±åŒ…æ‹¬æ ‡é¢˜æ ã€çª—å£è¾¹æ¡†ã€æœ€å¤§ã€æœ€å°æŒ‰é’®ã€æ»šåŠ¨æ¡ç­‰;ä»WM_NCCREATEå¯ä»¥å¾—åˆ°WM_CREATEï¼Œå®ƒå¯¹åº”çš„ç»“æ„ä½“å°±æ˜¯ä¸Šä¸ªå‡½æ•°çš„thiså‚æ•°*/)
 	{
-		//ÏÈ°Ñ²ÎÊı×ª³ÉCREATESTRUCTW½á¹¹Ìå,Ö®ºóÔÙÀûÓÃÆälpCreateParams³ÉÔ±½«Ëü×Ô¼ºÓ³ÉäÎª´°¿ÚÊµÀıµÄÖ¸Õë
+		//å…ˆæŠŠå‚æ•°è½¬æˆCREATESTRUCTWç»“æ„ä½“,ä¹‹åå†åˆ©ç”¨å…¶lpCreateParamsæˆå‘˜å°†å®ƒè‡ªå·±æ˜ å°„ä¸ºçª—å£å®ä¾‹çš„æŒ‡é’ˆ
 		const CREATESTRUCTW* const pCreate = reinterpret_cast<CREATESTRUCTW*>(lParam);
 		Window* const pWnd = static_cast<Window*>(pCreate->lpCreateParams);
 
 		// set WinAPI-managed user data to store ptr to window class
-		//ÔÊĞíÔÚwinapi¶Ë´æ´¢Êı¾İ
-		SetWindowLongPtr(hWnd, GWLP_USERDATA/*¸ù¾İÌØ¶¨µÄ´°¿ÚÉèÖÃÓÃ»§Êı¾İ*/, reinterpret_cast<LONG_PTR>(pWnd));
+		//å…è®¸åœ¨winapiç«¯å­˜å‚¨æ•°æ®
+		SetWindowLongPtr(hWnd, GWLP_USERDATA/*æ ¹æ®ç‰¹å®šçš„çª—å£è®¾ç½®ç”¨æˆ·æ•°æ®*/, reinterpret_cast<LONG_PTR>(pWnd));
 		// set message proc to normal (non-setup) handler now that setup is finished
 		SetWindowLongPtr(hWnd, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(&Window::HandleMsgThunk));
 		// forward message to window class handler
@@ -117,10 +117,10 @@ LRESULT WINAPI/*WINAPI*/ Window::HandleMsgSetup(HWND hWnd, UINT msg, WPARAM wPar
 	return DefWindowProc(hWnd, msg, wParam, lParam);
 }
 
-//Á½¸ö¾²Ì¬»Øµ÷º¯Êı¶¼ÊÇÎªÁË¶ÔpWnd½øĞĞÏûÏ¢´¦ÀíºóÓ³ÉäÎª´°¿ÚÖ¸Õë
+//ä¸¤ä¸ªé™æ€å›è°ƒå‡½æ•°éƒ½æ˜¯ä¸ºäº†å¯¹pWndè¿›è¡Œæ¶ˆæ¯å¤„ç†åæ˜ å°„ä¸ºçª—å£æŒ‡é’ˆ
 LRESULT WINAPI/*WINAPI*/ Window::HandleMsgThunk(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) noexcept
 {
-	//½ÓÊÜWindowÀàµÄÖ¸Õë£¬²¢ÖØ¶¨Ïò ´°¿ÚÖ¸Õë Ö¸ÏòWindowÀà
+	//æ¥å—Windowç±»çš„æŒ‡é’ˆï¼Œå¹¶é‡å®šå‘ çª—å£æŒ‡é’ˆ æŒ‡å‘Windowç±»
 	Window* const pWnd = reinterpret_cast<Window*>(GetWindowLongPtr(hWnd, GWLP_USERDATA));
 	return pWnd->HandleMsg(hWnd, msg, wParam, lParam);
 }
@@ -163,9 +163,9 @@ const char* Window::Exception::GetType() const noexcept
 
 std::string Window::Exception::TranslateErrorCode(HRESULT hr) noexcept
 {
-	//Ö¸ÏòĞÂ·ÖÅäµÄ»º´æµÄÖ¸Õë,ÓÃÓÚ³ĞÔØ´íÎó´úÂë×Ö·û´®
+	//æŒ‡å‘æ–°åˆ†é…çš„ç¼“å­˜çš„æŒ‡é’ˆ,ç”¨äºæ‰¿è½½é”™è¯¯ä»£ç å­—ç¬¦ä¸²
 	char* pMsgBuf = nullptr;
-	//´íÎó´úÂëµÄ³¤¶È
+	//é”™è¯¯ä»£ç çš„é•¿åº¦
 	DWORD nMsgLen = FormatMessage(
 		FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
 		nullptr,
@@ -174,7 +174,7 @@ std::string Window::Exception::TranslateErrorCode(HRESULT hr) noexcept
 		reinterpret_cast<LPSTR>(&pMsgBuf), 
 		0, nullptr
 	);
-	//Èô´Ë´¦Ò²·µ»Ø0,ÔòÖ±½Ó·µ»ØÎ´¶¨Òå´íÎó
+	//è‹¥æ­¤å¤„ä¹Ÿè¿”å›0,åˆ™ç›´æ¥è¿”å›æœªå®šä¹‰é”™è¯¯
 	if (nMsgLen == 0)
 	{
 		return "Unidentified error code";
