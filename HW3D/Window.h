@@ -57,7 +57,7 @@ private:
 	LRESULT HandleMsg(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) noexcept;
 
 public:
-	Keyboard kbd;
+	Keyboard kbd;//ผüลฬภเสตภý
 
 private:
 	int width;
