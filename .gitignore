@@ -49,3 +49,10 @@ Debug/HW3D.exe
 .vs/HW3D/v16/ipch/AutoPCH/b6ee17e0381f7d7d/WINDOWSMESSAGEMAP.ipch
 .vs/HW3D/v16/.suo
 .vs/HW3D/v16/ipch/AutoPCH/bdff77bde9a117c3/KEYBOARD.ipch
+HW3D/x64/Debug/HW3D.res
+HW3D/x64/Debug/HW3D.tlog/CL.15748.write.1.tlog
+HW3D/x64/Debug/HW3D.tlog/rc.command.1.tlog
+HW3D/x64/Debug/HW3D.tlog/rc.read.1.tlog
+HW3D/x64/Debug/HW3D.tlog/rc.write.1.tlog
+HW3D/x64/Debug/Keyboard.obj
+.vs/HW3D/v16/ipch/AutoPCH/aa597bd69f73f99e/KEYBOARD.ipch

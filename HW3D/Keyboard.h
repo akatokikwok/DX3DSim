@@ -74,7 +74,7 @@ public:///Keyboard本类方法
 private:
 	//这些方法将会被窗口调用
 	void OnKeyPressed(unsigned char keycode) noexcept;
-	void OnkeyReleased(unsigned char keycode) noexcept;
+	void OnKeyReleased(unsigned char keycode) noexcept;
 	void OnChar(char character) noexcept;
 	/*清除掉下面的bitset成员*/
 	void ClearState() noexcept;
@@ -86,7 +86,7 @@ private:
 	static constexpr unsigned int nKeys = 256u;
 	static constexpr unsigned int bufferSize = 16u;
 	bool autorepeatEnabled = false;
-	std::bitset<nKeys> Keystates;
+	std::bitset<nKeys> keystates;
 	std::queue<Event> keybuffer;
 	std::queue<char> charbuffer;
 
