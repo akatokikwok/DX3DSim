@@ -1,11 +1,12 @@
 #pragma once
 #include "GrbWin.h"
 #include "GrbException.h"
+#include "Keyboard.h"
 
 class Window
 {
 public:///继承异常处理类GrbException
-class Exception : public GrbException
+	class Exception : public GrbException
 	{
 	public:
 		Exception(int line, const char* file, HRESULT hr) noexcept;
@@ -54,6 +55,10 @@ private:
 	static LRESULT CALLBACK HandleMsgThunk(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) noexcept;
 	/*调用这个成员函数来处理消息*/
 	LRESULT HandleMsg(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) noexcept;
+
+public:
+	Keyboard kbd;//键盘类实例
+
 private:
 	int width;
 	int height;

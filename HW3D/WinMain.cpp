@@ -95,7 +95,7 @@ int CALLBACK WinMain(
 	try
 	{
 		/// 利用Window框架类的带参构造可以创造出1个类的多个窗口实例，均可以工作
-		Window wnd1(800, 300, "chuang kou wenben");
+		Window wnd(800, 300, "chuang kou wenben");
 		//Window wnd2(300, 800, "chuang kou 2 wen ben");
 
 		///消息结构体构造
@@ -105,6 +105,11 @@ int CALLBACK WinMain(
 		{
 			TranslateMessage(&msg);//TranslateMessage适当条件下可以把wm_keydown同时转成wm_char
 			DispatchMessage(&msg);
+
+			if (wnd.kbd.KeyIsPressed(VK_MENU) )
+			{
+				MessageBox(nullptr, "Something happened", "Space Key Was Pressed", MB_OK|MB_ICONEXCLAMATION);
+			}
 		}
 		if (gResult == -1)
 		{
