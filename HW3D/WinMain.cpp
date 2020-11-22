@@ -106,7 +106,7 @@ int CALLBACK WinMain(
 			TranslateMessage(&msg);//TranslateMessage适当条件下可以把wm_keydown同时转成wm_char
 			DispatchMessage(&msg);
 
-			if (wnd.kbd.KeyIsPressed(VK_SPACE))
+			if (wnd.kbd.KeyIsPressed(VK_MENU) )
 			{
 				MessageBox(nullptr, "Something happened", "Space Key Was Pressed", MB_OK|MB_ICONEXCLAMATION);
 			}

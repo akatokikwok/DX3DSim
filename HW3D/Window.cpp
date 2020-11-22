@@ -132,12 +132,22 @@ LRESULT Window::HandleMsg(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) noe
 		case WM_CLOSE:
 			PostQuitMessage(0);
 			return 0;
-
-			/*********** KEYBOARD MESSAGES ***********/
-		case WM_KEYDOWN:
-			kbd.OnKeyPressed(static_cast<unsigned char>(wParam));
+		// 当焦点不在主窗口时,清除所有键的状态
+		case WM_KILLFOCUS:
+			kbd.ClearState();
 			break;
+
+			/*********** KEYBOARD MESSAGES ***********/				
+		case WM_KEYDOWN://多键位同时按下的处理
+		case WM_SYSKEYDOWN://系统键 按下也是同一套逻辑
+			if (!(lParam & 0x40000000) || kbd.AutorepeatIsEnabled())
+			{
+				kbd.OnKeyPressed(static_cast<unsigned char>(wParam));
+			}
+			break;
+
 		case WM_KEYUP:
+		case WM_SYSKEYUP:
 			kbd.OnKeyReleased(static_cast<unsigned char>(wParam));
 			break;
 		case WM_CHAR:
