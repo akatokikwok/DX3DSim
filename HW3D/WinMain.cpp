@@ -1,4 +1,4 @@
-#include <Windows.h>
+ï»¿#include <Windows.h>
 #include <winuser.h>
 #include "WindowsMessageMap.h"
 #include <iosfwd>
@@ -6,22 +6,22 @@
 
 #include "Window.h"
 
-//×Ô¶¨Òå1¸öÏûÏ¢´¦Àí»úÖÆ
-LRESULT CALLBACK cusWndProc(HWND hWnd,/*´¦ÀíÏûÏ¢µÄ´°¿Ú¾ä±ú*/ UINT msg,/*ÏûÏ¢IDºÅ*/ WPARAM wParam, LPARAM lParam)
+//è‡ªå®šä¹‰1ä¸ªæ¶ˆæ¯å¤„ç†æœºåˆ¶
+LRESULT CALLBACK cusWndProc(HWND hWnd,/*å¤„ç†æ¶ˆæ¯çš„çª—å£å¥æŸ„*/ UINT msg,/*æ¶ˆæ¯IDå·*/ WPARAM wParam, LPARAM lParam)
 {
-	//´´½¨¾²Ì¬´°¿ÚÏûÏ¢map
+	//åˆ›å»ºé™æ€çª—å£æ¶ˆæ¯map
 	static WindowsMessageMap mm;
-	//¶ÔÓÚÊÕµ½µÄÃ¿Ò»ÌõÏûÏ¢,¶¼ÓÃ×Ö·û´®ĞÎÊ½´òÓ¡³öÀ´
+	//å¯¹äºæ”¶åˆ°çš„æ¯ä¸€æ¡æ¶ˆæ¯,éƒ½ç”¨å­—ç¬¦ä¸²å½¢å¼æ‰“å°å‡ºæ¥
 	OutputDebugString(
-		mm(msg, lParam, wParam).c_str()//ÕâÀïµÄÀ¨ºÅÔÚWindowsMessageMapÀàÀï½øĞĞµÄÖØÔØ£¬Ğ§¹ûÊÇÄÃµ½¸ñÊ½»¯×Ö·û´®
+		mm(msg, lParam, wParam).c_str()//è¿™é‡Œçš„æ‹¬å·åœ¨WindowsMessageMapç±»é‡Œè¿›è¡Œçš„é‡è½½ï¼Œæ•ˆæœæ˜¯æ‹¿åˆ°æ ¼å¼åŒ–å­—ç¬¦ä¸²
 	);
 
-	switch (msg)//¸ù¾İÏûÏ¢IDÀ´¾ñÔñ
+	switch (msg)//æ ¹æ®æ¶ˆæ¯IDæ¥æŠ‰æ‹©
 	{
 	case WM_CLOSE:
 		PostQuitMessage(69);
 		break;
-	case WM_KEYDOWN://¶Ô´óĞ¡Ğ´²»Ãô¸Ğ
+	case WM_KEYDOWN://å¯¹å¤§å°å†™ä¸æ•æ„Ÿ
 		if ( wParam=='F' )
 		{
 			SetWindowText( hWnd, "i have changed the title of this HWND");
@@ -33,23 +33,23 @@ LRESULT CALLBACK cusWndProc(HWND hWnd,/*´¦ÀíÏûÏ¢µÄ´°¿Ú¾ä±ú*/ UINT msg,/*ÏûÏ¢IDºÅ
 			SetWindowText(hWnd, "the title of this HWND has recoverd");
 		}
 		break;
-	case WM_CHAR:///´óĞ¡Ğ´Ãô¸Ğ,µ±ÏëÊäÈëÒ»¶ÎÎÄ×ÖµÄÊ±ºò£¬ËùÓÃµ½µÄ¼ü¾Í»á³öÏÖWM_CHAR
+	case WM_CHAR:///å¤§å°å†™æ•æ„Ÿ,å½“æƒ³è¾“å…¥ä¸€æ®µæ–‡å­—çš„æ—¶å€™ï¼Œæ‰€ç”¨åˆ°çš„é”®å°±ä¼šå‡ºç°WM_CHAR
 		{
 			static std::string title;
 			title.push_back((char)wParam);
-			SetWindowText(hWnd, title.c_str());/*´ËÊ±´°¿Ú±êÌâÏÔÊ¾¼üÅÌÉÏÈÎÒâÒÔKeydowm WParamµÄ×Ö*/
+			SetWindowText(hWnd, title.c_str());/*æ­¤æ—¶çª—å£æ ‡é¢˜æ˜¾ç¤ºé”®ç›˜ä¸Šä»»æ„ä»¥Keydowm WParamçš„å­—*/
 		}
 		break;
 	case WM_LBUTTONDOWN:
 		{
-			POINTS pt = MAKEPOINTS(lParam);//ÄÃÒ»¸öPoint½á¹¹Ìå
-			std::ostringstream oss;//ÕâÀïÒâË¼ÊÇ°ÑÊó±ê×ø±ê½á¹¹ÌåÊä³öÎªÎÄ±¾
+			POINTS pt = MAKEPOINTS(lParam);//æ‹¿ä¸€ä¸ªPointç»“æ„ä½“
+			std::ostringstream oss;//è¿™é‡Œæ„æ€æ˜¯æŠŠé¼ æ ‡åæ ‡ç»“æ„ä½“è¾“å‡ºä¸ºæ–‡æœ¬
 			oss << "(" << pt.x << "," << pt.y << ")";
 			SetWindowText(hWnd, oss.str().c_str());
 		}
 	}
 
-	return DefWindowProc(hWnd, msg, wParam, lParam);//µ÷ÓÃ±ê×¼¿âÀïµÄÄ¬ÈÏº¯ÊıDefWindowsProc;
+	return DefWindowProc(hWnd, msg, wParam, lParam);//è°ƒç”¨æ ‡å‡†åº“é‡Œçš„é»˜è®¤å‡½æ•°DefWindowsProc;
 }
 
 
@@ -61,12 +61,12 @@ int CALLBACK WinMain(
 )
 {
 	
-#pragma region ÆúÓÃver1.0.5
-	////×¢²á´°¿ÚÀà
+#pragma region å¼ƒç”¨ver1.0.5
+	////æ³¨å†Œçª—å£ç±»
 	//WNDCLASSEX wc = { 0 };
 	//wc.cbSize = sizeof(wc);
 	//wc.style = CS_OWNDC;
-	//wc.lpfnWndProc = ::cusWndProc; //¶¨ÒåwindowsProcedureÖ¸Õë
+	//wc.lpfnWndProc = ::cusWndProc; //å®šä¹‰windowsProcedureæŒ‡é’ˆ
 	//wc.cbClsExtra = 0;
 	//wc.cbWndExtra = 0;
 	//wc.hInstance = hInstance;
@@ -78,7 +78,7 @@ int CALLBACK WinMain(
 	//const auto pClassName = "hw3d_className";
 	//wc.lpszClassName = pClassName;
 	//RegisterClassEx(&wc);
-	////´´½¨´°¿ÚÊµÀı
+	////åˆ›å»ºçª—å£å®ä¾‹
 	//HWND hWnd = CreateWindowEx(
 	//	0,pClassName,
 	//	"babababa,this is a chuangkou",
@@ -90,26 +90,41 @@ int CALLBACK WinMain(
 	//ShowWindow(hWnd, SW_SHOW);
 	////while (true)
 	////	;
-#pragma endregion ÆúÓÃver1.0.5
+#pragma endregion å¼ƒç”¨ver1.0.5
 
 	try
 	{
-		/// ÀûÓÃWindow¿ò¼ÜÀàµÄ´ø²Î¹¹Ôì¿ÉÒÔ´´Ôì³ö1¸öÀàµÄ¶à¸ö´°¿ÚÊµÀı£¬¾ù¿ÉÒÔ¹¤×÷
+		/// åˆ©ç”¨Windowæ¡†æ¶ç±»çš„å¸¦å‚æ„é€ å¯ä»¥åˆ›é€ å‡º1ä¸ªç±»çš„å¤šä¸ªçª—å£å®ä¾‹ï¼Œå‡å¯ä»¥å·¥ä½œ
 		Window wnd(800, 300, "chuang kou wenben");
 		//Window wnd2(300, 800, "chuang kou 2 wen ben");
 
-		///ÏûÏ¢½á¹¹Ìå¹¹Ôì
+		///æ¶ˆæ¯ç»“æ„ä½“æ„é€ 
 		MSG msg;
 		BOOL gResult;
-		while ((gResult = GetMessage(&msg, nullptr, 0, 0)) > 0)//´óÓÚ0¾ÍÊÇÊÕµ½ÏûÏ¢£¬=0ÊÇÍË³ö,-1ÊÇ³ö´í
+		while ((gResult = GetMessage(&msg, nullptr, 0, 0)) > 0)//å¤§äº0å°±æ˜¯æ”¶åˆ°æ¶ˆæ¯ï¼Œ=0æ˜¯é€€å‡º,-1æ˜¯å‡ºé”™
 		{
-			TranslateMessage(&msg);//TranslateMessageÊÊµ±Ìõ¼şÏÂ¿ÉÒÔ°Ñwm_keydownÍ¬Ê±×ª³Éwm_char
+			TranslateMessage(&msg);//TranslateMessageé€‚å½“æ¡ä»¶ä¸‹å¯ä»¥æŠŠwm_keydownåŒæ—¶è½¬æˆwm_char
 			DispatchMessage(&msg);
 
-			if (wnd.kbd.KeyIsPressed(VK_MENU) )
+			#pragma region æŒ‰ä¸‹alté”®äº‹ä»¶ æµ‹è¯•
+//if (wnd.kbd.KeyIsPressed(VK_MENU) )
+//			{
+//				MessageBox(nullptr, "Something happened", "Space Key Was Pressed", MB_OK|MB_ICONEXCLAMATION);
+//			}
+#pragma endregion æŒ‰ä¸‹alté”®äº‹ä»¶ æµ‹è¯•
+
+#pragma region é¼ æ ‡å…‰æ ‡ç§»åŠ¨äº‹ä»¶ æµ‹è¯•
+			while (!wnd.mouse.IsEmpty())
 			{
-				MessageBox(nullptr, "Something happened", "Space Key Was Pressed", MB_OK|MB_ICONEXCLAMATION);
+				const auto e = wnd.mouse.Read();
+				if (e.GetType() == Mouse::Event::Type::Move)
+				{
+					std::ostringstream oss;
+					oss << "Mouse Postion: (" << e.GetPosX() << "," << e.GetPosY()<<")";
+					wnd.SetTitle(oss.str());
+				}
 			}
+#pragma endregion é¼ æ ‡å…‰æ ‡ç§»åŠ¨äº‹ä»¶ æµ‹è¯•
 		}
 		if (gResult == -1)
 		{
@@ -117,7 +132,7 @@ int CALLBACK WinMain(
 		}
 		else if (gResult == 0)
 		{
-			return msg.wParam;//msg.wParamÊÇPostQuitMessageÍË³öÊ±ºòÏÔÊ¾µÄcodeÍ¨Öª
+			return msg.wParam;//msg.wParamæ˜¯PostQuitMessageé€€å‡ºæ—¶å€™æ˜¾ç¤ºçš„codeé€šçŸ¥
 		}
 	}
 	catch (const GrbException& e)
