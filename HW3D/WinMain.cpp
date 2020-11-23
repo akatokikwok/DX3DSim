@@ -117,12 +117,28 @@ int CALLBACK WinMain(
 			while (!wnd.mouse.IsEmpty())
 			{
 				const auto e = wnd.mouse.Read();
-				if (e.GetType() == Mouse::Event::Type::Move)
+
+				switch (e.GetType())
 				{
-					std::ostringstream oss;
-					oss << "Mouse Postion: (" << e.GetPosX() << "," << e.GetPosY()<<")";
-					wnd.SetTitle(oss.str());
+				case Mouse::Event::Type::Leave:
+					wnd.SetTitle("Gone! Cursor Has leaved Client");
+					break;
+				case Mouse::Event::Type::Move:
+					{
+						std::ostringstream oss;
+						oss << "Mouse Moved to (" << e.GetPosX() << "," << e.GetPosY() << ")";
+						wnd.SetTitle(oss.str());
+					}
+					break;			
 				}
+
+
+				//if (e.GetType() == Mouse::Event::Type::Move)
+				//{
+				//	std::ostringstream oss;
+				//	oss << "Mouse Postion: (" << e.GetPosX() << "," << e.GetPosY()<<")";
+				//	wnd.SetTitle(oss.str());
+				//}
 			}
 #pragma endregion 鼠标光标移动事件 测试
 		}

@@ -16,6 +16,8 @@ public:///Event类
 			RRelease,
 			WheelUp,
 			WheelDown,
+			Enter,//在窗口内
+			Leave,//离开窗口 
 			Move,
 			Invalid
 		};
@@ -84,6 +86,7 @@ public:
 	std::pair<int, int> GetPos() const noexcept;
 	int GetPosX() const noexcept;
 	int GetPosY() const noexcept;
+	bool IsInWindow() const noexcept;
 	bool LeftIsPressed() const noexcept;
 	bool RightIsPressed() const noexcept;
 	Mouse::Event Read() noexcept;
@@ -94,6 +97,8 @@ public:
 	void Flush() noexcept;
 private:
 	void OnMouseMove(int newx, int newy) noexcept;
+	void OnMouseLeave() noexcept;
+	void OnMouseEnter() noexcept;
 	void OnLeftPressed(int x, int y) noexcept;
 	void OnLeftReleased(int x, int y) noexcept;
 	void OnRightPressed(int x, int y) noexcept;
@@ -109,6 +114,8 @@ private:
 	/*按键状态*/
 	bool leftIsPressed = false;
 	bool rightIsPressed = false;
+	/*是否在窗口内*/
+	bool isInWindow = false;
 	/*事件队列*/
 	std::queue<Event> buffer;
 };

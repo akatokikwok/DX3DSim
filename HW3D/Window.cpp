@@ -169,8 +169,29 @@ LRESULT Window::HandleMsg(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) noe
 		case WM_MOUSEMOVE:
 		{
 			//lParam储存坐标
-			POINTS pt = MAKEPOINTS(lParam);
-			mouse.OnMouseMove(pt.x, pt.y);
+			const POINTS pt = MAKEPOINTS(lParam);
+			if (pt.x >= 0 && pt.x< width && pt.y >=0 && pt.y <height )
+			{
+				mouse.OnMouseMove(pt.x, pt.y);
+
+				if (!mouse.IsInWindow())
+				{
+					SetCapture(hWnd);
+					mouse.OnMouseEnter();
+				}
+			}
+			else
+			{
+				if (wParam & (MK_LBUTTON | MK_RBUTTON))
+				{
+					mouse.OnMouseMove(pt.x, pt.y);
+				}
+				else
+				{
+					ReleaseCapture();
+					mouse.OnMouseLeave();
+				}
+			}
 			break;
 		}
 		case WM_LBUTTONDOWN:
@@ -189,12 +210,27 @@ LRESULT Window::HandleMsg(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) noe
 		{
 			const POINTS pt = MAKEPOINTS(lParam);
 			mouse.OnLeftReleased(pt.x, pt.y);
+			// release mouse if outside of window
+			// 在窗口内按下鼠标左键 即使光标出了窗口仍然可以捕捉并在标题绘制光标位置
+			if (pt.x < 0 || pt.x >= width || pt.y < 0 || pt.y >= height)
+			{
+				ReleaseCapture();
+				mouse.OnMouseLeave();
+			}
 			break;
 		}
 		case WM_RBUTTONUP:
 		{
 			const POINTS pt = MAKEPOINTS(lParam);
 			mouse.OnRightReleased(pt.x, pt.y);
+			// release mouse if outside of window
+			// 在窗口内按下鼠标左键 即使光标出了窗口仍然可以捕捉并在标题绘制光标位置
+			if (pt.x < 0 || pt.x >= width || pt.y < 0 || pt.y >= height)
+			{
+				ReleaseCapture();
+				mouse.OnMouseLeave();
+			}
+
 			break;
 		}
 		case WM_MOUSEWHEEL:
