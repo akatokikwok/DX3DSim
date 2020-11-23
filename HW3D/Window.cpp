@@ -50,6 +50,9 @@ Window::WindowClass::~WindowClass()
 }
 
 Window::Window(int width, int height, const char* argname) noexcept
+	:
+	width(width),
+	height(height)
 {
 	//计算窗口尺寸
 	RECT wr;
@@ -168,7 +171,7 @@ LRESULT Window::HandleMsg(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) noe
 			//lParam储存坐标
 			POINTS pt = MAKEPOINTS(lParam);
 			mouse.OnMouseMove(pt.x, pt.y);
-			//break;
+			break;
 		}
 		case WM_LBUTTONDOWN:
 		{
