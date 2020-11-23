@@ -233,17 +233,22 @@ LRESULT Window::HandleMsg(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) noe
 
 			break;
 		}
-		case WM_MOUSEWHEEL:
+		
+		case WM_MOUSEWHEEL:/******************滑轮事件********************/
 		{
 			const POINTS pt = MAKEPOINTS(lParam);
-			if (GET_WHEEL_DELTA_WPARAM(wParam) > 0)
+#pragma region 弃用
+			/*if (GET_WHEEL_DELTA_WPARAM(wParam) > 0)
 			{
 				mouse.OnWheelUp(pt.x, pt.y);
 			}
 			else if (GET_WHEEL_DELTA_WPARAM(wParam) < 0)
 			{
 				mouse.OnWheelDown(pt.x, pt.y);
-			}
+			}*/
+#pragma endregion		弃用
+			const int delta = GET_WHEEL_DELTA_WPARAM(wParam);
+			mouse.OnWheelDelta(pt.x, pt.y, delta);
 			break;
 		}
 		/************** END MOUSE MESSAGES **************/

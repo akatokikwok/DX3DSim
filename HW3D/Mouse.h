@@ -105,6 +105,8 @@ private:
 	void OnRightReleased(int x, int y) noexcept;
 	void OnWheelUp(int x, int y) noexcept;
 	void OnWheelDown(int x, int y) noexcept;
+	/*计算滑轮的旋转值,若参数delta值足够大,会导致多次触发滚轮事件*/
+	void OnWheelDelta(int x, int y, int delta) noexcept;
 	void TrimBuffer() noexcept;
 private:
 	static constexpr unsigned int bufferSize = 16u;
@@ -116,6 +118,8 @@ private:
 	bool rightIsPressed = false;
 	/*是否在窗口内*/
 	bool isInWindow = false;
+	/*存储鼠标滚轮的总旋转值*/
+	int wheelDeltaCarry = 0;
 	/*事件队列*/
 	std::queue<Event> buffer;
 };

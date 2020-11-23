@@ -5,6 +5,7 @@
 #include <sstream>
 
 #include "Window.h"
+#include "Mouse.h"
 
 //自定义1个消息处理机制
 LRESULT CALLBACK cusWndProc(HWND hWnd,/*处理消息的窗口句柄*/ UINT msg,/*消息ID号*/ WPARAM wParam, LPARAM lParam)
@@ -106,6 +107,8 @@ int CALLBACK WinMain(
 			TranslateMessage(&msg);//TranslateMessage适当条件下可以把wm_keydown同时转成wm_char
 			DispatchMessage(&msg);
 
+			static int i = 0;//测试滑轮事件,让标题该数字值用的,仅用于测试功能
+
 			#pragma region 按下alt键事件 测试
 //if (wnd.kbd.KeyIsPressed(VK_MENU) )
 //			{
@@ -113,23 +116,41 @@ int CALLBACK WinMain(
 //			}
 #pragma endregion 按下alt键事件 测试
 
-#pragma region 鼠标光标移动事件 测试
+			#pragma region 鼠标光标移动事件 测试
 			while (!wnd.mouse.IsEmpty())
 			{
 				const auto e = wnd.mouse.Read();
-
 				switch (e.GetType())
 				{
 				case Mouse::Event::Type::Leave:
 					wnd.SetTitle("Gone! Cursor Has leaved Client");
 					break;
+
 				case Mouse::Event::Type::Move:
 					{
 						std::ostringstream oss;
 						oss << "Mouse Moved to (" << e.GetPosX() << "," << e.GetPosY() << ")";
 						wnd.SetTitle(oss.str());
 					}
-					break;			
+					break;		
+
+				case Mouse::Event::Type::WheelUp:
+					i++;
+					{
+						std::ostringstream oss;
+						oss << "Up: " << i;
+						wnd.SetTitle(oss.str());
+					}
+					break;
+				case Mouse::Event::Type::WheelDown:
+					i--;
+					{
+						std::ostringstream oss;
+						oss << "Down: " << i;
+						wnd.SetTitle(oss.str());
+					}
+					break;
+
 				}
 
 
