@@ -168,6 +168,7 @@ LRESULT Window::HandleMsg(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) noe
 			//lParam储存坐标
 			POINTS pt = MAKEPOINTS(lParam);
 			mouse.OnMouseMove(pt.x, pt.y);
+			//break;
 		}
 		case WM_LBUTTONDOWN:
 		{
