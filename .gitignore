@@ -61,3 +61,9 @@ HW3D/x64/Debug/HW3D.tlog/CL.write.1.tlog
 .vs/HW3D/v16/ipch/AutoPCH/7a8c717d605003d4/MOUSE.ipch
 .vs/HW3D/v16/ipch/AutoPCH/dba08cf842c39495/MOUSE.ipch
 HW3D/x64/Debug/Mouse.obj
+.vs/HW3D/v16/ipch/AutoPCH/51b1b5af38497124/GRBTIMER.ipch
+.vs/HW3D/v16/ipch/AutoPCH/574ee271bd2dd7e5/APP.ipch
+.vs/HW3D/v16/ipch/AutoPCH/812f898bedbcbcad/GRBTIMER.ipch
+.vs/HW3D/v16/ipch/AutoPCH/a9b0ce52ba8e7c64/APP.ipch
+HW3D/x64/Debug/App.obj
+HW3D/x64/Debug/GrbTimer.obj

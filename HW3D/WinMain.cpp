@@ -7,6 +7,8 @@
 #include "Window.h"
 #include "Mouse.h"
 
+#include "App.h" /*ver1.0.10*/
+
 //自定义1个消息处理机制
 LRESULT CALLBACK cusWndProc(HWND hWnd,/*处理消息的窗口句柄*/ UINT msg,/*消息ID号*/ WPARAM wParam, LPARAM lParam)
 {
@@ -95,6 +97,9 @@ int CALLBACK WinMain(
 
 	try
 	{
+		
+		#pragma region 注释ver1.0.9
+		/*
 		/// 利用Window框架类的带参构造可以创造出1个类的多个窗口实例，均可以工作
 		Window wnd(800, 300, "chuang kou wenben");
 		//Window wnd2(300, 800, "chuang kou 2 wen ben");
@@ -170,7 +175,10 @@ int CALLBACK WinMain(
 		else if (gResult == 0)
 		{
 			return msg.wParam;//msg.wParam是PostQuitMessage退出时候显示的code通知
-		}
+		}*/
+#pragma endregion 注释ver1.0.9
+
+		return App{}.Go();
 	}
 	catch (const GrbException& e)
 	{

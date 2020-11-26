@@ -101,6 +101,26 @@ void Window::SetTitle(const std::string& title)
 	}
 }
 
+std::optional<int> Window::ProcessMessage()
+{
+	MSG msg;
+	//若队列里存在消息,就移除并且派发消息,但是不阻塞
+	while ( PeekMessage(&msg, nullptr,0,0, PM_REMOVE))
+	{
+		//手动检查队列里的消息是不是wm_quit
+		if (msg.wParam == WM_QUIT)
+		{
+			return msg.wParam;
+		}
+
+		/*一直循环下去,直至队列中再也无消息,返回空的optional库*/
+		TranslateMessage(&msg);
+		DispatchMessage(&msg);
+	}
+	/*一直循环下去,直至队列中再也无消息,返回空的optional库*/
+	return {};
+}
+
 Window::~Window()
 {
 	DestroyWindow(hWnd);
