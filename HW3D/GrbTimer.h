@@ -1,13 +1,13 @@
-#pragma once
-#include <chrono>/*chronoÊÇÒ»¸ötime library, Ô´ÓÚboost£¬ÏÖÔÚÒÑ¾­ÊÇC++±ê×¼*/
+ï»¿#pragma once
+#include <chrono>/*chronoæ˜¯ä¸€ä¸ªtime library, æºäºboostï¼Œç°åœ¨å·²ç»æ˜¯C++æ ‡å‡†*/
 
 class GrbTimer
 {
 public:
 	GrbTimer();
-	/*µ÷ÓÃ¸Ãº¯Êı,»ñÈ¡´ÓÉÏ´Îmarkµ½±¾´ÎËù¾­ÀúµÄÊ±¼ä*/
+	/*è°ƒç”¨è¯¥å‡½æ•°,è·å–ä»ä¸Šæ¬¡markåˆ°æœ¬æ¬¡æ‰€ç»å†çš„æ—¶é—´*/
 	float Mark();
-	/*Í¬markº¯Êı,µ«ÊÇ²»»áÖØÉèmark¼ÆÊ±Æ÷*/
+	/*åŒmarkå‡½æ•°,ä½†æ˜¯ä¸ä¼šé‡è®¾markè®¡æ—¶å™¨*/
 	float Peek() const;
 private:
 	std::chrono::steady_clock::time_point last;

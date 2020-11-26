@@ -54,7 +54,7 @@ public:
 	Window& operator=(const Window&) = delete;
 
 	//测试方法,把消息拍到窗口标题上
-	void SetTitle(const std::string& title);
+	void SetTitle(const std::string& title); 
 	/*把消息处理的应用逻辑，置入此方法,该函数负责处理所有窗口的消息,所以要设置成static型*/
 	static std::optional<int> ProcessMessage();
 
