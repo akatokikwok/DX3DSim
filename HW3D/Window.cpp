@@ -28,12 +28,12 @@ Window::WindowClass::WindowClass() noexcept
 	wc.cbWndExtra = 0;
 	wc.hInstance = Window::WindowClass::GetInstance();
 	wc.hIcon = static_cast<HICON>(
-		LoadImage(hInst/*哪个程序需要图标*/, 
+		LoadImage(GetInstance()/*哪个程序需要图标*/,
 			MAKEINTRESOURCE(IDI_ICON1)/*图标资源的标志*/,
 			IMAGE_ICON, 32, 32, 0)
 	);
 	wc.hIconSm = static_cast<HICON>(
-		LoadImage(hInst/*哪个程序需要图标*/,
+		LoadImage(GetInstance()/*哪个程序需要图标*/,
 			MAKEINTRESOURCE(IDI_ICON1)/*图标资源的标志*/,
 			IMAGE_ICON, 16, 16, 0)
 		);
@@ -69,6 +69,7 @@ Window::Window(int width, int height, const char* argname) noexcept
 	{
 		throw CHWND_LAST_EXCEPT();
 	};
+
 	
 	//创建窗口或者拿取窗口
 	hWnd = CreateWindow(
@@ -79,8 +80,7 @@ Window::Window(int width, int height, const char* argname) noexcept
 		CW_USEDEFAULT,
 		wr.right-wr.left,
 		wr.bottom-wr.top,
-		nullptr,nullptr,WindowClass::GetInstance(),
-		this
+		nullptr,nullptr,WindowClass::GetInstance(),this		
 	);
 	if (hWnd==nullptr)
 	{
@@ -111,7 +111,7 @@ std::optional<int> Window::ProcessMessage()
 		//手动检查队列里的消息是不是wm_quit
 		if (msg.wParam == WM_QUIT)
 		{
-			return msg.wParam;
+			return (int)msg.wParam;
 		}
 
 		/*一直循环下去,直至队列中再也无消息,返回空的optional库*/
@@ -123,8 +123,7 @@ std::optional<int> Window::ProcessMessage()
 }
 
 Graphics& Window::Gfx()
-{
-	
+{	
 	return *pGfx;
 }
 
