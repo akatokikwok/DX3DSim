@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 
 #include "GrbWin.h"
 #include <d3d11.h>
@@ -7,7 +7,7 @@ class Graphics
 {
 public:
 	Graphics(HWND hWnd);
-	/* ½ûÓÃ¿½±´ºÍ¸´ÖÆ´ø²Î¹¹Ôì*/
+	/* ç¦ç”¨æ‹·è´å’Œå¤åˆ¶å¸¦å‚æ„é€ */
 	Graphics(const Graphics&) = delete;
 	Graphics& operator=(const Graphics&) = delete;
 	~Graphics();

@@ -1,4 +1,6 @@
-#include "Graphics.h"
+ï»¿#include "Graphics.h"
+
+#pragma comment(lib, "d3d11.lib")//é“¾æ¥åˆ°åº“
 
 Graphics::Graphics(HWND hWnd)
 {
@@ -6,32 +8,32 @@ Graphics::Graphics(HWND hWnd)
 	sd.BufferDesc.Width = 0;
 	sd.BufferDesc.Height = 0;
 	sd.BufferDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
-	sd.BufferDesc.RefreshRate.Numerator = 0;//´Ë´¦²»ÓÃÓÚÈ«ÆÁÄ£Ê½¹Ê²»ÓÃË¢ĞÂÖ¡ÂÊ
+	sd.BufferDesc.RefreshRate.Numerator = 0;//æ­¤å¤„ä¸ç”¨äºå…¨å±æ¨¡å¼æ•…ä¸ç”¨åˆ·æ–°å¸§ç‡
 	sd.BufferDesc.RefreshRate.Denominator = 0;
 	sd.BufferDesc.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;
 	sd.BufferDesc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
 	sd.SampleDesc.Count = 1;
 	sd.SampleDesc.Quality = 0;
-	sd.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;//½«´Ë»º´æÓÃ×÷äÖÈ¾Ä¿±ê
+	sd.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;//å°†æ­¤ç¼“å­˜ç”¨ä½œæ¸²æŸ“ç›®æ ‡
 	sd.BufferCount = 1;
 	sd.OutputWindow = hWnd;
 	sd.Windowed = TRUE;
-	sd.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;//ĞÔÄÜ×î¸ß
+	sd.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;//æ€§èƒ½æœ€é«˜
 	sd.Flags = 0;
 
 	D3D11CreateDeviceAndSwapChain(
-		nullptr,//Ä¬ÈÏÏÔ¿¨
-		D3D_DRIVER_TYPE_HARDWARE,//Ê¹ÓÃÓ²¼şÉè±¸
-		nullptr,//Èí¼şÇı¶¯
-		0,//À©Õ¹±êÇ©
-		nullptr,//ÌØĞÔ¼¶±ğ
+		nullptr,//é»˜è®¤æ˜¾å¡ 
+		D3D_DRIVER_TYPE_HARDWARE,//ä½¿ç”¨ç¡¬ä»¶è®¾å¤‡ 
+		nullptr,//è½¯ä»¶é©±åŠ¨ 
+		0,//æ‰©å±•æ ‡ç­¾ 
+		nullptr,//ç‰¹æ€§çº§åˆ« 
 		0,
 		D3D11_SDK_VERSION,
-		&sd,//½»»»Á´ÃèÊö·ûDescriptorµÄÖ¸Õë
-		&pSwap,//½»»»Á´
-		&pDevice,//Ö¸ÏòÉè±¸µÄÖ¸Õë
-		nullptr,//Êä³öÌØĞÔ¼¶±ğ
-		&pContext	//ÉÏÏÂÎÄ
+		&sd,//äº¤æ¢é“¾æè¿°ç¬¦Descriptorçš„æŒ‡é’ˆ
+		&pSwap,//äº¤æ¢é“¾
+		&pDevice,//æŒ‡å‘è®¾å¤‡çš„æŒ‡é’ˆ
+		nullptr,//è¾“å‡ºç‰¹æ€§çº§åˆ«
+		&pContext	//ä¸Šä¸‹æ–‡
 	);
 }
 
