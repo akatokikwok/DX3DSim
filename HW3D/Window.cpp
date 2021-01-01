@@ -89,6 +89,9 @@ Window::Window(int width, int height, const char* argname) noexcept
 
 	//展示窗口
 	ShowWindow(hWnd, SW_SHOWDEFAULT);
+
+	//利用窗口句柄创建Graphics对象,它是1个unique指针,当窗口销毁时也会自动销毁此graphics对象
+	pGfx = std::make_unique<Graphics>(hWnd);
 }
 
 void Window::SetTitle(const std::string& title)
@@ -117,6 +120,12 @@ std::optional<int> Window::ProcessMessage()
 	}
 	/*一直循环下去,直至队列中再也无消息,返回空的optional库*/
 	return {};
+}
+
+Graphics& Window::Gfx()
+{
+	
+	return *pGfx;
 }
 
 Window::~Window()

@@ -1,14 +1,16 @@
-#pragma once
+ï»¿#pragma once
 #include "GrbWin.h"
 #include "GrbException.h"
 #include "Keyboard.h"
 #include "Mouse.h"
 
 #include <optional>/*ver1.0.10*/
+#include "Graphics.h"//ver1.0.13
+#include <memory>//ver1.0.13
 
 class Window
 {
-public:///¼Ì³ĞÒì³£´¦ÀíÀàGrbException
+public:///ç»§æ‰¿å¼‚å¸¸å¤„ç†ç±»GrbException
 	class Exception : public GrbException
 	{
 	public:
@@ -16,7 +18,7 @@ public:///¼Ì³ĞÒì³£´¦ÀíÀàGrbException
 		const char* what() const noexcept override;
 		virtual const char* GetType() const noexcept;
 		static std::string TranslateErrorCode(HRESULT hr) noexcept;
-		/*ÄÃÈ¡´íÎóÏûÏ¢*/
+		/*æ‹¿å–é”™è¯¯æ¶ˆæ¯*/
 		HRESULT GetErrorCode() const noexcept;
 		/**/
 		std::string GetErrorString() const noexcept;
@@ -24,14 +26,14 @@ public:///¼Ì³ĞÒì³£´¦ÀíÀàGrbException
 		HRESULT hr;
 	};
 
-private:///µ¥ÀıÀàWindowClass
-	//µ¥Àı£¬¹ÜÀíwindow ÀàµÄ×¢²áºÍÇåÀí
+private:///å•ä¾‹ç±»WindowClass
+	//å•ä¾‹ï¼Œç®¡ç†window ç±»çš„æ³¨å†Œå’Œæ¸…ç†
 	class WindowClass
 	{
 	public:
-		/*»ñÈ¡ÀàÃû*/
+		/*è·å–ç±»å*/
 		static const char* GetName() noexcept;
-		/*»ñÈ¡ÀàÊµÀıµÄhandle*/
+		/*è·å–ç±»å®ä¾‹çš„handle*/
 		static HINSTANCE GetInstance() noexcept;
 	protected:
 	private:
@@ -41,43 +43,44 @@ private:///µ¥ÀıÀàWindowClass
 		WindowClass& operator= (const WindowClass&) = delete;
 
 		static constexpr const char* wndClassName = "GRB Direct113D Engine Window";
-		static WindowClass wndClass;//WindowClassÀà ÊµÀı,´ò¿ª³ÌĞòÊ±ĞèÒª´´½¨¸Ã¾²Ì¬Àà		
-		HINSTANCE hInst;//WindowClassÀà ¾ä±ú
+		static WindowClass wndClass;//WindowClassç±» å®ä¾‹,æ‰“å¼€ç¨‹åºæ—¶éœ€è¦åˆ›å»ºè¯¥é™æ€ç±»		
+		HINSTANCE hInst;//WindowClassç±» å¥æŸ„
 	};
 
 public:
-	/*¹¹Ôìº¯Êı*/
+	/*æ„é€ å‡½æ•°*/
 	Window(int width, int height, const char* argname) noexcept;
-	/*Îö¹¹º¯Êı*/
+	/*ææ„å‡½æ•°*/
 	~Window();
 	Window(const Window&) = delete;
 	Window& operator=(const Window&) = delete;
 
-	//²âÊÔ·½·¨,°ÑÏûÏ¢ÅÄµ½´°¿Ú±êÌâÉÏ
+	//æµ‹è¯•æ–¹æ³•,æŠŠæ¶ˆæ¯æ‹åˆ°çª—å£æ ‡é¢˜ä¸Š
 	void SetTitle(const std::string& title); 
-	/*°ÑÏûÏ¢´¦ÀíµÄÓ¦ÓÃÂß¼­£¬ÖÃÈë´Ë·½·¨,¸Ãº¯Êı¸ºÔğ´¦ÀíËùÓĞ´°¿ÚµÄÏûÏ¢,ËùÒÔÒªÉèÖÃ³ÉstaticĞÍ*/
+	/*æŠŠæ¶ˆæ¯å¤„ç†çš„åº”ç”¨é€»è¾‘ï¼Œç½®å…¥æ­¤æ–¹æ³•,è¯¥å‡½æ•°è´Ÿè´£å¤„ç†æ‰€æœ‰çª—å£çš„æ¶ˆæ¯,æ‰€ä»¥è¦è®¾ç½®æˆstaticå‹*/
 	static std::optional<int> ProcessMessage();
-
-
-
+	/* è®¿é—®Graphicsçš„æ–¹æ³•*/
+	Graphics& Gfx();
 
 private:
-	/**ÏûÏ¢´¦Àí³ÌĞòº¯Êı;2¸ö¾²Ì¬»Øµ÷º¯Êı£¬ÎªÁË½â¾öwinapi²»ÄÜÖ±½Óµ÷ÓÃ³ÉÔ±º¯Êı*********/
+	/**æ¶ˆæ¯å¤„ç†ç¨‹åºå‡½æ•°;2ä¸ªé™æ€å›è°ƒå‡½æ•°ï¼Œä¸ºäº†è§£å†³winapiä¸èƒ½ç›´æ¥è°ƒç”¨æˆå‘˜å‡½æ•°*********/
 	static LRESULT CALLBACK HandleMsgSetup(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) noexcept;
 	static LRESULT CALLBACK HandleMsgThunk(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) noexcept;
-	/*µ÷ÓÃÕâ¸ö³ÉÔ±º¯ÊıÀ´´¦ÀíÏûÏ¢*/
+	/*è°ƒç”¨è¿™ä¸ªæˆå‘˜å‡½æ•°æ¥å¤„ç†æ¶ˆæ¯*/
 	LRESULT HandleMsg(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) noexcept;
 
 public:
-	Keyboard kbd;//¼üÅÌÀàÊµÀı
-	Mouse mouse;//Êó±êÀàÊµÀı
+	Keyboard kbd;//é”®ç›˜ç±»å®ä¾‹
+	Mouse mouse;//é¼ æ ‡ç±»å®ä¾‹
 
 private:
 	int width;
 	int height;
 	HWND hWnd;
+
+	std::unique_ptr<Graphics> pGfx;//Graphicsç±»å®ä¾‹
 };
-//¹¤¾ßºê
+//å·¥å…·å®
 #define CHWND_EXCEPT( hr ) Window::Exception( __LINE__,__FILE__,hr ) 
-/*GetLastError¿ÉÒÔ²¶×½Ò»Ğ©windowsÎŞ·¨·¢ÏÖµÄ´íÎó*/
+/*GetLastErrorå¯ä»¥æ•æ‰ä¸€äº›windowsæ— æ³•å‘ç°çš„é”™è¯¯*/
 #define CHWND_LAST_EXCEPT() Window::Exception(__LINE__, __FILE__, GetLastError())
