@@ -35,10 +35,23 @@ Graphics::Graphics(HWND hWnd)
 		nullptr,//输出特性级别
 		&pContext	//上下文
 	);
+
+	//用来保存交换链里后缓存
+	ID3D11Resource* pBackBuffer = nullptr;
+	//用交换链的方法访问后台缓存纹理
+	pSwap->GetBuffer(0, __uuidof(ID3D11Resource), reinterpret_cast<void**>(&pBackBuffer));
+	//用获取到的纹理来创建渲染目标视图
+	pDevice->CreateRenderTargetView(pBackBuffer, nullptr, &pTarget);
+	//具备了渲染视图之后可以释放后台缓存
+	pBackBuffer->Release();
 }
 
 Graphics::~Graphics()
 {
+	if (pTarget!=nullptr)
+	{
+		pTarget->Release();
+	}
 	if (pContext!=nullptr)
 	{
 		pContext->Release();
@@ -52,5 +65,10 @@ Graphics::~Graphics()
 		pDevice->Release();
 	}
 
+}
+
+void Graphics::EndFrame()
+{
+	pSwap->Present(/*同步间隔*/1u, 0u);
 }
 
