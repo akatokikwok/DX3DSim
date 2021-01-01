@@ -61,12 +61,10 @@ Window::Window(int width, int height, const char* argname) noexcept
 	wr.top = 100;
 	wr.bottom = height + wr.top;
 
-	if (/*检查窗口大小调整是否失败,失败则抛出异常*/
-		
+	if (
+			/*检查窗口大小调整是否失败,失败则抛出异常*/
 			//用于传递矩形、传递样式、传递是否有菜单之后的自适应窗口函数	
-			AdjustWindowRect(&wr,
-				(WS_CAPTION | WS_MINIMIZEBOX | WS_SYSMENU),
-				FALSE) == 0
+			AdjustWindowRect( &wr, (WS_CAPTION | WS_MINIMIZEBOX | WS_SYSMENU), FALSE ) == 0
 		)
 	{
 		throw CHWND_LAST_EXCEPT();
