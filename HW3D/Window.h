@@ -2,6 +2,9 @@
 #include "GrbWin.h"
 #include "GrbException.h"
 #include "Keyboard.h"
+#include "Mouse.h"
+
+#include <optional>/*ver1.0.10*/
 
 class Window
 {
@@ -49,6 +52,15 @@ public:
 	~Window();
 	Window(const Window&) = delete;
 	Window& operator=(const Window&) = delete;
+
+	//测试方法,把消息拍到窗口标题上
+	void SetTitle(const std::string& title); 
+	/*把消息处理的应用逻辑，置入此方法,该函数负责处理所有窗口的消息,所以要设置成static型*/
+	static std::optional<int> ProcessMessage();
+
+
+
+
 private:
 	/**消息处理程序函数;2个静态回调函数，为了解决winapi不能直接调用成员函数*********/
 	static LRESULT CALLBACK HandleMsgSetup(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) noexcept;
@@ -58,6 +70,7 @@ private:
 
 public:
 	Keyboard kbd;//键盘类实例
+	Mouse mouse;//鼠标类实例
 
 private:
 	int width;

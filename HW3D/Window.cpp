@@ -50,6 +50,9 @@ Window::WindowClass::~WindowClass()
 }
 
 Window::Window(int width, int height, const char* argname) noexcept
+	:
+	width(width),
+	height(height)
 {
 	//计算窗口尺寸
 	RECT wr;
@@ -58,13 +61,10 @@ Window::Window(int width, int height, const char* argname) noexcept
 	wr.top = 100;
 	wr.bottom = height + wr.top;
 
-	if (/*检查窗口大小调整是否失败,失败则抛出异常*/
-		FAILED(
+	if (
+			/*检查窗口大小调整是否失败,失败则抛出异常*/
 			//用于传递矩形、传递样式、传递是否有菜单之后的自适应窗口函数	
-			AdjustWindowRect(&wr,
-				(WS_CAPTION | WS_MINIMIZEBOX | WS_SYSMENU),
-				FALSE)
-		)
+			AdjustWindowRect( &wr, (WS_CAPTION | WS_MINIMIZEBOX | WS_SYSMENU), FALSE ) == 0
 		)
 	{
 		throw CHWND_LAST_EXCEPT();
@@ -89,6 +89,34 @@ Window::Window(int width, int height, const char* argname) noexcept
 
 	//展示窗口
 	ShowWindow(hWnd, SW_SHOWDEFAULT);
+}
+
+void Window::SetTitle(const std::string& title)
+{
+	if (SetWindowText(hWnd, title.c_str()) == 0)
+	{
+		throw CHWND_LAST_EXCEPT();
+	}
+}
+
+std::optional<int> Window::ProcessMessage()
+{
+	MSG msg;
+	//若队列里存在消息,就移除并且派发消息,但是不阻塞
+	while ( PeekMessage(&msg, nullptr,0,0, PM_REMOVE))
+	{
+		//手动检查队列里的消息是不是wm_quit
+		if (msg.wParam == WM_QUIT)
+		{
+			return msg.wParam;
+		}
+
+		/*一直循环下去,直至队列中再也无消息,返回空的optional库*/
+		TranslateMessage(&msg);
+		DispatchMessage(&msg);
+	}
+	/*一直循环下去,直至队列中再也无消息,返回空的optional库*/
+	return {};
 }
 
 Window::~Window()
@@ -154,6 +182,94 @@ LRESULT Window::HandleMsg(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) noe
 			kbd.OnChar(static_cast<unsigned char>(wParam));
 			break;
 			/*********** END KEYBOARD MESSAGES ***********/
+
+			/************* MOUSE MESSAGES ****************/
+		case WM_MOUSEMOVE:
+		{
+			//lParam储存坐标
+			const POINTS pt = MAKEPOINTS(lParam);
+			if (pt.x >= 0 && pt.x< width && pt.y >=0 && pt.y <height )
+			{
+				mouse.OnMouseMove(pt.x, pt.y);
+
+				if (!mouse.IsInWindow())
+				{
+					SetCapture(hWnd);
+					mouse.OnMouseEnter();
+				}
+			}
+			else
+			{
+				if (wParam & (MK_LBUTTON | MK_RBUTTON))
+				{
+					mouse.OnMouseMove(pt.x, pt.y);
+				}
+				else
+				{
+					ReleaseCapture();
+					mouse.OnMouseLeave();
+				}
+			}
+			break;
+		}
+		case WM_LBUTTONDOWN:
+		{
+			const POINTS pt = MAKEPOINTS(lParam);
+			mouse.OnLeftPressed(pt.x, pt.y);
+			break;
+		}
+		case WM_RBUTTONDOWN:
+		{
+			const POINTS pt = MAKEPOINTS(lParam);
+			mouse.OnRightPressed(pt.x, pt.y);
+			break;
+		}
+		case WM_LBUTTONUP:
+		{
+			const POINTS pt = MAKEPOINTS(lParam);
+			mouse.OnLeftReleased(pt.x, pt.y);
+			// release mouse if outside of window
+			// 在窗口内按下鼠标左键 即使光标出了窗口仍然可以捕捉并在标题绘制光标位置
+			if (pt.x < 0 || pt.x >= width || pt.y < 0 || pt.y >= height)
+			{
+				ReleaseCapture();
+				mouse.OnMouseLeave();
+			}
+			break;
+		}
+		case WM_RBUTTONUP:
+		{
+			const POINTS pt = MAKEPOINTS(lParam);
+			mouse.OnRightReleased(pt.x, pt.y);
+			// release mouse if outside of window
+			// 在窗口内按下鼠标左键 即使光标出了窗口仍然可以捕捉并在标题绘制光标位置
+			if (pt.x < 0 || pt.x >= width || pt.y < 0 || pt.y >= height)
+			{
+				ReleaseCapture();
+				mouse.OnMouseLeave();
+			}
+
+			break;
+		}
+		
+		case WM_MOUSEWHEEL:/******************滑轮事件********************/
+		{
+			const POINTS pt = MAKEPOINTS(lParam);
+#pragma region 弃用
+			/*if (GET_WHEEL_DELTA_WPARAM(wParam) > 0)
+			{
+				mouse.OnWheelUp(pt.x, pt.y);
+			}
+			else if (GET_WHEEL_DELTA_WPARAM(wParam) < 0)
+			{
+				mouse.OnWheelDown(pt.x, pt.y);
+			}*/
+#pragma endregion		弃用
+			const int delta = GET_WHEEL_DELTA_WPARAM(wParam);
+			mouse.OnWheelDelta(pt.x, pt.y, delta);
+			break;
+		}
+		/************** END MOUSE MESSAGES **************/
 	}
 	return DefWindowProc(hWnd, msg, wParam, lParam);
 }
