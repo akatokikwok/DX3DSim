@@ -5,7 +5,7 @@
 
 App::App()
 	:
-	wnd(800,600, "App Constructor Fn")
+	wnd(800,600, "App::APP()::Defalut Window For U")
 {
 
 }
@@ -46,11 +46,20 @@ int App::Go()
 
 void App::DoFrame()
 {	
-	/*获取从窗口创立以来经过的累计时长*/
-	const float t = timer.Peek();
-	std::ostringstream oss;
-	//对时长变量t进行四舍五入1位
-	oss << "Time elapsed:::::::" << std::setprecision(1) << std::fixed << t << "s";
-	wnd.SetTitle(oss.str());
+#pragma region 于ver1.0.13弃用
+	///*获取从窗口创立以来经过的累计时长*/
+	//const float t = timer.Peek();
+	//std::ostringstream oss;
+	////对时长变量t进行四舍五入1位
+	//oss << "Time elapsed:::::::" << std::setprecision(1) << std::fixed << t << "s";
+	//wnd.SetTitle(oss.str());
+#pragma endregion 于ver1.0.13弃用
+
+	//构造一个变化的范围数
+	const float c = sin(timer.Peek()) / 2.0f + 0.5f;
+	wnd.Gfx().ClearBuffer(c, c, 1.0f);
+	//让交换链内缓存上屏
+	wnd.Gfx().EndFrame();
+
 }
 
