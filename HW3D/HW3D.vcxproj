@@ -160,6 +160,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="App.cpp" />
+    <ClCompile Include="Graphics.cpp" />
     <ClCompile Include="GrbException.cpp" />
     <ClCompile Include="GrbTimer.cpp" />
     <ClCompile Include="Keyboard.cpp" />
@@ -170,6 +171,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="App.h" />
+    <ClInclude Include="Graphics.h" />
     <ClInclude Include="GrbException.h" />
     <ClInclude Include="GrbTimer.h" />
     <ClInclude Include="GrbWin.h" />
