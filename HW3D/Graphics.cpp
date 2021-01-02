@@ -150,19 +150,46 @@ void Graphics::DrawTestTriangle()
 
 	/* 在设备上创建出顶点缓冲*/
 	GFX_THROW_INFO(pDevice->CreateBuffer( /*Buffer描述*/&bd, /*SubResourceData*/&sd, /*ppBuffer*/&pVertexBuffer));
-	/* 缓存绑定到管线上*/
+	/* 顶点缓存绑定到管线上*/
 	const UINT stride = sizeof(Vertex);
 	const UINT offset = 0u;
-	pContext->IASetVertexBuffers(/*起始槽位*/0u, /*缓存数*/1u ,  &pVertexBuffer,  /*单顶点型数据大小*/&stride, /*需求中的数据处于顶点里第几位*/&offset);
+	pContext->IASetVertexBuffers(/*起始槽位*/0u, /*缓存数*/1u ,  pVertexBuffer.GetAddressOf(),  /*单顶点型数据大小*/&stride, /*需求中的数据处于顶点里第几位*/&offset);
 
 	/* 创建顶点shader*/
 	wrl::ComPtr<ID3D11VertexShader> pVertexShader;
+	/* 创建顶点shader*/
 	wrl::ComPtr<ID3DBlob> pBlob;
 	GFX_THROW_INFO(D3DReadFileToBlob(L"VertexShader.cso", &pBlob));
 	GFX_THROW_INFO( pDevice->CreateVertexShader(pBlob->GetBufferPointer(), pBlob->GetBufferSize(), nullptr, &pVertexShader));
 
-	/* 管线上设置顶点shader*/
+	/* 管线上绑定顶点shader*/
 	pContext->VSSetShader(pVertexShader.Get(), nullptr, 0u);
+	/* 读取像素shader*/
+	wrl::ComPtr<ID3D11PixelShader> pPixelShader;
+	GFX_THROW_INFO( D3DReadFileToBlob( L"PixelShader.cso" , &pBlob));
+	GFX_THROW_INFO( pDevice->CreatePixelShader(pBlob->GetBufferPointer(),pBlob->GetBufferSize(),nullptr, &pPixelShader));
+	/* 管线上绑定像素shader*/
+	pContext->PSSetShader(pPixelShader.Get(), nullptr, 0u);
+
+	/* 绑定渲染目标,不然像素shader不知道渲染输出到哪个目的地*/
+	// GetAddressof的好处是会获取到智能指针的指针,而不用释放对象;getaddressof就是单纯取指针地址。
+	pContext->OMSetRenderTargets(1u, pTarget.GetAddressOf(), nullptr/*此处未用到深度模板*/);
+
+	/* 管线上绑定图元装备形式,三角形列表,3个顶点一组*/
+	pContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY::D3D10_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+	/* 顺带设置一下视口*/
+	D3D11_VIEWPORT vp;
+	vp.Width = 800;
+	vp.Height = 600;
+	vp.MinDepth = 0;
+	vp.MaxDepth = 1;
+	vp.TopLeftX = 0;
+	vp.TopLeftY = 0;
+	pContext->RSSetViewports(1u, &vp);
+
+
+
 	GFX_THROW_INFO_ONLY(pContext->Draw(/*顶点数*/ (UINT)std::size(vertices), /*起始顶点位置*/0u));//3个顶点,从0号开始
 }
 
