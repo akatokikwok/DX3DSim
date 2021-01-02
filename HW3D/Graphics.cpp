@@ -155,23 +155,40 @@ void Graphics::DrawTestTriangle()
 	const UINT offset = 0u;
 	pContext->IASetVertexBuffers(/*起始槽位*/0u, /*缓存数*/1u ,  pVertexBuffer.GetAddressOf(),  /*单顶点型数据大小*/&stride, /*需求中的数据处于顶点里第几位*/&offset);
 
-	/* 创建顶点shader*/
-	wrl::ComPtr<ID3D11VertexShader> pVertexShader;
-	/* 创建顶点shader*/
-	wrl::ComPtr<ID3DBlob> pBlob;
-	GFX_THROW_INFO(D3DReadFileToBlob(L"VertexShader.cso", &pBlob));
-	GFX_THROW_INFO( pDevice->CreateVertexShader(pBlob->GetBufferPointer(), pBlob->GetBufferSize(), nullptr, &pVertexShader));
+	/// 此后过程是利用Blob先创建像素shader再创建顶点shader,最后再顶点输入布局*///////////////////////////////////////////////////////////////////////////
 
-	/* 管线上绑定顶点shader*/
-	pContext->VSSetShader(pVertexShader.Get(), nullptr, 0u);
-	/* 读取像素shader*/
+	/* 利用Blob字节码创建像素shader*/
 	wrl::ComPtr<ID3D11PixelShader> pPixelShader;
+	wrl::ComPtr<ID3DBlob> pBlob;
 	GFX_THROW_INFO( D3DReadFileToBlob( L"PixelShader.cso" , &pBlob));
 	GFX_THROW_INFO( pDevice->CreatePixelShader(pBlob->GetBufferPointer(),pBlob->GetBufferSize(),nullptr, &pPixelShader));
 	/* 管线上绑定像素shader*/
 	pContext->PSSetShader(pPixelShader.Get(), nullptr, 0u);
 
-	/* 绑定渲染目标,不然像素shader不知道渲染输出到哪个目的地*/
+	/* 创建顶点shader*/
+	wrl::ComPtr<ID3D11VertexShader> pVertexShader;
+	/* 创建顶点shader*/
+	GFX_THROW_INFO(D3DReadFileToBlob(L"VertexShader.cso", &pBlob));
+	GFX_THROW_INFO(pDevice->CreateVertexShader(pBlob->GetBufferPointer(), pBlob->GetBufferSize(), nullptr, &pVertexShader));
+	/* 管线上绑定顶点shader*/
+	pContext->VSSetShader(pVertexShader.Get(), nullptr, 0u);
+
+
+	/* 绑定顶点输入布局*/
+	//但是在像素shader认为,三维和二维都只是向量,除了位置外可能还有颜色\法向量
+	wrl::ComPtr<ID3D11InputLayout> pInputLayout;
+	const D3D11_INPUT_ELEMENT_DESC ied[] =
+	{
+		//{ /*该值必须要与顶点hlsl里的第二参数保持一致*/"Position", /*索引*/0, DXGI_FORMAT_R32G32_FLOAT,/*Slot*/0,/*相比于原组的偏移量*/0, D3D11_INPUT_PER_VERTEX_DATA, 0},
+		{ "Position",0,DXGI_FORMAT_R32G32_FLOAT,0,0,D3D11_INPUT_PER_VERTEX_DATA,0 },
+	};
+	GFX_THROW_INFO(
+		pDevice->CreateInputLayout(/*输入布局数组*/ied, /*数组里元素数量*/(UINT)std::size(ied),
+			/*着色器字节码*/pBlob->GetBufferPointer(), /*字节码长度*/pBlob->GetBufferSize(), &pInputLayout)
+	);
+	pContext->IASetInputLayout(pInputLayout.Get());
+
+	/* 管线上绑定渲染目标,不然像素shader不知道渲染输出到哪个目的地*/
 	// GetAddressof的好处是会获取到智能指针的指针,而不用释放对象;getaddressof就是单纯取指针地址。
 	pContext->OMSetRenderTargets(1u, pTarget.GetAddressOf(), nullptr/*此处未用到深度模板*/);
 
@@ -188,9 +205,8 @@ void Graphics::DrawTestTriangle()
 	vp.TopLeftY = 0;
 	pContext->RSSetViewports(1u, &vp);
 
-
-
 	GFX_THROW_INFO_ONLY(pContext->Draw(/*顶点数*/ (UINT)std::size(vertices), /*起始顶点位置*/0u));//3个顶点,从0号开始
+
 }
 
 /// 各异常类实现 //////////////////////////////////////////////////////////////////////////
