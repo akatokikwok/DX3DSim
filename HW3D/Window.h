@@ -10,23 +10,41 @@
 
 class Window
 {
-public:///继承异常处理类GrbException
+public:
+	/* 继承异常处理类GrbException*/
 	class Exception : public GrbException
 	{
+		using GrbException::GrbException;
 	public:
-		Exception(int line, const char* file, HRESULT hr) noexcept;
-		const char* what() const noexcept override;
-		virtual const char* GetType() const noexcept;
 		static std::string TranslateErrorCode(HRESULT hr) noexcept;
+	};
+
+	/* HrException异常类*/
+	class HrException : public Exception
+	{
+	public:
+		HrException(int line, const char* file, HRESULT hr) noexcept;
+		const char* what() const noexcept override;
+		virtual const char* GetType() const noexcept override;
 		/*拿取错误消息*/
 		HRESULT GetErrorCode() const noexcept;
-		/**/
-		std::string GetErrorString() const noexcept;
+		/*报错描述*/
+		std::string GetErrorDescription() const noexcept;
 	private:
 		HRESULT hr;
 	};
 
-private:///单例类WindowClass
+	/* 图形显示异常类*/
+	class NoGfxException : public Exception
+	{
+	public:
+		using Exception::Exception;
+		const char* GetType() const noexcept override;
+	};
+
+	/// //////////////////////////////////////////////////////////////////////////
+private:
+	///单例类WindowClass
 	//单例，管理window 类的注册和清理
 	class WindowClass
 	{
@@ -58,7 +76,7 @@ public:
 	//测试方法,把消息拍到窗口标题上
 	void SetTitle(const std::string& title); 
 	/*把消息处理的应用逻辑，置入此方法,该函数负责处理所有窗口的消息,所以要设置成static型*/
-	static std::optional<int> ProcessMessage();
+	static std::optional<int> ProcessMessages() noexcept;
 	/* 访问Graphics的方法*/
 	Graphics& Gfx();
 
@@ -81,6 +99,6 @@ private:
 	std::unique_ptr<Graphics> pGfx;//Graphics类实例
 };
 //工具宏
-#define CHWND_EXCEPT( hr ) Window::Exception( __LINE__,__FILE__,hr ) 
-/*GetLastError可以捕捉一些windows无法发现的错误*/
-#define CHWND_LAST_EXCEPT() Window::Exception(__LINE__, __FILE__, GetLastError())
+#define CHWND_EXCEPT( hr ) Window::HrException( __LINE__,__FILE__,(hr) )
+#define CHWND_LAST_EXCEPT() Window::HrException( __LINE__,__FILE__,GetLastError() )
+#define CHWND_NOGFX_EXCEPT() Window::NoGfxException( __LINE__,__FILE__ ) 
