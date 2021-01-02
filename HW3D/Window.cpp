@@ -14,7 +14,6 @@ HINSTANCE Window::WindowClass::GetInstance() noexcept
 	return wndClass.hInst;
 }
 
-//Window::WindowClass::WindowClass() noexcept
 
 Window::WindowClass::WindowClass() noexcept
 	:
@@ -28,12 +27,12 @@ Window::WindowClass::WindowClass() noexcept
 	wc.cbWndExtra = 0;
 	wc.hInstance = Window::WindowClass::GetInstance();
 	wc.hIcon = static_cast<HICON>(
-		LoadImage(hInst/*哪个程序需要图标*/, 
+		LoadImage(GetInstance()/*哪个程序需要图标*/,
 			MAKEINTRESOURCE(IDI_ICON1)/*图标资源的标志*/,
 			IMAGE_ICON, 32, 32, 0)
 	);
 	wc.hIconSm = static_cast<HICON>(
-		LoadImage(hInst/*哪个程序需要图标*/,
+		LoadImage(GetInstance()/*哪个程序需要图标*/,
 			MAKEINTRESOURCE(IDI_ICON1)/*图标资源的标志*/,
 			IMAGE_ICON, 16, 16, 0)
 		);
@@ -69,6 +68,7 @@ Window::Window(int width, int height, const char* argname) noexcept
 	{
 		throw CHWND_LAST_EXCEPT();
 	};
+
 	
 	//创建窗口或者拿取窗口
 	hWnd = CreateWindow(
@@ -79,8 +79,7 @@ Window::Window(int width, int height, const char* argname) noexcept
 		CW_USEDEFAULT,
 		wr.right-wr.left,
 		wr.bottom-wr.top,
-		nullptr,nullptr,WindowClass::GetInstance(),
-		this
+		nullptr,nullptr,WindowClass::GetInstance(),this		
 	);
 	if (hWnd==nullptr)
 	{
@@ -89,6 +88,9 @@ Window::Window(int width, int height, const char* argname) noexcept
 
 	//展示窗口
 	ShowWindow(hWnd, SW_SHOWDEFAULT);
+
+	//利用窗口句柄创建Graphics对象,它是1个unique指针,当窗口销毁时也会自动销毁此graphics对象
+	pGfx = std::make_unique<Graphics>(hWnd);
 }
 
 void Window::SetTitle(const std::string& title)
@@ -99,7 +101,7 @@ void Window::SetTitle(const std::string& title)
 	}
 }
 
-std::optional<int> Window::ProcessMessage()
+std::optional<int> Window::ProcessMessages() noexcept
 {
 	MSG msg;
 	//若队列里存在消息,就移除并且派发消息,但是不阻塞
@@ -108,7 +110,7 @@ std::optional<int> Window::ProcessMessage()
 		//手动检查队列里的消息是不是wm_quit
 		if (msg.wParam == WM_QUIT)
 		{
-			return msg.wParam;
+			return (int)msg.wParam;
 		}
 
 		/*一直循环下去,直至队列中再也无消息,返回空的optional库*/
@@ -117,6 +119,15 @@ std::optional<int> Window::ProcessMessage()
 	}
 	/*一直循环下去,直至队列中再也无消息,返回空的optional库*/
 	return {};
+}
+
+Graphics& Window::Gfx()
+{	
+	if (!pGfx)
+	{
+		throw CHWND_NOGFX_EXCEPT();
+	}
+	return *pGfx;
 }
 
 Window::~Window()
@@ -276,25 +287,27 @@ LRESULT Window::HandleMsg(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) noe
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-// Window Exception Stuff
-Window::Exception::Exception(int line, const char* file, HRESULT hr) noexcept
+Window::HrException::HrException(int line, const char* file, HRESULT hr) noexcept
 	:
-	GrbException(line, file),
+	Exception(line, file),
 	hr(hr)
-{}
+{
 
-const char* Window::Exception::what() const noexcept
+}
+
+const char* Window::HrException::what() const noexcept
 {
 	std::ostringstream oss;
 	oss << GetType() << std::endl
-		<< "[Error Code] " << GetErrorCode() << std::endl
-		<< "[Description] " << GetErrorString() << std::endl
+		<< "[Error Code] 0x" << std::hex << std::uppercase << GetErrorCode()
+		<< std::dec << " (" << (unsigned long)GetErrorCode() << ")" << std::endl
+		<< "[Description] " << GetErrorDescription() << std::endl
 		<< GetOriginString();
 	whatBuffer = oss.str();
 	return whatBuffer.c_str();
 }
 
-const char* Window::Exception::GetType() const noexcept
+const char* Window::HrException::GetType() const noexcept
 {
 	return "Grb Window Exception";
 }
@@ -304,7 +317,7 @@ std::string Window::Exception::TranslateErrorCode(HRESULT hr) noexcept
 	//指向新分配的缓存的指针,用于承载错误代码字符串
 	char* pMsgBuf = nullptr;
 	//错误代码的长度
-	DWORD nMsgLen = FormatMessage(
+	const DWORD nMsgLen = FormatMessage(
 		FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
 		nullptr,
 		hr, 
@@ -322,12 +335,17 @@ std::string Window::Exception::TranslateErrorCode(HRESULT hr) noexcept
 	return errorString;
 }
 
-HRESULT Window::Exception::GetErrorCode() const noexcept
+HRESULT Window::HrException::GetErrorCode() const noexcept
 {
 	return hr;
 }
 
-std::string Window::Exception::GetErrorString() const noexcept
+std::string Window::HrException::GetErrorDescription() const noexcept
 {
-	return TranslateErrorCode(hr);
+	return Exception::TranslateErrorCode(hr);
+}
+
+const char* Window::NoGfxException::GetType() const noexcept
+{
+	return "Chili Window Exception [No Graphics]";
 }
