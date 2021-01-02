@@ -65,7 +65,7 @@ public:
 	/*清除渲染视图的进一步封装方法*/
 	void ClearBuffer(float red, float green, float blue) noexcept;
 	/* 与绘制三角形有关的代码*/
-	void DrawTestTriangle();
+	void DrawTestTriangle(float angle);
 
 private:
 #ifndef NDEBUG

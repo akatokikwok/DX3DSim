@@ -116,7 +116,7 @@ void Graphics::ClearBuffer(float red, float green, float blue) noexcept
 	pContext->ClearRenderTargetView(pTarget.Get(), color);
 }
 
-void Graphics::DrawTestTriangle()
+void Graphics::DrawTestTriangle(float angle)
 {
 	namespace wrl = Microsoft::WRL;
 	HRESULT hr;
@@ -192,6 +192,37 @@ void Graphics::DrawTestTriangle()
 	GFX_THROW_INFO(pDevice->CreateBuffer(&ibd, &isd, &pIndexBuffer));
 	pContext->IASetIndexBuffer(pIndexBuffer.Get(), DXGI_FORMAT_R16_UINT, 0u);
 
+	/* 创建常量缓存来使用变换矩阵*/
+	struct ConstantBuffer
+	{
+		struct
+		{
+			float element[4][4];
+		} transformation;
+	};
+	const ConstantBuffer cb =
+	{
+		//绕Z轴转,此处考虑到800*600的屏幕图形会被拉伸,所以乘3/4来保持不拉伸,在第一列体现
+		{
+			0.75f*(std::cos(angle)),	std::sin(angle),	0,	0,
+			0.75f*(-std::sin(angle)),	std::cos(angle),	0,	0,
+			0,					0,					1,	0,
+			0,					0,					0,	1,		
+		}
+	};
+	wrl::ComPtr<ID3D11Buffer> pConstantBuffer;
+	D3D11_BUFFER_DESC cbd;
+	cbd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+	cbd.Usage = D3D11_USAGE_DYNAMIC;//每帧更新一次,需要一个动态的
+	cbd.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;//允许CPU每帧传顶点数据过来
+	cbd.MiscFlags = 0u;
+	cbd.ByteWidth = sizeof(cb);
+	cbd.StructureByteStride = 0u;
+	D3D11_SUBRESOURCE_DATA csd = {};
+	csd.pSysMem = &cb;
+	GFX_THROW_INFO(pDevice->CreateBuffer(&cbd, &csd, &pConstantBuffer));
+	//管线上绑定常量缓存(在VS阶段)
+	pContext->VSSetConstantBuffers(0u, 1u, pConstantBuffer.GetAddressOf());
 
 	/// 此后过程是利用Blob先创建像素shader再创建顶点shader,最后再顶点输入布局*///////////////////////////////////////////////////////////////////////////
 

@@ -7,11 +7,18 @@ struct VSOut
     
 };
 
+//常量缓存要保持和C++的一致
+cbuffer CBuff
+{
+    //row_major关键字告诉HLSL这是个行矩阵,所以在此一步来进行转置;因为
+    //矩阵在CPU里按二维数组进行存储而在GPU里是按列存储的； 所以旋转矩阵必须使用转置
+    row_major matrix transform;
+};
 
 VSOut main(float2 pos : Position, float3 color : Color) 
 {
     VSOut vso;
-    vso.pos = float4(pos.x, pos.y, 0.0f, 1.0f);
+    vso.pos = mul(float4(pos.x, pos.y, 0.0f, 1.0f), transform);
     vso.color = color;
     
     return vso;

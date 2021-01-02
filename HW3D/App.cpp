@@ -59,7 +59,8 @@ void App::DoFrame()
 	/* 以填充色清屏先*/
 	wnd.Gfx().ClearBuffer(c, c, 1.0f);
 	/* 调用绘制三角形方法*/
-	wnd.Gfx().DrawTestTriangle();
+	//此处timer.peek动态修改角度即矩阵的值达到每一帧矩阵变化以催动顶点移动
+	wnd.Gfx().DrawTestTriangle( timer.Peek() );
 	//让交换链内缓存上屏
 	wnd.Gfx().EndFrame();
 
