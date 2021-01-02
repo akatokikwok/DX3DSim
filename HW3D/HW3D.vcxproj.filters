@@ -13,7 +13,7 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
-    <Filter Include="Dxrr">
+    <Filter Include="Dxerr">
       <UniqueIdentifier>{8852992f-f528-44ab-a3a8-9d5e00e70831}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
@@ -46,7 +46,7 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="dxerr.cpp">
-      <Filter>Dxrr</Filter>
+      <Filter>Dxerr</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -81,7 +81,7 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="dxerr.h">
-      <Filter>Dxrr</Filter>
+      <Filter>Dxerr</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -96,13 +96,13 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="DXTrace.inl">
-      <Filter>Dxrr</Filter>
+      <Filter>Dxerr</Filter>
     </None>
     <None Include="DXGetErrorString.inl">
-      <Filter>Dxrr</Filter>
+      <Filter>Dxerr</Filter>
     </None>
     <None Include="DXGetErrorDescription.inl">
-      <Filter>Dxrr</Filter>
+      <Filter>Dxerr</Filter>
     </None>
   </ItemGroup>
 </Project>
