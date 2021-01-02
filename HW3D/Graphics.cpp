@@ -124,16 +124,33 @@ void Graphics::DrawTestTriangle()
 	/* 创建1个顶点结构体型*/
 	struct Vertex
 	{
-		float x;
-		float y;
+		struct  
+		{
+			float x;
+			float y;
+		} pos;
+		
+		struct 
+		{
+			unsigned char r;
+			unsigned char g;
+			unsigned char b;
+			unsigned char a;
+		} color;		
 	};
+
 	/* 创建1个顶点数组,此处为顺时针*/
-	const Vertex vertices[] =
+	/*const*/ Vertex vertices[] =
 	{
-		{ 0.0f, 0.5f},
-		{ 0.5f, -0.5f},
-		{ -0.5f, -0.5f},
+		{ 0.0f, 0.5f,	255,0,0,0},
+		{ 0.5f, -0.5f,  0,255,0,0},
+		{ -0.5f, -0.5f,	0,0,255,0},
+		{-0.3, 0.3,0,255,0,0},
+		{0.3,0.3,0,0,255,0},
+		{0,-0.8,255,0,0,0},
+
 	};
+	vertices[0].color.g = 255;
 
 	wrl::ComPtr<ID3D11Buffer> pVertexBuffer;//声明1个顶点缓存
 
@@ -144,7 +161,6 @@ void Graphics::DrawTestTriangle()
 	bd.MiscFlags = 0u;
 	bd.ByteWidth = sizeof(vertices);//顶点数组的尺寸
 	bd.StructureByteStride = sizeof(Vertex);//顶点型的大小
-
 	D3D11_SUBRESOURCE_DATA sd = {};
 	sd.pSysMem = vertices;//顶点数组指针
 
@@ -154,6 +170,28 @@ void Graphics::DrawTestTriangle()
 	const UINT stride = sizeof(Vertex);
 	const UINT offset = 0u;
 	pContext->IASetVertexBuffers(/*起始槽位*/0u, /*缓存数*/1u ,  pVertexBuffer.GetAddressOf(),  /*单顶点型数据大小*/&stride, /*需求中的数据处于顶点里第几位*/&offset);
+
+	/* 创建索引缓存以便以特定顺序节省顶点并调用DrawIndexed()*///索引缓冲一般为16位，可用unsigned short
+	const unsigned short indices[] =
+	{
+		0,1,2,
+		0,2,3,
+		0,4,1,
+		2,1,5,
+	};
+	wrl::ComPtr<ID3D11Buffer> pIndexBuffer;
+	D3D11_BUFFER_DESC ibd = {};
+	ibd.BindFlags = D3D11_BIND_INDEX_BUFFER;
+	ibd.Usage = D3D11_USAGE_DEFAULT;
+	ibd.CPUAccessFlags = 0u;
+	ibd.MiscFlags = 0u;
+	ibd.ByteWidth = sizeof(indices);
+	ibd.StructureByteStride = sizeof(unsigned short);
+	D3D11_SUBRESOURCE_DATA isd = {};
+	isd.pSysMem = indices;
+	GFX_THROW_INFO(pDevice->CreateBuffer(&ibd, &isd, &pIndexBuffer));
+	pContext->IASetIndexBuffer(pIndexBuffer.Get(), DXGI_FORMAT_R16_UINT, 0u);
+
 
 	/// 此后过程是利用Blob先创建像素shader再创建顶点shader,最后再顶点输入布局*///////////////////////////////////////////////////////////////////////////
 
@@ -181,6 +219,7 @@ void Graphics::DrawTestTriangle()
 	{
 		//{ /*该值必须要与顶点hlsl里的第二参数保持一致*/"Position", /*索引*/0, DXGI_FORMAT_R32G32_FLOAT,/*Slot*/0,/*相比于原组的偏移量*/0, D3D11_INPUT_PER_VERTEX_DATA, 0},
 		{ "Position",0,DXGI_FORMAT_R32G32_FLOAT,0,0,D3D11_INPUT_PER_VERTEX_DATA,0 },
+		{ "Color",0,DXGI_FORMAT_R8G8B8A8_UNORM/*UNORM可以让数归一化*/,0,8u,D3D11_INPUT_PER_VERTEX_DATA,0 },
 	};
 	GFX_THROW_INFO(
 		pDevice->CreateInputLayout(/*输入布局数组*/ied, /*数组里元素数量*/(UINT)std::size(ied),
@@ -205,7 +244,7 @@ void Graphics::DrawTestTriangle()
 	vp.TopLeftY = 0;
 	pContext->RSSetViewports(1u, &vp);
 
-	GFX_THROW_INFO_ONLY(pContext->Draw(/*顶点数*/ (UINT)std::size(vertices), /*起始顶点位置*/0u));//3个顶点,从0号开始
+	GFX_THROW_INFO_ONLY(pContext->DrawIndexed(/*顶点数*/ (UINT)std::size(indices), /*起始顶点位置*/0u,0u));//3个顶点,从0号开始
 
 }
 
