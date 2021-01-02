@@ -33,7 +33,7 @@ int App::Go()
 	while (true)
 	{
 		/*ecode是optional型，optional型会重载BOOL型,其不为空就使ecode返回真*/
-		if (const auto ecode = Window::ProcessMessage())
+		if (const auto ecode = Window::ProcessMessages())
 		{
 			//拿取消息并返回ecode
 			return *ecode;
