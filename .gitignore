@@ -122,3 +122,7 @@ FindWallpaper/x64/Debug/FindWallpaper.vcxproj.FileListAbsolute.txt
 .vs/HW3D/v16/ipch/AutoPCH/e3e37d88e3858515/DXERR.ipch
 HW3D/x64/Debug/dxerr.obj
 HW3D/x64/Debug/HW3D.tlog/CL.10224.write.1.tlog
+.vs/HW3D/v16/ipch/AutoPCH/8faee93011cd6a34/DXGIINFOMANAGER.ipch
+.vs/HW3D/v16/ipch/AutoPCH/c99e0dfa2f7ff475/DXGIINFOMANAGER.ipch
+HW3D/x64/Debug/DxgiInfoManager.obj
+HW3D/x64/Debug/HW3D.tlog/CL.10604.write.1.tlog
