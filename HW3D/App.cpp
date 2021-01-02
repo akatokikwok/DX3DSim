@@ -40,7 +40,6 @@ int App::Go()
 		}
 		//否则若上述BOOL为空（返回假）,执行每帧逻辑函数
 		App::DoFrame();
-
 	}
 }
 
@@ -57,7 +56,10 @@ void App::DoFrame()
 
 	//构造一个变化的范围数
 	const float c = sin(timer.Peek()) / 2.0f + 0.5f;
+	/* 以填充色清屏先*/
 	wnd.Gfx().ClearBuffer(c, c, 1.0f);
+	/* 调用绘制三角形方法*/
+	wnd.Gfx().DrawTestTriangle();
 	//让交换链内缓存上屏
 	wnd.Gfx().EndFrame();
 
