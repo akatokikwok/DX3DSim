@@ -116,3 +116,10 @@ HW3D/x64/Debug/HW3D.vcxproj.FileListAbsolute.txt
 HW3D/x64/Debug/HW3D.tlog/CL.10036.write.1.tlog
 FindWallpaper/x64/Debug/FindWallpaper.Build.CppClean.log
 FindWallpaper/x64/Debug/FindWallpaper.vcxproj.FileListAbsolute.txt
+.vs/HW3D/v16/ipch/AutoPCH/210978b6f8a10854/DXERR.ipch
+.vs/HW3D/v16/ipch/AutoPCH/2be0e491b101d686/TERMINATE.ipch
+.vs/HW3D/v16/ipch/AutoPCH/8faee93011cd6a34/DXGIINFOMANAGER.ipch
+.vs/HW3D/v16/ipch/AutoPCH/b7aaa159cdb0beee/REPORT_RUNTIME_ERROR.ipch
+.vs/HW3D/v16/ipch/AutoPCH/ba821c47196ee05e/VCTMP17876_159364.DXERR.CF52A0C5.ipch
+HW3D/x64/Debug/dxerr.obj
+HW3D/x64/Debug/DxgiInfoManager.obj
