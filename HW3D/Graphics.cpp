@@ -190,7 +190,7 @@ void Graphics::DrawTestTriangle()
 
 	/* 管线上绑定渲染目标,不然像素shader不知道渲染输出到哪个目的地*/
 	// GetAddressof的好处是会获取到智能指针的指针,而不用释放对象;getaddressof就是单纯取指针地址。
-	pContext->OMSetRenderTargets(1u, pTarget.GetAddressOf(), nullptr/*此处未用到深度模板*/);
+	pContext->OMSetRenderTargets(1u, pTarget.GetAddressOf(), nullptr/*此处未用到深度模板*/); 
 
 	/* 管线上绑定图元装备形式,三角形列表,3个顶点一组*/
 	pContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY::D3D10_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
