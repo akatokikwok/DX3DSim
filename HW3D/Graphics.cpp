@@ -1,6 +1,11 @@
 ﻿#include "Graphics.h"
 #include "dxerr.h"
 #include <sstream>
+#include <wrl.h>
+#include <wrl\client.h>
+
+//为了使用智能指针
+namespace wrl = Microsoft::WRL;
 
 #pragma comment(lib, "d3d11.lib")//链接到库
 
@@ -61,36 +66,20 @@ Graphics::Graphics(HWND hWnd)
 		&pContext	//上下文
 	));
 
-	//用来保存交换链里后缓存
-	ID3D11Resource* pBackBuffer = nullptr;
-	//用交换链的方法访问后台缓存纹理
-	GFX_THROW_INFO(pSwap->GetBuffer(0, __uuidof(ID3D11Resource), reinterpret_cast<void**>(&pBackBuffer)));
-	//用获取到的纹理来创建渲染目标视图
-	GFX_THROW_INFO(pDevice->CreateRenderTargetView(pBackBuffer, nullptr, &pTarget));
-	//具备了渲染视图之后可以释放后台缓存
-	pBackBuffer->Release();
+	////用来保存交换链里后缓存
+	//ID3D11Resource* pBackBuffer = nullptr;
+	////用交换链的方法访问后台缓存纹理
+	//GFX_THROW_INFO(pSwap->GetBuffer(0, __uuidof(ID3D11Resource), reinterpret_cast<void**>(&pBackBuffer)));
+	////用获取到的纹理来创建渲染目标视图
+	//GFX_THROW_INFO(pDevice->CreateRenderTargetView(pBackBuffer, nullptr, &pTarget));
+	////具备了渲染视图之后可以释放后台缓存
+	//pBackBuffer->Release();
+
+	wrl::ComPtr<ID3D11Resource> pBackBuffer;
+	GFX_THROW_INFO( pSwap->GetBuffer(0, __uuidof(ID3D11Resource), &pBackBuffer));
+	GFX_THROW_INFO(pDevice->CreateRenderTargetView(pBackBuffer.Get(), nullptr, &pTarget));
 }
 
-Graphics::~Graphics()
-{
-	if (pTarget!=nullptr)
-	{
-		pTarget->Release();
-	}
-	if (pContext!=nullptr)
-	{
-		pContext->Release();
-	}
-	if (pSwap!=nullptr)
-	{
-		pSwap->Release();
-	}
-	if (pDevice!=nullptr)
-	{
-		pDevice->Release();
-	}
-
-}
 
 void Graphics::EndFrame()
 {
@@ -119,7 +108,7 @@ void Graphics::ClearBuffer(float red, float green, float blue) noexcept
 	//给一个颜色
 	const float color[] = { red, green, blue, 1.0f };
 	//在上下文以指定的颜色来填充清除渲染视图
-	pContext->ClearRenderTargetView(pTarget, color);
+	pContext->ClearRenderTargetView(pTarget.Get(), color);
 }
 
 /// 各异常类实现 //////////////////////////////////////////////////////////////////////////

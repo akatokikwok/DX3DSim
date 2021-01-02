@@ -4,6 +4,7 @@
 #include <d3d11.h>
 #include <vector>
 #include "DxgiInfoManager.h"
+#include <wrl.h>
 
 class Graphics
 {
@@ -43,7 +44,7 @@ public:
 	/* 禁用拷贝和复制带参构造*/
 	Graphics(const Graphics&) = delete;
 	Graphics& operator=(const Graphics&) = delete;
-	~Graphics();
+	~Graphics()=default;
 	/*每帧结束瞬间做的事*/
 	void EndFrame();
 	/*清除渲染视图的进一步封装方法*/
@@ -53,8 +54,10 @@ private:
 #ifndef NDEBUG
 	DxgiInfoManager infoManager;
 #endif
-	ID3D11Device* pDevice = nullptr;//设备
-	IDXGISwapChain* pSwap = nullptr;//交换链
-	ID3D11DeviceContext* pContext = nullptr;//上下文
-	ID3D11RenderTargetView* pTarget = nullptr;//渲染视图
+
+	Microsoft::WRL::ComPtr<ID3D11Device> pDevice;//设备
+	Microsoft::WRL::ComPtr<IDXGISwapChain> pSwap;//交换链
+	Microsoft::WRL::ComPtr<ID3D11DeviceContext> pContext;//上下文
+	Microsoft::WRL::ComPtr<ID3D11RenderTargetView> pTarget;//渲染视图
 };
+
