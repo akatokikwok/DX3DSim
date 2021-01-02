@@ -5,6 +5,7 @@
 #include <vector>
 #include "DxgiInfoManager.h"
 #include <wrl.h>
+#include <wrl\internal.h>
 
 class Graphics
 {
@@ -29,6 +30,17 @@ public:
 		HRESULT hr;
 		std::string info;
 	};
+	/* 信息通知 异常类*/
+	class InfoException : public Exception
+	{
+	public:
+		InfoException(int line, const char* file, std::vector<std::string> infoMsgs) noexcept;
+		const char* what() const noexcept override;
+		const char* GetType() const noexcept override;
+		std::string GetErrorInfo() const noexcept;
+	private:
+		std::string info;
+	};
 	/* 设备被意外移除异常类*/
 	class DeviceRemovedException : public HrException
 	{
@@ -45,19 +57,24 @@ public:
 	Graphics(const Graphics&) = delete;
 	Graphics& operator=(const Graphics&) = delete;
 	~Graphics()=default;
+	
+	//////////////////////////////////////////////////////////////////////////
+
 	/*每帧结束瞬间做的事*/
 	void EndFrame();
 	/*清除渲染视图的进一步封装方法*/
 	void ClearBuffer(float red, float green, float blue) noexcept;
+	/* 与绘制三角形有关的代码*/
+	void DrawTestTriangle();
 
 private:
 #ifndef NDEBUG
 	DxgiInfoManager infoManager;
 #endif
 
-	Microsoft::WRL::ComPtr<ID3D11Device> pDevice;//设备
+	Microsoft::WRL::ComPtr<ID3D11Device> pDevice;//设备,用于分配内存\创建资源
 	Microsoft::WRL::ComPtr<IDXGISwapChain> pSwap;//交换链
-	Microsoft::WRL::ComPtr<ID3D11DeviceContext> pContext;//上下文
+	Microsoft::WRL::ComPtr<ID3D11DeviceContext> pContext;//上下文,用于发送渲染命令
 	Microsoft::WRL::ComPtr<ID3D11RenderTargetView> pTarget;//渲染视图
 };
 
