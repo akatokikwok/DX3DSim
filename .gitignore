@@ -134,3 +134,6 @@ HW3D/x64/Debug/HW3D.tlog/fxc.read.1.tlog
 HW3D/x64/Debug/HW3D.tlog/fxc.write.1.tlog
 HW3D/x64/Debug/HW3D.tlog/CL.12992.write.1.tlog
 HW3D/x64/Debug/HW3D.tlog/CL.10920.write.1.tlog
+.vs/HW3D/v16/ipch/AutoPCH/41d3b153eaa90269/CONSTANTBUFFERS.ipch
+.vs/HW3D/v16/ipch/AutoPCH/6c1f3a65922ac94d/BINDABLE.ipch
+.vs/HW3D/v16/ipch/AutoPCH/800a6435b686b29c/BINDABLE.ipch
