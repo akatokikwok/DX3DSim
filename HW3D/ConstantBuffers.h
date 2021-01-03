@@ -24,7 +24,7 @@ public:
 		// 写完之后接触锁定内存
 		GetContext(gfx)->Unmap(pConstantBuffer.Get(), 0u);
 	}
-	/* 带const参数的构造,创建常量缓存*/
+	/* 带const参数的构造,用初始化数据创建常量缓存*/
 	ConstantBuffer(Graphics& gfx, const C& consts)
 	{
 		INFOMAN(gfx);
@@ -41,7 +41,7 @@ public:
 		csd.pSysMem = &consts;
 		GFX_THROW_INFO(GetDevice(gfx)->CreateBuffer(&cbd, &csd, &pConstantBuffer));
 	}
-	/* 不带const参数的构造,创建常量缓存*/
+	/* 不带const参数的构造,不用数据初始化创建常量缓存*/
 	ConstantBuffer(Graphics& gfx)
 	{
 		INFOMAN(gfx);
