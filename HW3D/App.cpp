@@ -2,13 +2,33 @@
 #include <iomanip>
 #include <iosfwd>
 #include <sstream>
+#include "Box.h"
+#include <memory>
+#include <DirectXCollision.h>
 
 App::App()
 	:
 	wnd(800,600, "App::APP()::Defalut Window For U")
 {
+	std::mt19937 rng(std::random_device{}());
+	std::uniform_real_distribution<float> adist(0.0f, 3.1415f * 2.0f);
+	std::uniform_real_distribution<float> ddist(0.0f, 3.1415f * 2.0f);
+	std::uniform_real_distribution<float> odist(0.0f, 3.1415f * 0.3f);
+	std::uniform_real_distribution<float> rdist(6.0f, 20.0f);
+	for (auto i = 0; i < 80; i++)
+	{
+		boxes.push_back(std::make_unique<Box>(
+			wnd.Gfx(), rng, adist,
+			ddist, odist, rdist
+			));
+	}
+	/*构建左手透视投影矩阵*/
+	wnd.Gfx().SetProjection(DirectX::XMMatrixPerspectiveLH(1.0f, 3.0f / 4.0f, 0.5f, 40.0f));
 
 }
+
+App::~App()
+{}
 
 int App::Go()
 {
@@ -54,13 +74,24 @@ void App::DoFrame()
 	//wnd.SetTitle(oss.str());
 #pragma endregion 于ver1.0.13弃用
 
-	//构造一个变化的范围数
-	const float c = sin(timer.Peek()) / 2.0f + 0.5f;
-	/* 以填充色清屏先*/
-	wnd.Gfx().ClearBuffer(c, c, 1.0f);
-	/* 调用绘制三角形方法*/
-	//此处timer.peek动态修改角度即矩阵的值达到每一帧矩阵变化以催动顶点移动
-	wnd.Gfx().DrawTestTriangle( timer.Peek() );
+#pragma region ver1.0.20弃用
+	////构造一个变化的范围数
+	//const float c = sin(timer.Peek()) / 2.0f + 0.5f;
+	///* 以填充色清屏先*/
+	//wnd.Gfx().ClearBuffer(c, c, 1.0f);
+	///* 调用绘制三角形方法*/
+	////此处timer.peek动态修改角度即矩阵的值达到每一帧矩阵变化以催动顶点移动
+	//wnd.Gfx().DrawTestTriangle( timer.Peek() );
+#pragma endregion ver1.0.20弃用
+
+	auto dt = timer.Mark();
+	wnd.Gfx().ClearBuffer(0.07f, 0.0f, 0.12f);
+
+	for (auto& b : boxes)
+	{
+		b->Update(dt);
+		b->Draw(wnd.Gfx());
+	}
 	//让交换链内缓存上屏
 	wnd.Gfx().EndFrame();
 
