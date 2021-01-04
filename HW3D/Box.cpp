@@ -45,7 +45,7 @@ Box::Box(Graphics& gfx,
 			{ -1.0f,1.0f,1.0f },
 			{ 1.0f,1.0f,1.0f },
 		};
-		AddStaticBind(std::make_unique<VertexBuffer>(gfx, vertices));
+		DrawableBase::AddStaticBind(std::make_unique<VertexBuffer>(gfx, vertices));
 		// 构造顶点缓存并添加至binds对象数组
 		AddBind(std::make_unique<VertexBuffer>(gfx, vertices));
 		// 构造顶点着色器并添加至binds对象数组
@@ -99,6 +99,10 @@ Box::Box(Graphics& gfx,
 		AddStaticBind(std::make_unique<InputLayout>(gfx, ied, pvsbc));
 		// 构造输入图元
 		AddStaticBind(std::make_unique<Topology>(gfx, D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST));
+	}
+	else//若已经初始化就使用该方法确保Indexbuffer存在值
+	{
+		DrawableBase::SetIndexFromStatic();
 	}
 
 	// 以box本类数据填充构造常量缓存

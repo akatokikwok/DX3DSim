@@ -20,9 +20,23 @@ public:
 
 	void AddStaticIndexBuffer(std::unique_ptr<IndexBuffer> ibuf) noexcept
 	{
-		assert(pIndexBuffer == nullptr);
+		assert("Attempting to add index buffer a second time" && pIndexBuffer == nullptr);
 		pIndexBuffer = ibuf.get();
 		staticBinds.push_back(std::move(ibuf));
+	}
+
+	void SetIndexFromStatic() noexcept/*(!IS_DEBUG)*/
+	{
+		assert("Attempting to add index buffer a second time" && pIndexBuffer == nullptr);
+		for (const auto& b : staticBinds)//先拿到所有绑定对象(基本上都是从Bindable实例)
+		{
+			if (const auto p = dynamic_cast<IndexBuffer*>(b.get()))//若是索引缓存指针
+			{
+				pIndexBuffer = p;
+				return;
+			}
+		}
+		assert("Failed to find index buffer in static binds" && pIndexBuffer != nullptr);
 	}
 
 private:
