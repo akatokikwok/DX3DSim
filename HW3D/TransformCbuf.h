@@ -1,13 +1,13 @@
-#pragma once
+ï»¿#pragma once
 #include "ConstantBuffers.h"
 #include "Drawable.h"
 #include <DirectXMath.h>
 /*
-Drawable¾¡¹Ü³ÖÓĞ´óÁ¿µÄBindable¶ÔÏó£¬µ«²»ÖªµÀÄÄ¸öÆ¥ÅäTransCbuf;
-»ùÀà²¢Ã»ÓĞ²úÉú±ä»»¾ØÕóËùĞèÒªµÄÊı¾İ,Ö»ÓĞÆäÅÉÉúµÄ×ÓÀà²Å»áÓĞ
-ËùÒÔÈÃTransformCbuf²»´Ó¶¥µã»º´æ¼Ì³Ğ,¶øÊÇÖ±½Ó´ÓBindable¼Ì³Ğ
-È»ºó½«¶¥µã»º´æ×÷ÎªTransCbufµÄ×é³É×Ö¶Î
-²¢ÇÒTransformCbuf»¹±£´æ1¸öÖ¸ÏòDrawableµÄÒıÓÃ,	¿ÉÒÔ´ÓDrawableÀï»ñÈ¡Ğı×ªmatrixÒÔUpdate(´ømap´ß¶¯)¸üĞÂ×Ô¼ºÄÚ²¿¶¥µãµÄ×ÅÉ«Æ÷»º´æ
+Drawableå°½ç®¡æŒæœ‰å¤§é‡çš„Bindableå¯¹è±¡ï¼Œä½†ä¸çŸ¥é“å“ªä¸ªåŒ¹é…TransCbuf;
+åŸºç±»å¹¶æ²¡æœ‰äº§ç”Ÿå˜æ¢çŸ©é˜µæ‰€éœ€è¦çš„æ•°æ®,åªæœ‰å…¶æ´¾ç”Ÿçš„å­ç±»æ‰ä¼šæœ‰
+æ‰€ä»¥è®©TransformCbufä¸ä»é¡¶ç‚¹ç¼“å­˜ç»§æ‰¿,è€Œæ˜¯ç›´æ¥ä»Bindableç»§æ‰¿
+ç„¶åå°†é¡¶ç‚¹ç¼“å­˜ä½œä¸ºTransCbufçš„ç»„æˆå­—æ®µ
+å¹¶ä¸”TransformCbufè¿˜ä¿å­˜1ä¸ªæŒ‡å‘Drawableçš„å¼•ç”¨,	å¯ä»¥ä»Drawableé‡Œè·å–æ—‹è½¬matrixä»¥Update(å¸¦mapå‚¬åŠ¨)æ›´æ–°è‡ªå·±å†…éƒ¨é¡¶ç‚¹çš„ç€è‰²å™¨ç¼“å­˜
 */
 
 
@@ -15,10 +15,10 @@ Drawable¾¡¹Ü³ÖÓĞ´óÁ¿µÄBindable¶ÔÏó£¬µ«²»ÖªµÀÄÄ¸öÆ¥ÅäTransCbuf;
 class TransformCbuf : public Bindable
 {
 public:
-	// ÄÃµ½gfxµÄÍ¶Ó°¾ØÕóºÍDrawableÅÉÉúÀàµÄĞı×ª¾ØÕóÀ´¸üĞÂ³£Á¿
+	// æ‹¿åˆ°gfxçš„æŠ•å½±çŸ©é˜µå’ŒDrawableæ´¾ç”Ÿç±»çš„æ—‹è½¬çŸ©é˜µæ¥æ›´æ–°å¸¸é‡
 	TransformCbuf(Graphics& gfx, const Drawable& parent);
 	void Bind(Graphics& gfx) noexcept override;
 private:
 	VertexConstantBuffer<DirectX::XMMATRIX> vcbuf;
-	const Drawable& parent;//×Ö¶Î: 1¸öDrawableÒıÓÃ
+	const Drawable& parent;//å­—æ®µ: 1ä¸ªDrawableå¼•ç”¨
 };
