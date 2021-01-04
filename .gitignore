@@ -161,3 +161,11 @@ HW3D/x64/Debug/Box.obj
 HW3D/x64/Debug/Drawable.obj
 .vs/HW3D/v16/ipch/AutoPCH/9bed50f11cc5d675/DRAWABLEBASE.ipch
 HW3D/x64/Debug/HW3D.tlog/CL.10744.write.1.tlog
+.vs/HW3D/v16/ipch/AutoPCH/300af0cd5085f5d7/INDEXEDTRIANGLELIST.ipch
+.vs/HW3D/v16/ipch/AutoPCH/4ac093005bcb6cf4/PLANE.ipch
+.vs/HW3D/v16/ipch/AutoPCH/50f6fd4f9004d12b/SPHERE.ipch
+.vs/HW3D/v16/ipch/AutoPCH/5e83f5c6d4ace7cb/PRISM.ipch
+.vs/HW3D/v16/ipch/AutoPCH/6d26954f37a4344d/CONE.ipch
+.vs/HW3D/v16/ipch/AutoPCH/a4c2403e2370dcb9/CHILIMATH.ipch
+.vs/HW3D/v16/ipch/AutoPCH/c9967ab371fd037b/CUBE.ipch
+HW3D/x64/Debug/HW3D.tlog/CL.11640.write.1.tlog
