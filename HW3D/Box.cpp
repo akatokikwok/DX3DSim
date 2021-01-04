@@ -2,6 +2,7 @@
 #include "BindableBase.h"
 #include "GraphicsThrowMacros.h"
 #include "DrawableBase.h"
+#include "Sphere.h"
 
 Box::Box(Graphics& gfx,
 	std::mt19937& rng,
@@ -21,50 +22,72 @@ Box::Box(Graphics& gfx,
 	theta(adist(rng)),
 	phi(adist(rng))
 {
+	// 使用简写dx
+	namespace dx = DirectX;
+
 	if (!IsStaticInitialized())//若不初始化,则初始化
 	{
 		// 顶点型
 		struct Vertex
 		{
-			struct
+			#pragma region ver1.0.22弃用
+			/*struct
 			{
 				float x;
 				float y;
 				float z;
-			} pos;
+			} pos;*/
+			#pragma endregion ver1.0.22弃用
+			dx::XMFLOAT3 pos;
 		};
-		// 顶点数组
-		const std::vector<Vertex> vertices =
-		{
-			{ -1.0f,-1.0f,-1.0f },
-			{ 1.0f,-1.0f,-1.0f },
-			{ -1.0f,1.0f,-1.0f },
-			{ 1.0f,1.0f,-1.0f },
-			{ -1.0f,-1.0f,1.0f },
-			{ 1.0f,-1.0f,1.0f },
-			{ -1.0f,1.0f,1.0f },
-			{ 1.0f,1.0f,1.0f },
-		};
-		DrawableBase::AddStaticBind(std::make_unique<VertexBuffer>(gfx, vertices));
+		#pragma region ver1.0.22顶点数组及其绑定弃用
+		//// 顶点数组
+		//const std::vector<Vertex> vertices =
+		//{
+		//	{ -1.0f,-1.0f,-1.0f },
+		//	{ 1.0f,-1.0f,-1.0f },
+		//	{ -1.0f,1.0f,-1.0f },
+		//	{ 1.0f,1.0f,-1.0f },
+		//	{ -1.0f,-1.0f,1.0f },
+		//	{ 1.0f,-1.0f,1.0f },
+		//	{ -1.0f,1.0f,1.0f },
+		//	{ 1.0f,1.0f,1.0f },
+		//};
+		//DrawableBase::AddStaticBind(std::make_unique<VertexBuffer>(gfx, vertices));	
+		
 		// 构造顶点缓存并添加至binds对象数组
-		AddBind(std::make_unique<VertexBuffer>(gfx, vertices));
+		//AddBind(std::make_unique<VertexBuffer>(gfx, vertices));
+		#pragma endregion ver1.0.22顶点数组及其绑定弃用
+
+		/* 构造1个几何体，并且同时更改它的缩放,最后创造出顶点缓存并添加至binds对象数组*/
+		auto model = Sphere::Make<Vertex>();
+		model.Transform(dx::XMMatrixScaling(1.0f, 1.0f, 1.2f));
+		AddStaticBind(std::make_unique<VertexBuffer>(gfx, model.vertices));
+
+	
 		// 构造顶点着色器并添加至binds对象数组
 		auto pvs = std::make_unique<VertexShader>(gfx, L"VertexShader.cso");
 		auto pvsbc = pvs->GetBytecode();
 		AddStaticBind(std::move(pvs));
 		// 构造像素着色器并添加至binds对象数组
 		AddStaticBind(std::make_unique<PixelShader>(gfx, L"PixelShader.cso"));
-		// 创建索引数组并构造索引缓存,添加至binds对象数组
-		const std::vector<unsigned short> indices =
-		{
-			0,2,1, 2,3,1,
-			1,3,5, 3,7,5,
-			2,6,3, 3,6,7,
-			4,5,7, 4,7,6,
-			0,4,2, 2,4,6,
-			0,1,4, 1,5,4
-		};
-		AddStaticIndexBuffer(std::make_unique<IndexBuffer>(gfx, indices));
+
+		#pragma region ver1.0.22 索引数组及其绑定弃用
+		//// 创建索引数组并构造索引缓存,添加至binds对象数组
+		//const std::vector<unsigned short> indices =
+		//{
+		//	0,2,1, 2,3,1,
+		//	1,3,5, 3,7,5,
+		//	2,6,3, 3,6,7,
+		//	4,5,7, 4,7,6,
+		//	0,4,2, 2,4,6,
+		//	0,1,4, 1,5,4
+		//};
+		//AddStaticIndexBuffer(std::make_unique<IndexBuffer>(gfx, indices));
+		#pragma endregion ver1.0.22 索引数组及其绑定弃用
+		// 创造索引缓存并添加至binds对象数组
+		AddStaticIndexBuffer(std::make_unique<IndexBuffer>(gfx, model.indices));
+
 		//  像素常量数组和 顶点常量数组
 		struct ConstantBuffer2
 		{
