@@ -19,6 +19,8 @@ public:
 	TransformCbuf(Graphics& gfx, const Drawable& parent);
 	void Bind(Graphics& gfx) noexcept override;
 private:
-	VertexConstantBuffer<DirectX::XMMATRIX> vcbuf;
-	const Drawable& parent;//字段: 1个Drawable引用
+	// 静态的矩阵型 顶点常量缓存指针
+	static std::unique_ptr<VertexConstantBuffer<DirectX::XMMATRIX>> pVcbuf;
+	//字段: 1个Drawable引用
+	const Drawable& parent;
 };

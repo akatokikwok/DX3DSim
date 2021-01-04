@@ -6,15 +6,16 @@
 template<class T>
 class DrawableBase : public Drawable
 {
-public:
-	bool IsStaticInitialized() const noexcept
+protected:
+	 static bool IsStaticInitialized()  noexcept
 	{
 		return !staticBinds.empty();
 	}
 
-	void AddStaticBind(std::unique_ptr<Bindable> bind) noexcept
+	// 更改为静态添加绑定
+	 static void AddStaticBind(std::unique_ptr<Bindable> bind) noexcept
 	{
-		assert("*Must* use AddIndexBuffer to bind index buffer" && typeid(*bind) != typeid(IndexBuffer));
+		assert("*Must* use AddStaticIndexBuffer to bind index buffer" && typeid(*bind) != typeid(IndexBuffer));
 		staticBinds.push_back(std::move(bind));
 	}
 
@@ -40,7 +41,7 @@ public:
 	}
 
 private:
-	const std::vector<std::unique_ptr<Bindable>>& GetStaticBinds() const noexcept 
+	const std::vector<std::unique_ptr<Bindable>>& GetStaticBinds() const noexcept override
 	{
 		return staticBinds;
 	}

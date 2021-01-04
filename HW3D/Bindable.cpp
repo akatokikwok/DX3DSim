@@ -1,4 +1,5 @@
 ﻿#include "Bindable.h"
+#include <stdexcept>
 
 ID3D11DeviceContext* Bindable::GetContext(Graphics& gfx) noexcept
 {
