@@ -1,22 +1,18 @@
 ﻿#pragma once
-#include "Drawable.h"
 #include "DrawableBase.h"
 
-/* 继承自DrawableBase的Box类*/
-class Box : public DrawableBase<Box>
+class Melon : public DrawableBase<Melon>
 {
 public:
-	Box(Graphics& gfx, 
-		std::mt19937& rng,
-		std::uniform_real_distribution<float>& adist,//随机浮点数
+	Melon(Graphics& gfx, std::mt19937& rng,
+		std::uniform_real_distribution<float>& adist,
 		std::uniform_real_distribution<float>& ddist,
 		std::uniform_real_distribution<float>& odist,
-		std::uniform_real_distribution<float>& rdist
-		,std::uniform_real_distribution<float>& bdist
+		std::uniform_real_distribution<float>& rdist,
+		std::uniform_int_distribution<int>& longdist,// 经度,用于控制网格细分程度
+		std::uniform_int_distribution<int>& latdist  // 纬度,用于控制网格细分程度
 	);
-	/* 负责更新一大堆浮点参数*/
 	void Update(float dt) noexcept override;
-	/* 负责处理这些参数为DX矩阵格式*/
 	DirectX::XMMATRIX GetTransformXM() const noexcept override;
 private:
 	// positional
@@ -27,14 +23,11 @@ private:
 	float theta;
 	float phi;
 	float chi;
-
-	// speed (delta/s),与box运动相关
+	// speed (delta/s)
 	float droll;
 	float dpitch;
 	float dyaw;
 	float dtheta;
 	float dphi;
 	float dchi;
-	// 模型变换
-	DirectX::XMFLOAT3X3 mt;
 };

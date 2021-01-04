@@ -1,17 +1,18 @@
-#pragma once
+ï»¿#pragma once
 #include "IndexedTriangleList.h"
 #include <DirectXMath.h>
 
 class Cube
 {
 public:
+	// Make(),åˆ›é€ å‡ºé¡¶ç‚¹ä½ç½®å’Œé¡¶ç‚¹ç´¢å¼•
 	template<class V>
 	static IndexedTriangleList<V> Make()
 	{
 		namespace dx = DirectX;
 
 		constexpr float side = 1.0f / 2.0f;
-		/// ´´½¨¶¥µãÎ»ÖÃ
+		/// åˆ›å»ºé¡¶ç‚¹ä½ç½®
 		std::vector<dx::XMFLOAT3> vertices;
 		vertices.emplace_back(-side, -side, -side); // 0
 		vertices.emplace_back(side, -side, -side); // 1
@@ -21,7 +22,7 @@ public:
 		vertices.emplace_back(side, -side, side); // 5
 		vertices.emplace_back(-side, side, side); // 6
 		vertices.emplace_back(side, side, side); // 7
-		/// ´´½¨¶¥µãË÷Òı
+		/// åˆ›å»ºé¡¶ç‚¹ç´¢å¼•
 		std::vector<V> verts(vertices.size());
 		for (size_t i = 0; i < vertices.size(); i++)
 		{

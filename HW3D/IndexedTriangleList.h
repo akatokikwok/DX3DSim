@@ -15,7 +15,7 @@ public:
 		assert(vertices.size() > 2);
 		assert(indices.size() % 3 == 0);
 	}
-	// 变换方法
+	// IndexedTriangleList类自带的三维变换方法
 	void Transform(DirectX::FXMMATRIX matrix)
 	{
 		for (auto& v : vertices)//拿到单个顶点
@@ -31,6 +31,6 @@ public:
 	}
 
 public:
-	std::vector<T> vertices;
-	std::vector<unsigned short> indices;
+	std::vector<T> vertices;			// 顶点数组
+	std::vector<unsigned short> indices;// 索引数组
 };

@@ -19,7 +19,7 @@ public:
 	virtual DirectX::XMMATRIX GetTransformXM() const noexcept = 0;
 	/* Draw(gfx),在流水线上绑定各Bindable实例,同时按照索引数量来绘制他们*/
 	void Draw(Graphics& gfx) const noexcept/*(!IS_DEBUG)*/;
-	/* */
+	/* 负责更新一大堆浮点参数*/
 	virtual void Update(float dt) noexcept = 0;
 
 protected:

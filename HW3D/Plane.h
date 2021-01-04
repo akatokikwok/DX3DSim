@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 #include <vector>
 #include <array>
 #include "IndexedTriangleList.h"
@@ -8,7 +8,7 @@ class Plane
 {
 public:
 	template<class V>
-	static IndexedTriangleList<V> MakeTesselated(int divisions_x, int divisions_y)//ÓÃÓÚÏ¸·ÖµÄ²ÎÊı
+	static IndexedTriangleList<V> MakeTesselated(int divisions_x, int divisions_y)//ç”¨äºç»†åˆ†çš„å‚æ•°
 	{
 		namespace dx = DirectX;
 		assert(divisions_x >= 1);
