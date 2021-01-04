@@ -21,6 +21,8 @@ public:
 	void Draw(Graphics& gfx) const noexcept/*(!IS_DEBUG)*/;
 	/* */
 	virtual void Update(float dt) noexcept = 0;
+
+protected:
 	/* 为binds添加参数bindable对象*/
 	void AddBind(std::unique_ptr<Bindable> bind) noexcept/*(!IS_DEBUG)*/;
 	/* 不会重复添加缓存索引的方法*/
