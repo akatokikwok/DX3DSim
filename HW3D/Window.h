@@ -98,7 +98,9 @@ private:
 
 	std::unique_ptr<Graphics> pGfx;//Graphics类实例
 };
-//工具宏
-#define CHWND_EXCEPT( hr ) Window::HrException( __LINE__,__FILE__,(hr) )
-#define CHWND_LAST_EXCEPT() Window::HrException( __LINE__,__FILE__,GetLastError() )
-#define CHWND_NOGFX_EXCEPT() Window::NoGfxException( __LINE__,__FILE__ ) 
+#pragma region ver1.0.20弃用,转移到专用宏文件里
+////工具宏
+//#define CHWND_EXCEPT( hr ) Window::HrException( __LINE__,__FILE__,(hr) )
+//#define CHWND_LAST_EXCEPT() Window::HrException( __LINE__,__FILE__,GetLastError() )
+//#define CHWND_NOGFX_EXCEPT() Window::NoGfxException( __LINE__,__FILE__ ) 
+#pragma endregion ver1.0.20弃用,转移到专用宏文件里
