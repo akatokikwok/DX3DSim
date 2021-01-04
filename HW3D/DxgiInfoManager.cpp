@@ -1,12 +1,16 @@
-#include "DxgiInfoManager.h"
+﻿#include "DxgiInfoManager.h"
 #include "Window.h"
 #include "Graphics.h"
 #include <dxgidebug.h>
 #include <memory>
+#include "GraphicsThrowMacros.h"
+#include "..\HW3D\WindowsThrowMacro.h"
 
 #pragma comment(lib, "dxguid.lib")
 
-#define GFX_THROW_NOINFO(hrcall) if( FAILED( hr = (hrcall) ) ) throw Graphics::HrException( __LINE__,__FILE__,hr )
+#pragma region ver1.0.20 弃用
+//#define GFX_THROW_NOINFO(hrcall) if( FAILED( hr = (hrcall) ) ) throw Graphics::HrException( __LINE__,__FILE__,hr )
+#pragma endregion ver1.0.20 弃用
 
 DxgiInfoManager::DxgiInfoManager()
 {

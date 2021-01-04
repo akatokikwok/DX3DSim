@@ -95,7 +95,7 @@ Box::Box(Graphics& gfx,
 	AddBind(std::make_unique<InputLayout>(gfx, ied, pvsbc));
 	// 构造输入图元
 	AddBind(std::make_unique<Topology>(gfx, D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST));
-	// 
+	// 以box本类数据填充构造常量缓存
 	AddBind(std::make_unique<TransformCbuf>(gfx, *this));
 }
 
