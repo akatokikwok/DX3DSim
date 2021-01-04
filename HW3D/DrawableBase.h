@@ -35,4 +35,5 @@ private:
 };
 
 // 需要在外部再声明一下静态绑定对象
+template<class T>
 std::vector<std::unique_ptr<Bindable>> DrawableBase<T>::staticBinds;

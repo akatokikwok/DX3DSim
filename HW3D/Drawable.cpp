@@ -11,6 +11,12 @@ void Drawable::Draw(Graphics& gfx) const noexcept/*(!IS_DEBUG)*/
 	{
 		b->Bind(gfx);
 	}
+
+	for (auto& b : GetStaticBinds())
+	{
+		b->Bind(gfx);
+	}
+
 	//使用图形类里方法建立索引
 	gfx.DrawIndexed(pIndexBuffer->GetCount());
 }

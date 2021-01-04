@@ -1,8 +1,9 @@
 ﻿#pragma once
 #include "Drawable.h"
+#include "DrawableBase.h"
 
-/* 继承自Drawable的Box类*/
-class Box : public Drawable
+/* 继承自DrawableBase的Box类*/
+class Box : public DrawableBase<Box>
 {
 public:
 	Box(Graphics& gfx, 
