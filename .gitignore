@@ -159,3 +159,5 @@ HW3D/x64/Debug/VertexShader.obj
 .vs/HW3D/v16/ipch/AutoPCH/eba5f503f9f77947/BOX.ipch
 HW3D/x64/Debug/Box.obj
 HW3D/x64/Debug/Drawable.obj
+.vs/HW3D/v16/ipch/AutoPCH/9bed50f11cc5d675/DRAWABLEBASE.ipch
+HW3D/x64/Debug/HW3D.tlog/CL.10744.write.1.tlog
