@@ -6,9 +6,15 @@
 #include "DxgiInfoManager.h"
 #include <wrl.h>
 #include <wrl\internal.h>
+#include <d3dcompiler.h>
+#include <DirectXMath.h>
+#include <memory>
+#include <random>
 
 class Graphics
 {
+	//让绑定类成为图形类的友元;但友元类的子类是没有访问Grahpics类私有变量的权限
+	friend class Bindable;
 public:
 	/* 异常类*/
 	class Exception : public GrbException
@@ -64,8 +70,16 @@ public:
 	void EndFrame();
 	/*清除渲染视图的进一步封装方法*/
 	void ClearBuffer(float red, float green, float blue) noexcept;
-	/* 与绘制三角形有关的代码*/
-	void DrawTestTriangle(float angle);
+	///* 与绘制三角形有关的代码*/
+	//void DrawTestTriangle(float angle);
+
+	/// ver1.0.20 Added
+	void DrawIndexed(UINT count) noexcept/*(!IS_DEBUG)*/;
+	/* 设置投影矩阵*/
+	void SetProjection(DirectX::FXMMATRIX proj) noexcept;
+	DirectX::XMMATRIX GetProjection() const noexcept;
+private:
+	DirectX::XMMATRIX projection;//字段: 投影矩阵
 
 private:
 #ifndef NDEBUG
@@ -76,5 +90,6 @@ private:
 	Microsoft::WRL::ComPtr<IDXGISwapChain> pSwap;//交换链
 	Microsoft::WRL::ComPtr<ID3D11DeviceContext> pContext;//上下文,用于发送渲染命令
 	Microsoft::WRL::ComPtr<ID3D11RenderTargetView> pTarget;//渲染视图
+	Microsoft::WRL::ComPtr<ID3D11DepthStencilView> pDSV; //深度视图
 };
 

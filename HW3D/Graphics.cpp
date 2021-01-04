@@ -4,29 +4,36 @@
 #include <wrl.h>
 #include <wrl\client.h>
 #include <d3dcompiler.h>
+#include <cmath>
+#include <DirectXMath.h>
+#include "GraphicsThrowMacros.h"
+
 
 //为了使用智能指针
 namespace wrl = Microsoft::WRL;
+namespace dx = DirectX;
 
 #pragma comment(lib, "d3d11.lib")//链接到库
 #pragma comment(lib, "D3DCompiler.lib")//运行时编译着色器
 
-// graphics exception checking/throwing macros (some with dxgi infos)
-#define GFX_EXCEPT_NOINFO(hr) Graphics::HrException( __LINE__,__FILE__,(hr) )
-#define GFX_THROW_NOINFO(hrcall) if( FAILED( hr = (hrcall) ) ) throw Graphics::HrException( __LINE__,__FILE__,hr )
-
-#ifndef NDEBUG
-#define GFX_EXCEPT(hr) Graphics::HrException( __LINE__,__FILE__,(hr),infoManager.GetMessages() )
-#define GFX_THROW_INFO(hrcall) infoManager.Set(); if( FAILED( hr = (hrcall) ) ) throw GFX_EXCEPT(hr)
-#define GFX_DEVICE_REMOVED_EXCEPT(hr) Graphics::DeviceRemovedException( __LINE__,__FILE__,(hr),infoManager.GetMessages() )
-//不返回hr型的消息宏
-#define GFX_THROW_INFO_ONLY(call) infoManager.Set(); (call); {auto v = infoManager.GetMessages(); if(!v.empty()) {throw Graphics::InfoException( __LINE__,__FILE__,v);}}
-#else
-#define GFX_EXCEPT(hr) Graphics::HrException( __LINE__,__FILE__,(hr) )
-#define GFX_THROW_INFO(hrcall) GFX_THROW_NOINFO(hrcall)
-#define GFX_DEVICE_REMOVED_EXCEPT(hr) Graphics::DeviceRemovedException( __LINE__,__FILE__,(hr) )
-#define GFX_THROW_INFO_ONLY(call) (call)
-#endif
+#pragma region ver1.0.20弃用,转移到专门的宏文件GraphicsThrowMacros.h里
+//// graphics exception checking/throwing macros (some with dxgi infos)
+//#define GFX_EXCEPT_NOINFO(hr) Graphics::HrException( __LINE__,__FILE__,(hr) )
+//#define GFX_THROW_NOINFO(hrcall) if( FAILED( hr = (hrcall) ) ) throw Graphics::HrException( __LINE__,__FILE__,hr )
+//
+//#ifndef NDEBUG
+//#define GFX_EXCEPT(hr) Graphics::HrException( __LINE__,__FILE__,(hr),infoManager.GetMessages() )
+//#define GFX_THROW_INFO(hrcall) infoManager.Set(); if( FAILED( hr = (hrcall) ) ) throw GFX_EXCEPT(hr)
+//#define GFX_DEVICE_REMOVED_EXCEPT(hr) Graphics::DeviceRemovedException( __LINE__,__FILE__,(hr),infoManager.GetMessages() )
+////不返回hr型的消息宏
+//#define GFX_THROW_INFO_ONLY(call) infoManager.Set(); (call); {auto v = infoManager.GetMessages(); if(!v.empty()) {throw Graphics::InfoException( __LINE__,__FILE__,v);}}
+//#else
+//#define GFX_EXCEPT(hr) Graphics::HrException( __LINE__,__FILE__,(hr) )
+//#define GFX_THROW_INFO(hrcall) GFX_THROW_NOINFO(hrcall)
+//#define GFX_DEVICE_REMOVED_EXCEPT(hr) Graphics::DeviceRemovedException( __LINE__,__FILE__,(hr) )
+//#define GFX_THROW_INFO_ONLY(call) (call)
+//#endif
+#pragma endregion ver1.0.20弃用,转移到专门的宏文件GraphicsThrowMacros.h里
 
 Graphics::Graphics(HWND hWnd)
 {
@@ -83,6 +90,52 @@ Graphics::Graphics(HWND hWnd)
 	wrl::ComPtr<ID3D11Resource> pBackBuffer;
 	GFX_THROW_INFO( pSwap->GetBuffer(0, __uuidof(ID3D11Resource), &pBackBuffer));
 	GFX_THROW_INFO(pDevice->CreateRenderTargetView(pBackBuffer.Get(), nullptr, &pTarget));
+
+	///
+	// create depth stensil state
+	D3D11_DEPTH_STENCIL_DESC dsDesc = {};
+	dsDesc.DepthEnable = TRUE;
+	dsDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
+	dsDesc.DepthFunc = D3D11_COMPARISON_LESS;
+	wrl::ComPtr<ID3D11DepthStencilState> pDSState;
+	GFX_THROW_INFO(pDevice->CreateDepthStencilState(&dsDesc, &pDSState));
+	// bind depth state
+	pContext->OMSetDepthStencilState(pDSState.Get(), 1u);
+	// create depth stensil texture
+	wrl::ComPtr<ID3D11Texture2D> pDepthStencil;
+	D3D11_TEXTURE2D_DESC descDepth = {};
+	descDepth.Width = 800u;
+	descDepth.Height = 600u;
+	descDepth.MipLevels = 1u;
+	descDepth.ArraySize = 1u;
+	descDepth.Format = DXGI_FORMAT_D32_FLOAT;
+	descDepth.SampleDesc.Count = 1u;
+	descDepth.SampleDesc.Quality = 0u;
+	descDepth.Usage = D3D11_USAGE_DEFAULT;
+	descDepth.BindFlags = D3D11_BIND_DEPTH_STENCIL;
+	GFX_THROW_INFO(pDevice->CreateTexture2D(&descDepth, nullptr, &pDepthStencil));
+	// create view of depth stensil texture
+	D3D11_DEPTH_STENCIL_VIEW_DESC descDSV = {};
+	descDSV.Format = DXGI_FORMAT_D32_FLOAT;
+	descDSV.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
+	descDSV.Texture2D.MipSlice = 0u;
+	GFX_THROW_INFO(pDevice->CreateDepthStencilView(
+		pDepthStencil.Get(), &descDSV, &pDSV
+	));
+
+	// bind depth stensil view to OM
+	pContext->OMSetRenderTargets(1u, pTarget.GetAddressOf(), pDSV.Get());
+	//pContext->OMSetRenderTargets(1u, pTarget.GetAddressOf(), nullptr/*此处未用到深度模板*/);
+
+	// configure viewport
+	D3D11_VIEWPORT vp;
+	vp.Width = 800.0f;
+	vp.Height = 600.0f;
+	vp.MinDepth = 0.0f;
+	vp.MaxDepth = 1.0f;
+	vp.TopLeftX = 0.0f;
+	vp.TopLeftY = 0.0f;
+	pContext->RSSetViewports(1u, &vp);
 }
 
 
@@ -114,170 +167,190 @@ void Graphics::ClearBuffer(float red, float green, float blue) noexcept
 	const float color[] = { red, green, blue, 1.0f };
 	//在上下文以指定的颜色来填充清除渲染视图
 	pContext->ClearRenderTargetView(pTarget.Get(), color);
+
+	pContext->ClearDepthStencilView(pDSV.Get(), D3D11_CLEAR_DEPTH, 1.0f, 0u);
 }
 
-void Graphics::DrawTestTriangle(float angle)
+void Graphics::DrawIndexed(UINT count) noexcept/*(!IS_DEBUG)*/
 {
-	namespace wrl = Microsoft::WRL;
-	HRESULT hr;
-
-	/* 创建1个顶点结构体型*/
-	struct Vertex
-	{
-		struct  
-		{
-			float x;
-			float y;
-		} pos;
-		
-		struct 
-		{
-			unsigned char r;
-			unsigned char g;
-			unsigned char b;
-			unsigned char a;
-		} color;		
-	};
-
-	/* 创建1个顶点数组,此处为顺时针*/
-	/*const*/ Vertex vertices[] =
-	{
-		{ 0.0f, 0.5f,	255,0,0,0},
-		{ 0.5f, -0.5f,  0,255,0,0},
-		{ -0.5f, -0.5f,	0,0,255,0},
-		{-0.3, 0.3,0,255,0,0},
-		{0.3,0.3,0,0,255,0},
-		{0,-0.8,255,0,0,0},
-
-	};
-	vertices[0].color.g = 255;
-
-	wrl::ComPtr<ID3D11Buffer> pVertexBuffer;//声明1个顶点缓存
-
-	D3D11_BUFFER_DESC bd = {};
-	bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;//缓存类型
-	bd.Usage = D3D11_USAGE_DEFAULT;
-	bd.CPUAccessFlags = 0u;
-	bd.MiscFlags = 0u;
-	bd.ByteWidth = sizeof(vertices);//顶点数组的尺寸
-	bd.StructureByteStride = sizeof(Vertex);//顶点型的大小
-	D3D11_SUBRESOURCE_DATA sd = {};
-	sd.pSysMem = vertices;//顶点数组指针
-
-	/* 在设备上创建出顶点缓冲*/
-	GFX_THROW_INFO(pDevice->CreateBuffer( /*Buffer描述*/&bd, /*SubResourceData*/&sd, /*ppBuffer*/&pVertexBuffer));
-	/* 顶点缓存绑定到管线上*/
-	const UINT stride = sizeof(Vertex);
-	const UINT offset = 0u;
-	pContext->IASetVertexBuffers(/*起始槽位*/0u, /*缓存数*/1u ,  pVertexBuffer.GetAddressOf(),  /*单顶点型数据大小*/&stride, /*需求中的数据处于顶点里第几位*/&offset);
-
-	/* 创建索引缓存以便以特定顺序节省顶点并调用DrawIndexed()*///索引缓冲一般为16位，可用unsigned short
-	const unsigned short indices[] =
-	{
-		0,1,2,
-		0,2,3,
-		0,4,1,
-		2,1,5,
-	};
-	wrl::ComPtr<ID3D11Buffer> pIndexBuffer;
-	D3D11_BUFFER_DESC ibd = {};
-	ibd.BindFlags = D3D11_BIND_INDEX_BUFFER;
-	ibd.Usage = D3D11_USAGE_DEFAULT;
-	ibd.CPUAccessFlags = 0u;
-	ibd.MiscFlags = 0u;
-	ibd.ByteWidth = sizeof(indices);
-	ibd.StructureByteStride = sizeof(unsigned short);
-	D3D11_SUBRESOURCE_DATA isd = {};
-	isd.pSysMem = indices;
-	GFX_THROW_INFO(pDevice->CreateBuffer(&ibd, &isd, &pIndexBuffer));
-	pContext->IASetIndexBuffer(pIndexBuffer.Get(), DXGI_FORMAT_R16_UINT, 0u);
-
-	/* 创建常量缓存来使用变换矩阵*/
-	struct ConstantBuffer
-	{
-		struct
-		{
-			float element[4][4];
-		} transformation;
-	};
-	const ConstantBuffer cb =
-	{
-		//绕Z轴转,此处考虑到800*600的屏幕图形会被拉伸,所以乘3/4来保持不拉伸,在第一列体现
-		{
-			0.75f*(std::cos(angle)),	std::sin(angle),	0,	0,
-			0.75f*(-std::sin(angle)),	std::cos(angle),	0,	0,
-			0,					0,					1,	0,
-			0,					0,					0,	1,		
-		}
-	};
-	wrl::ComPtr<ID3D11Buffer> pConstantBuffer;
-	D3D11_BUFFER_DESC cbd;
-	cbd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-	cbd.Usage = D3D11_USAGE_DYNAMIC;//每帧更新一次,需要一个动态的
-	cbd.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;//允许CPU每帧传顶点数据过来
-	cbd.MiscFlags = 0u;
-	cbd.ByteWidth = sizeof(cb);
-	cbd.StructureByteStride = 0u;
-	D3D11_SUBRESOURCE_DATA csd = {};
-	csd.pSysMem = &cb;
-	GFX_THROW_INFO(pDevice->CreateBuffer(&cbd, &csd, &pConstantBuffer));
-	//管线上绑定常量缓存(在VS阶段)
-	pContext->VSSetConstantBuffers(0u, 1u, pConstantBuffer.GetAddressOf());
-
-	/// 此后过程是利用Blob先创建像素shader再创建顶点shader,最后再顶点输入布局*///////////////////////////////////////////////////////////////////////////
-
-	/* 利用Blob字节码创建像素shader*/
-	wrl::ComPtr<ID3D11PixelShader> pPixelShader;
-	wrl::ComPtr<ID3DBlob> pBlob;
-	GFX_THROW_INFO( D3DReadFileToBlob( L"PixelShader.cso" , &pBlob));
-	GFX_THROW_INFO( pDevice->CreatePixelShader(pBlob->GetBufferPointer(),pBlob->GetBufferSize(),nullptr, &pPixelShader));
-	/* 管线上绑定像素shader*/
-	pContext->PSSetShader(pPixelShader.Get(), nullptr, 0u);
-
-	/* 创建顶点shader*/
-	wrl::ComPtr<ID3D11VertexShader> pVertexShader;
-	/* 创建顶点shader*/
-	GFX_THROW_INFO(D3DReadFileToBlob(L"VertexShader.cso", &pBlob));
-	GFX_THROW_INFO(pDevice->CreateVertexShader(pBlob->GetBufferPointer(), pBlob->GetBufferSize(), nullptr, &pVertexShader));
-	/* 管线上绑定顶点shader*/
-	pContext->VSSetShader(pVertexShader.Get(), nullptr, 0u);
-
-
-	/* 绑定顶点输入布局*/
-	//但是在像素shader认为,三维和二维都只是向量,除了位置外可能还有颜色\法向量
-	wrl::ComPtr<ID3D11InputLayout> pInputLayout;
-	const D3D11_INPUT_ELEMENT_DESC ied[] =
-	{
-		//{ /*该值必须要与顶点hlsl里的第二参数保持一致*/"Position", /*索引*/0, DXGI_FORMAT_R32G32_FLOAT,/*Slot*/0,/*相比于原组的偏移量*/0, D3D11_INPUT_PER_VERTEX_DATA, 0},
-		{ "Position",0,DXGI_FORMAT_R32G32_FLOAT,0,0,D3D11_INPUT_PER_VERTEX_DATA,0 },
-		{ "Color",0,DXGI_FORMAT_R8G8B8A8_UNORM/*UNORM可以让数归一化*/,0,8u,D3D11_INPUT_PER_VERTEX_DATA,0 },
-	};
-	GFX_THROW_INFO(
-		pDevice->CreateInputLayout(/*输入布局数组*/ied, /*数组里元素数量*/(UINT)std::size(ied),
-			/*着色器字节码*/pBlob->GetBufferPointer(), /*字节码长度*/pBlob->GetBufferSize(), &pInputLayout)
-	);
-	pContext->IASetInputLayout(pInputLayout.Get());
-
-	/* 管线上绑定渲染目标,不然像素shader不知道渲染输出到哪个目的地*/
-	// GetAddressof的好处是会获取到智能指针的指针,而不用释放对象;getaddressof就是单纯取指针地址。
-	pContext->OMSetRenderTargets(1u, pTarget.GetAddressOf(), nullptr/*此处未用到深度模板*/); 
-
-	/* 管线上绑定图元装备形式,三角形列表,3个顶点一组*/
-	pContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY::D3D10_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
-	/* 顺带设置一下视口*/
-	D3D11_VIEWPORT vp;
-	vp.Width = 800;
-	vp.Height = 600;
-	vp.MinDepth = 0;
-	vp.MaxDepth = 1;
-	vp.TopLeftX = 0;
-	vp.TopLeftY = 0;
-	pContext->RSSetViewports(1u, &vp);
-
-	GFX_THROW_INFO_ONLY(pContext->DrawIndexed(/*顶点数*/ (UINT)std::size(indices), /*起始顶点位置*/0u,0u));//3个顶点,从0号开始
-
+	GFX_THROW_INFO_ONLY(pContext->DrawIndexed(count, 0u, 0u));
 }
+
+void Graphics::SetProjection(DirectX::FXMMATRIX proj) noexcept
+{
+	projection = proj;
+}
+
+DirectX::XMMATRIX Graphics::GetProjection() const noexcept
+{
+	return projection;
+}
+
+#pragma region ver1.0.20 DrawTestTriangle弃用
+
+//void Graphics::DrawTestTriangle(float angle)
+//{
+//	namespace wrl = Microsoft::WRL;
+//	HRESULT hr;
+//
+//	/* 创建1个顶点结构体型*/
+//	struct Vertex
+//	{
+//		struct  
+//		{
+//			float x;
+//			float y;
+//		} pos;
+//		
+//		struct 
+//		{
+//			unsigned char r;
+//			unsigned char g;
+//			unsigned char b;
+//			unsigned char a;
+//		} color;		
+//	};
+//
+//	/* 创建1个顶点数组,此处为顺时针*/
+//	/*const*/ Vertex vertices[] =
+//	{
+//		{ 0.0f, 0.5f,	255,0,0,0},
+//		{ 0.5f, -0.5f,  0,255,0,0},
+//		{ -0.5f, -0.5f,	0,0,255,0},
+//		{-0.3, 0.3,0,255,0,0},
+//		{0.3,0.3,0,0,255,0},
+//		{0,-0.8,255,0,0,0},
+//
+//	};
+//	vertices[0].color.g = 255;
+//
+//	wrl::ComPtr<ID3D11Buffer> pVertexBuffer;//声明1个顶点缓存
+//
+//	D3D11_BUFFER_DESC bd = {};
+//	bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;//缓存类型
+//	bd.Usage = D3D11_USAGE_DEFAULT;
+//	bd.CPUAccessFlags = 0u;
+//	bd.MiscFlags = 0u;
+//	bd.ByteWidth = sizeof(vertices);//顶点数组的尺寸
+//	bd.StructureByteStride = sizeof(Vertex);//顶点型的大小
+//	D3D11_SUBRESOURCE_DATA sd = {};
+//	sd.pSysMem = vertices;//顶点数组指针
+//
+//	/* 在设备上创建出顶点缓冲*/
+//	GFX_THROW_INFO(pDevice->CreateBuffer( /*Buffer描述*/&bd, /*SubResourceData*/&sd, /*ppBuffer*/&pVertexBuffer));
+//	/* 顶点缓存绑定到管线上*/
+//	const UINT stride = sizeof(Vertex);
+//	const UINT offset = 0u;
+//	pContext->IASetVertexBuffers(/*起始槽位*/0u, /*缓存数*/1u ,  pVertexBuffer.GetAddressOf(),  /*单顶点型数据大小*/&stride, /*需求中的数据处于顶点里第几位*/&offset);
+//
+//	/* 创建索引缓存以便以特定顺序节省顶点并调用DrawIndexed()*///索引缓冲一般为16位，可用unsigned short
+//	const unsigned short indices[] =
+//	{
+//		0,1,2,
+//		0,2,3,
+//		0,4,1,
+//		2,1,5,
+//	};
+//	wrl::ComPtr<ID3D11Buffer> pIndexBuffer;
+//	D3D11_BUFFER_DESC ibd = {};
+//	ibd.BindFlags = D3D11_BIND_INDEX_BUFFER;
+//	ibd.Usage = D3D11_USAGE_DEFAULT;
+//	ibd.CPUAccessFlags = 0u;
+//	ibd.MiscFlags = 0u;
+//	ibd.ByteWidth = sizeof(indices);
+//	ibd.StructureByteStride = sizeof(unsigned short);
+//	D3D11_SUBRESOURCE_DATA isd = {};
+//	isd.pSysMem = indices;
+//	GFX_THROW_INFO(pDevice->CreateBuffer(&ibd, &isd, &pIndexBuffer));
+//	pContext->IASetIndexBuffer(pIndexBuffer.Get(), DXGI_FORMAT_R16_UINT, 0u);
+//
+//	/* 创建常量缓存来使用变换矩阵*/
+//	struct ConstantBuffer
+//	{
+//		struct
+//		{
+//			float element[4][4];
+//		} transformation;
+//	};
+//	const ConstantBuffer cb =
+//	{
+//		//绕Z轴转,此处考虑到800*600的屏幕图形会被拉伸,所以乘3/4来保持不拉伸,在第一列体现
+//		{
+//			0.75f*(std::cos(angle)),	std::sin(angle),	0,	0,
+//			0.75f*(-std::sin(angle)),	std::cos(angle),	0,	0,
+//			0,					0,					1,	0,
+//			0,					0,					0,	1,		
+//		}
+//	};
+//	wrl::ComPtr<ID3D11Buffer> pConstantBuffer;
+//	D3D11_BUFFER_DESC cbd;
+//	cbd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+//	cbd.Usage = D3D11_USAGE_DYNAMIC;//每帧更新一次,需要一个动态的
+//	cbd.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;//允许CPU每帧传顶点数据过来
+//	cbd.MiscFlags = 0u;
+//	cbd.ByteWidth = sizeof(cb);
+//	cbd.StructureByteStride = 0u;
+//	D3D11_SUBRESOURCE_DATA csd = {};
+//	csd.pSysMem = &cb;
+//	GFX_THROW_INFO(pDevice->CreateBuffer(&cbd, &csd, &pConstantBuffer));
+//	//管线上绑定常量缓存(在VS阶段)
+//	pContext->VSSetConstantBuffers(0u, 1u, pConstantBuffer.GetAddressOf());
+//
+//	/// 此后过程是利用Blob先创建像素shader再创建顶点shader,最后再顶点输入布局*///////////////////////////////////////////////////////////////////////////
+//
+//	/* 利用Blob字节码创建像素shader*/
+//	wrl::ComPtr<ID3D11PixelShader> pPixelShader;
+//	wrl::ComPtr<ID3DBlob> pBlob;
+//	GFX_THROW_INFO( D3DReadFileToBlob( L"PixelShader.cso" , &pBlob));
+//	GFX_THROW_INFO( pDevice->CreatePixelShader(pBlob->GetBufferPointer(),pBlob->GetBufferSize(),nullptr, &pPixelShader));
+//	/* 管线上绑定像素shader*/
+//	pContext->PSSetShader(pPixelShader.Get(), nullptr, 0u);
+//
+//	/* 创建顶点shader*/
+//	wrl::ComPtr<ID3D11VertexShader> pVertexShader;
+//	/* 创建顶点shader*/
+//	GFX_THROW_INFO(D3DReadFileToBlob(L"VertexShader.cso", &pBlob));
+//	GFX_THROW_INFO(pDevice->CreateVertexShader(pBlob->GetBufferPointer(), pBlob->GetBufferSize(), nullptr, &pVertexShader));
+//	/* 管线上绑定顶点shader*/
+//	pContext->VSSetShader(pVertexShader.Get(), nullptr, 0u);
+//
+//
+//	/* 绑定顶点输入布局*/
+//	//但是在像素shader认为,三维和二维都只是向量,除了位置外可能还有颜色\法向量
+//	wrl::ComPtr<ID3D11InputLayout> pInputLayout;
+//	const D3D11_INPUT_ELEMENT_DESC ied[] =
+//	{
+//		//{ /*该值必须要与顶点hlsl里的第二参数保持一致*/"Position", /*索引*/0, DXGI_FORMAT_R32G32_FLOAT,/*Slot*/0,/*相比于原组的偏移量*/0, D3D11_INPUT_PER_VERTEX_DATA, 0},
+//		{ "Position",0,DXGI_FORMAT_R32G32_FLOAT,0,0,D3D11_INPUT_PER_VERTEX_DATA,0 },
+//		{ "Color",0,DXGI_FORMAT_R8G8B8A8_UNORM/*UNORM可以让数归一化*/,0,8u,D3D11_INPUT_PER_VERTEX_DATA,0 },
+//	};
+//	GFX_THROW_INFO(
+//		pDevice->CreateInputLayout(/*输入布局数组*/ied, /*数组里元素数量*/(UINT)std::size(ied),
+//			/*着色器字节码*/pBlob->GetBufferPointer(), /*字节码长度*/pBlob->GetBufferSize(), &pInputLayout)
+//	);
+//	pContext->IASetInputLayout(pInputLayout.Get());
+//
+//	/* 管线上绑定渲染目标,不然像素shader不知道渲染输出到哪个目的地*/
+//	// GetAddressof的好处是会获取到智能指针的指针,而不用释放对象;getaddressof就是单纯取指针地址。
+//	pContext->OMSetRenderTargets(1u, pTarget.GetAddressOf(), nullptr/*此处未用到深度模板*/); 
+//
+//	/* 管线上绑定图元装备形式,三角形列表,3个顶点一组*/
+//	pContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY::D3D10_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+//
+//	/* 顺带设置一下视口*/
+//	D3D11_VIEWPORT vp;
+//	vp.Width = 800;
+//	vp.Height = 600;
+//	vp.MinDepth = 0;
+//	vp.MaxDepth = 1;
+//	vp.TopLeftX = 0;
+//	vp.TopLeftY = 0;
+//	pContext->RSSetViewports(1u, &vp);
+//
+//	GFX_THROW_INFO_ONLY(pContext->DrawIndexed(/*顶点数*/ (UINT)std::size(indices), /*起始顶点位置*/0u,0u));//3个顶点,从0号开始
+//
+//}
+#pragma endregion ver1.0.20 DrawTestTriangle弃用
 
 /// 各异常类实现 //////////////////////////////////////////////////////////////////////////
 Graphics::HrException::HrException(int line, const char* file, HRESULT hr, std::vector<std::string> infoMsgs) noexcept
