@@ -3,7 +3,7 @@
 #include "GraphicsThrowMacros.h"
 
 /* 基类型,继承自Bindable*/
-template<typename C>
+template<typename C> 
 class ConstantBuffer : public Bindable
 {
 public:
@@ -56,9 +56,10 @@ public:
 		GFX_THROW_INFO(GetDevice(gfx)->CreateBuffer(&cbd, nullptr, &pConstantBuffer));
 	}
 protected:
-	Microsoft::WRL::ComPtr<ID3D11Buffer> pConstantBuffer;//常量缓存
+	Microsoft::WRL::ComPtr<ID3D11Buffer> pConstantBuffer;//字段:常量缓存
 };
 
+///	注明：使用模板继承基类，就无法访问父类保护的字段,应对办法是使用this或者using
 /* 2种常量缓存,此处是顶点的CBuffer.VS阶段绑定到管线*/
 template<typename C>
 class VertexConstantBuffer : public ConstantBuffer<C>
