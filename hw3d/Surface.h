@@ -1,4 +1,4 @@
-/******************************************************************************************
+﻿/******************************************************************************************
 *	Chili DirectX Framework Version 16.10.01											  *
 *	Surface.h																			  *
 *	Copyright 2016 PlanetChili <http://www.planetchili.net>								  *
@@ -126,8 +126,11 @@ public:
 	unsigned int GetWidth() const noexcept;
 	unsigned int GetHeight() const noexcept;
 	Color* GetBufferPtr() noexcept;
+	// 获取Surface实例的缓存
 	const Color* GetBufferPtr() const noexcept;
+	// 
 	const Color* GetBufferPtrConst() const noexcept;
+	// 读取指定路径图片
 	static Surface FromFile( const std::string& name );
 	void Save( const std::string& filename ) const;
 	void Copy( const Surface& src ) noexcept(!IS_DEBUG);

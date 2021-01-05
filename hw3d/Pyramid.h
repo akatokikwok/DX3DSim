@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "DrawableBase.h"
 
 class Pyramid : public DrawableBase<Pyramid>

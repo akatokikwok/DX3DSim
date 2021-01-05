@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "Bindable.h"
 #include "GraphicsThrowMacros.h"
 
@@ -6,6 +6,7 @@ template<typename C>
 class ConstantBuffer : public Bindable
 {
 public:
+	// 接受参数矩阵来更新常量缓存
 	void Update( Graphics& gfx,const C& consts )
 	{
 		INFOMAN( gfx );

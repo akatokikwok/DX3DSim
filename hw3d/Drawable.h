@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "Graphics.h"
 #include <DirectXMath.h>
 
@@ -12,7 +12,9 @@ public:
 	Drawable() = default;
 	Drawable( const Drawable& ) = delete;
 	virtual DirectX::XMMATRIX GetTransformXM() const noexcept = 0;
+	/* 把各绑定实例绑定物绑定到管线上,并按照Indexed()去绘制*/
 	void Draw( Graphics& gfx ) const noexcept(!IS_DEBUG);
+	/* 根据时长变化更新一大堆yaw pitch roll参数*/
 	virtual void Update( float dt ) noexcept = 0;
 	virtual ~Drawable() = default;
 protected:

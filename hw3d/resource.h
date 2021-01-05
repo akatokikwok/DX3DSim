@@ -1,6 +1,6 @@
 //{{NO_DEPENDENCIES}}
 // Microsoft Visual C++ generated include file.
-// Used by hw3d.rc
+// Used by HW3D.rc
 //
 #define IDI_ICON1                       101
 

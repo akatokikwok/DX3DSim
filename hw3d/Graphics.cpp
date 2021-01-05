@@ -1,4 +1,4 @@
-#include "Graphics.h"
+﻿#include "Graphics.h"
 #include "dxerr.h"
 #include <sstream>
 #include <d3dcompiler.h>

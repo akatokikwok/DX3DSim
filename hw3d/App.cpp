@@ -1,4 +1,4 @@
-#include "App.h"
+﻿#include "App.h"
 #include "Melon.h"
 #include "Pyramid.h"
 #include "Box.h"
@@ -11,11 +11,12 @@
 #include "GDIPlusManager.h"
 #include <iterator>
 
+// 管理GDI+的变量
 GDIPlusManager gdipm;
 
 App::App()
 	:
-	wnd( 800,600,"The Donkey Fart Box" )
+	wnd( 800,600,"The Window's Title of Renbin" )
 {
 	class Factory
 	{
@@ -68,12 +69,16 @@ App::App()
 		std::uniform_real_distribution<float> bdist{ 0.4f,3.0f };
 		std::uniform_int_distribution<int> latdist{ 5,20 };
 		std::uniform_int_distribution<int> longdist{ 10,40 };
-		std::uniform_int_distribution<int> typedist{ 0,4 };
+		std::uniform_int_distribution<int> typedist{ 0,4 };//供给给switch 切不同模型枚举用
 	};
 
+	Factory f(wnd.Gfx());
 	drawables.reserve( nDrawables );
+	// 使用Generate_n来产生drawables子类, 第2个参数是数量，第三个是工厂类容器
 	std::generate_n( std::back_inserter( drawables ),nDrawables,Factory{ wnd.Gfx() } );
 
+	const auto s = Surface::FromFile("Images\\kappa50.png");
+	// 构建左手透视投影矩阵
 	wnd.Gfx().SetProjection( DirectX::XMMatrixPerspectiveLH( 1.0f,3.0f / 4.0f,0.5f,40.0f ) );
 }
 
@@ -83,9 +88,12 @@ void App::DoFrame()
 	wnd.Gfx().ClearBuffer( 0.07f,0.0f,0.12f );
 	for( auto& d : drawables )
 	{
+		// 若按空格键就暂停,否则继续让时长运行
 		d->Update( wnd.kbd.KeyIsPressed( VK_SPACE ) ? 0.0f : dt );
+		// 绑定各个Bindable实例并按索引绘制
 		d->Draw( wnd.Gfx() );
 	}
+	// 使用交换链拿到后台缓存上屏
 	wnd.Gfx().EndFrame();
 }
 
