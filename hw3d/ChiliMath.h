@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include <math.h>
 
 constexpr float PI = 3.14159265f;

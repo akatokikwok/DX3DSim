@@ -1,4 +1,4 @@
-#include "SkinnedBox.h"
+﻿#include "SkinnedBox.h"
 #include "BindableBase.h"
 #include "GraphicsThrowMacros.h"
 #include "Cube.h"

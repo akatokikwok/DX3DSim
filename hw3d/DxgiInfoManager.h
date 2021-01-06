@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "ChiliWin.h"
 #include <wrl.h>
 #include <vector>

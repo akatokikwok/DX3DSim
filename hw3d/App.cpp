@@ -18,6 +18,7 @@ App::App()
 	:
 	wnd( 800,600,"The Window's Title of Renbin" )
 {
+	// 工厂类,含有构造持有图形,另外重载()操作符来达到动态选择哪个模型被创建实例化
 	class Factory
 	{
 	public:
@@ -73,8 +74,10 @@ App::App()
 	};
 
 	Factory f(wnd.Gfx());
+	// reserve是容器预留空间，但在空间内不真正创建元素对象，所以在没有添加新的对象之前，不能引用容器内的元素。加入新的元素时，要调用push_back()/insert()函数。
 	drawables.reserve( nDrawables );
 	// 使用Generate_n来产生drawables子类, 第2个参数是数量，第三个是工厂类容器
+	// generate_n() 功能:一个函数对象产生的值给一定的范围内指定数目的容器元素赋值
 	std::generate_n( std::back_inserter( drawables ),nDrawables,Factory{ wnd.Gfx() } );
 
 	const auto s = Surface::FromFile("Images\\kappa50.png");

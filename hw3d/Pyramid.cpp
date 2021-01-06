@@ -1,4 +1,4 @@
-#include "Pyramid.h"
+﻿#include "Pyramid.h"
 #include "BindableBase.h"
 #include "GraphicsThrowMacros.h"
 #include "Cone.h"
