@@ -14,6 +14,7 @@
 #include "imgui/imgui_impl_win32.h"
 #include "imgui/imgui_impl_dx11.h"
 
+namespace dx = DirectX;
 
 // 管理GDI+的变量
 GDIPlusManager gdipm;
@@ -86,7 +87,9 @@ App::App()
 
 	const auto s = Surface::FromFile("Images\\kappa50.png");
 	// 构建左手透视投影矩阵
-	wnd.Gfx().SetProjection( DirectX::XMMatrixPerspectiveLH( 1.0f,3.0f / 4.0f,0.5f,40.0f ) );
+	wnd.Gfx().SetProjection(dx::XMMatrixPerspectiveLH(1.0f, 3.0f / 4.0f, 0.5f, 40.0f));
+	// 构建观察矩阵
+	wnd.Gfx().SetCamera(dx::XMMatrixTranslation(0.0f, 0.0f, 20.0f));
 }
 
 void App::DoFrame()
