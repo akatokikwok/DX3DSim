@@ -10,6 +10,10 @@
 #include "Surface.h"
 #include "GDIPlusManager.h"
 #include <iterator>
+#include "imgui/imgui.h"
+#include "imgui/imgui_impl_win32.h"
+#include "imgui/imgui_impl_dx11.h"
+
 
 // 管理GDI+的变量
 GDIPlusManager gdipm;
@@ -87,16 +91,58 @@ App::App()
 
 void App::DoFrame()
 {
-	const auto dt = timer.Mark();
-	wnd.Gfx().ClearBuffer( 0.07f,0.0f,0.12f );
+	const auto dt = timer.Mark() * speed_factor;
+	//wnd.Gfx().ClearBuffer( 0.07f,0.0f,0.12f );
+
+	// 以按空格切换启用\禁用imgui
+	/*if (wnd.kbd.KeyIsPressed(VK_SPACE))
+	{
+		wnd.Gfx().DisableImgui();
+	}
+	else
+	{
+		wnd.Gfx().EnableImgui();
+	}*/
+	wnd.Gfx().BeginFrame(0.07f, 0.0f, 0.12f);
+
 	for( auto& d : drawables )
 	{
 		// 若按空格键就暂停,否则继续让时长运行
 		d->Update( wnd.kbd.KeyIsPressed( VK_SPACE ) ? 0.0f : dt );
 		// 绑定各个Bindable实例并按索引绘制
 		d->Draw( wnd.Gfx() );
+	}	
+
+	#pragma region imgui绘制实例过程
+	// imgui 实例; 若放在渲染d3d之前,则imgui位于背景,而D3D在前; Imgui没有z缓冲
+	//ImGui_ImplDX11_NewFrame();
+	//ImGui_ImplWin32_NewFrame();
+	//ImGui::NewFrame();
+	//// 此bool用于决定是否展示demo
+	//static bool show_demo_window = true;
+	
+	// 显示imgui内容
+	/*if (show_demo_window)
+	{
+		ImGui::ShowDemoWindow(&show_demo_window);
+	}*/
+	//ImGui::Render();// render方法吧所有设置转换成imgui内部格式
+	//ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());// 把内部格式数据转换到dx11平台上
+	#pragma endregion imgui绘制实例过程,弃用
+
+	static char buffer[1024];
+	if (ImGui::Begin("the windos's Title : Simulation Speed"))
+	{		
+		ImGui::SliderFloat("Speed Factor", &speed_factor, 0.0f, 4.0f);//增加1个滑块控制浮点值speed_factor
+
+		// 1000除以帧率得到每帧毫秒数
+		ImGui::Text("This Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+		ImGui::InputText("Butts", buffer, sizeof(buffer));
 	}
-	// 使用交换链拿到后台缓存上屏
+	ImGui::End();
+
+
+	// 使用交换链拿到后台缓存上屏,同时把imgui内部格式数据转换到dx11平台上
 	wnd.Gfx().EndFrame();
 }
 

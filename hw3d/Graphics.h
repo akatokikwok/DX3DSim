@@ -55,13 +55,21 @@ public:
 	Graphics( const Graphics& ) = delete;
 	Graphics& operator=( const Graphics& ) = delete;
 	~Graphics() = default;
+	/* // 在imgui开关打开的情况下3个new构造imgui实例并同时生成颜色填充清除渲染目标和清除zbuffer*/
+	void BeginFrame(float red, float green, float blue) noexcept;
 	void EndFrame();
-	void ClearBuffer( float red,float green,float blue ) noexcept;
+	//void ClearBuffer( float red,float green,float blue ) noexcept;
 	void DrawIndexed( UINT count ) noexcept(!IS_DEBUG);
 	void SetProjection( DirectX::FXMMATRIX proj ) noexcept;
 	DirectX::XMMATRIX GetProjection() const noexcept;
+
+	void EnableImgui() noexcept;
+	void DisableImgui() noexcept;
+	bool IsImguiEnabled() const noexcept;
 private:
 	DirectX::XMMATRIX projection;
+	bool imguiEnabled = true;
+
 #ifndef NDEBUG
 	DxgiInfoManager infoManager;
 #endif
