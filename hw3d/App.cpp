@@ -88,14 +88,16 @@ App::App()
 	const auto s = Surface::FromFile("Images\\kappa50.png");
 	// 构建左手透视投影矩阵
 	wnd.Gfx().SetProjection(dx::XMMatrixPerspectiveLH(1.0f, 3.0f / 4.0f, 0.5f, 40.0f));
-	// 构建观察矩阵
-	wnd.Gfx().SetCamera(dx::XMMatrixTranslation(0.0f, 0.0f, 20.0f));
+	//// 构建观察矩阵
+	//wnd.Gfx().SetCamera(dx::XMMatrixTranslation(0.0f, 0.0f, 20.0f));
 }
 
 void App::DoFrame()
 {
 	const auto dt = timer.Mark() * speed_factor;
 	//wnd.Gfx().ClearBuffer( 0.07f,0.0f,0.12f );
+	// 每帧设置视图观察矩阵
+	wnd.Gfx().SetCamera(cam.GetMatrix());
 
 	// 以按空格切换启用\禁用imgui
 	/*if (wnd.kbd.KeyIsPressed(VK_SPACE))
@@ -134,16 +136,19 @@ void App::DoFrame()
 	#pragma endregion imgui绘制实例过程,弃用
 
 	static char buffer[1024];
+	/// "速度创建"窗口
 	if (ImGui::Begin("the windos's Title : Simulation Speed"))
 	{		
 		ImGui::SliderFloat("Speed Factor", &speed_factor, 0.0f, 4.0f);//增加1个滑块控制浮点值speed_factor
 
 		// 1000除以帧率得到每帧毫秒数
 		ImGui::Text("This Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-		ImGui::InputText("Butts", buffer, sizeof(buffer));
+		////ImGui::InputText("Butts", buffer, sizeof(buffer));
+		ImGui::Text("Status: %s", wnd.kbd.KeyIsPressed(VK_SPACE) ? "PAUSED" : "RUNNING (hold 长按 spacebar to pause)");
 	}
 	ImGui::End();
-
+	// 必须在速度创建窗口被绘制出来之后 才允许绘制 这个控制器窗口
+	cam.SpawnControlWindow();
 
 	// 使用交换链拿到后台缓存上屏,同时把imgui内部格式数据转换到dx11平台上
 	wnd.Gfx().EndFrame();
