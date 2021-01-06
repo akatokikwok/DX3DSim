@@ -2,6 +2,7 @@
 #include <sstream>
 #include "resource.h"
 #include "WindowsThrowMacros.h"
+#include "imgui/imgui_impl_win32.h"// 包含它让其能够读取鼠标键盘的输入并处理
 
 
 // Window Class Stuff
@@ -79,12 +80,17 @@ Window::Window( int width,int height,const char* name )
 	}
 	// newly created windows start off as hidden
 	ShowWindow( hWnd,SW_SHOWDEFAULT );
+
+	// 初始化Imgui的实现类
+	ImGui_ImplWin32_Init(hWnd);
+
 	// create graphics object
 	pGfx = std::make_unique<Graphics>( hWnd );
 }
 
 Window::~Window()
 {
+	ImGui_ImplWin32_Shutdown();
 	DestroyWindow( hWnd );
 }
 
@@ -156,6 +162,12 @@ LRESULT CALLBACK Window::HandleMsgThunk( HWND hWnd,UINT msg,WPARAM wParam,LPARAM
 
 LRESULT Window::HandleMsg( HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam ) noexcept
 {
+	if (ImGui_ImplWin32_WndProcHandler(hWnd, msg, wParam, lParam))
+	{
+		return true;
+	}
+
+
 	switch( msg )
 	{
 	// we don't want the DefProc to handle this message because
