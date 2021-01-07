@@ -4,7 +4,7 @@
 class Camera
 {
 public:
-	拿到//摄像机的位置乘上摄像机旋转自身的方向的矩阵
+	// 拿到摄像机的位置乘上摄像机旋转自身的方向的矩阵
 	DirectX::XMMATRIX GetMatrix() const noexcept;
 	// 摄像机的控制菜单
 	void SpawnControlWindow() noexcept;
