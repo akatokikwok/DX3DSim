@@ -2,6 +2,7 @@
 #include "BindableBase.h"
 #include "GraphicsThrowMacros.h"
 #include "Cube.h"
+#include "Sampler.h"
 
 
 Box::Box( Graphics& gfx,
@@ -35,9 +36,11 @@ Box::Box( Graphics& gfx,
 
 		AddStaticBind( std::make_unique<VertexBuffer>( gfx,model.vertices ) );
 
+		AddStaticBind(std::make_unique<Sampler>(gfx));
+
 		auto pvs = std::make_unique<VertexShader>( gfx,L"ColorIndexVS.cso" );
 		auto pvsbc = pvs->GetBytecode();
-		AddStaticBind( std::move( pvs ) );
+		AddStaticBind( std::move( pvs ) );		
 
 		AddStaticBind( std::make_unique<PixelShader>( gfx,L"ColorIndexPS.cso" ) );
 

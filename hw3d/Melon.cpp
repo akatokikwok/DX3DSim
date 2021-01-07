@@ -2,6 +2,7 @@
 #include "BindableBase.h"
 #include "GraphicsThrowMacros.h"
 #include "Sphere.h"
+#include "Sampler.h"
 
 
 Melon::Melon( Graphics& gfx,
@@ -28,6 +29,9 @@ Melon::Melon( Graphics& gfx,
 
 	if( !IsStaticInitialized() )
 	{
+
+		AddStaticBind(std::make_unique<Sampler>(gfx));
+
 		auto pvs = std::make_unique<VertexShader>( gfx,L"ColorIndexVS.cso" );
 		auto pvsbc = pvs->GetBytecode();
 		AddStaticBind( std::move( pvs ) );
