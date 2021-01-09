@@ -27,6 +27,33 @@ public:
 		}
 	}
 
+	// asserts face-independent vertices w/ normals cleared to zero
+	// 此方法为每个三角面顶点添加法线
+	void SetNormalsIndependentFlat() noexcept(!IS_DEBUG)
+	{
+		using namespace DirectX;
+		assert(indices.size() % 3 == 0 && indices.size() > 0);
+		for (size_t i = 0; i < indices.size(); i += 3)
+		{	
+			// 拿到每个三角面的顶点
+			auto& v0 = vertices[indices[i]];
+			auto& v1 = vertices[indices[i + 1]];
+			auto& v2 = vertices[indices[i + 2]];
+			// 拿到每个三角面顶点的位置向量
+			const auto p0 = XMLoadFloat3(&v0.pos);
+			const auto p1 = XMLoadFloat3(&v1.pos);
+			const auto p2 = XMLoadFloat3(&v2.pos);
+			// 求上述的法线
+			const auto n = XMVector3Normalize(XMVector3Cross((p1 - p0), (p2 - p0)));
+			// 把法线数据填进顶点
+			XMStoreFloat3(&v0.n, n);
+			XMStoreFloat3(&v1.n, n);
+			XMStoreFloat3(&v2.n, n);
+		}
+	}
+
+
+
 public:
 	std::vector<T> vertices;
 	std::vector<unsigned short> indices;
