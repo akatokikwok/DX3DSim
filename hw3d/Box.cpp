@@ -30,23 +30,28 @@ Box::Box( Graphics& gfx,
 	{
 		struct Vertex
 		{
-			dx::XMFLOAT3 pos;
+			dx::XMFLOAT3 pos;// 持有位置
+			dx::XMFLOAT3 n;	// 持有法线	
 		};
-		const auto model = Cube::Make<Vertex>();
 
+		// 构造cube模型并添加法线
+		auto model = Cube::MakeIndependent<Vertex>();
+		model.SetNormalsIndependentFlat();
+		// 创建顶点缓存
 		AddStaticBind( std::make_unique<VertexBuffer>( gfx,model.vertices ) );
-
+		// 创建采样器
 		AddStaticBind(std::make_unique<Sampler>(gfx));
-
-		auto pvs = std::make_unique<VertexShader>( gfx,L"ColorIndexVS.cso" );
+		// 创建顶点着色器
+		auto pvs = std::make_unique<VertexShader>(gfx, L"PhongVS.cso");
 		auto pvsbc = pvs->GetBytecode();
 		AddStaticBind( std::move( pvs ) );		
-
-		AddStaticBind( std::make_unique<PixelShader>( gfx,L"ColorIndexPS.cso" ) );
-
+		// 创建像素着色器
+		AddStaticBind(std::make_unique<PixelShader>(gfx, L"PhongPS.cso"));
+		// 创建索引缓存
 		AddStaticIndexBuffer( std::make_unique<IndexBuffer>( gfx,model.indices ) );
 
-		struct PixelShaderConstants
+		#pragma region ver1.24.1弃用
+		/*struct PixelShaderConstants
 		{
 			struct
 			{
@@ -68,22 +73,30 @@ Box::Box( Graphics& gfx,
 				{ 0.0f,1.0f,1.0f },
 				{ 0.0f,0.0f,0.0f },
 			}
+		};*/
+		#pragma endregion ver1.24.1弃用
+		// 自定义灯泡像素常数缓存并创建像素常数缓存
+		struct PSLightConstants
+		{
+			dx::XMVECTOR pos;
 		};
-		AddStaticBind( std::make_unique<PixelConstantBuffer<PixelShaderConstants>>( gfx,cb2 ) );
+		AddStaticBind(std::make_unique<PixelConstantBuffer<PSLightConstants>>(gfx));
 
+		// 创建输入布局;持有位置和法线
 		const std::vector<D3D11_INPUT_ELEMENT_DESC> ied =
 		{
 			{ "Position",0,DXGI_FORMAT_R32G32B32_FLOAT,0,0,D3D11_INPUT_PER_VERTEX_DATA,0 },
+			{ "Normal",0,DXGI_FORMAT_R32G32B32_FLOAT,0,12,D3D11_INPUT_PER_VERTEX_DATA,0 },
 		};
 		AddStaticBind( std::make_unique<InputLayout>( gfx,ied,pvsbc ) );
-
+		// 创建输入图元
 		AddStaticBind( std::make_unique<Topology>( gfx,D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST ) );
 	}
 	else
 	{
 		SetIndexFromStatic();
 	}
-
+	// 创建顶点常数缓存
 	AddBind( std::make_unique<TransformCbuf>( gfx,*this ) );
 	
 	// model deformation transform (per instance, not stored as bind)
