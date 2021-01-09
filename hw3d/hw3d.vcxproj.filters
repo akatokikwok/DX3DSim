@@ -157,7 +157,7 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="SolidSphere.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\Drawable</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -321,7 +321,7 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="SolidSphere.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\Drawable</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -355,6 +355,18 @@
       <Filter>Shader</Filter>
     </FxCompile>
     <FxCompile Include="TextureVS.hlsl">
+      <Filter>Shader</Filter>
+    </FxCompile>
+    <FxCompile Include="PhongPS.hlsl">
+      <Filter>Shader</Filter>
+    </FxCompile>
+    <FxCompile Include="PhongVS.hlsl">
+      <Filter>Shader</Filter>
+    </FxCompile>
+    <FxCompile Include="SolidPS.hlsl">
+      <Filter>Shader</Filter>
+    </FxCompile>
+    <FxCompile Include="SolidVS.hlsl">
       <Filter>Shader</Filter>
     </FxCompile>
   </ItemGroup>
