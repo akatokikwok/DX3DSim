@@ -22,6 +22,7 @@ GDIPlusManager gdipm;
 App::App()
 	:
 	wnd( 800,600,"The Window's Title of Renbin" )
+	,light(wnd.Gfx())
 {
 	// 工厂类,含有构造持有图形,另外重载()操作符来达到动态选择哪个模型被创建实例化
 	class Factory
@@ -31,6 +32,7 @@ App::App()
 			:
 			gfx( gfx )
 		{}
+
 		std::unique_ptr<Drawable> operator()()
 		{
 			switch( typedist( rng ) )
@@ -64,6 +66,12 @@ App::App()
 				assert( false && "bad drawable type in factory" );
 				return {};
 			}
+
+			return std::make_unique<Box>(
+				gfx, rng, adist, ddist,
+				odist, rdist, bdist
+				);
+
 		}
 	private:
 		Graphics& gfx;
@@ -85,7 +93,7 @@ App::App()
 	// generate_n() 功能:一个函数对象产生的值给一定的范围内指定数目的容器元素赋值
 	std::generate_n( std::back_inserter( drawables ),nDrawables,Factory{ wnd.Gfx() } );
 
-	const auto s = Surface::FromFile("Images\\kappa50.png");
+	//const auto s = Surface::FromFile("Images\\kappa50.png");
 	// 构建左手透视投影矩阵
 	wnd.Gfx().SetProjection(dx::XMMatrixPerspectiveLH(1.0f, 3.0f / 4.0f, 0.5f, 40.0f));
 	//// 构建观察矩阵
@@ -96,6 +104,8 @@ void App::DoFrame()
 {
 	const auto dt = timer.Mark() * speed_factor;
 	//wnd.Gfx().ClearBuffer( 0.07f,0.0f,0.12f );
+	
+	wnd.Gfx().BeginFrame(0.07f, 0.0f, 0.12f);
 	// 每帧设置视图观察矩阵
 	wnd.Gfx().SetCamera(cam.GetMatrix());
 
@@ -108,7 +118,8 @@ void App::DoFrame()
 	{
 		wnd.Gfx().EnableImgui();
 	}*/
-	wnd.Gfx().BeginFrame(0.07f, 0.0f, 0.12f);
+	
+	light.Bind(wnd.Gfx());
 
 	for( auto& d : drawables )
 	{
@@ -117,6 +128,7 @@ void App::DoFrame()
 		// 绑定各个Bindable实例并按索引绘制
 		d->Draw( wnd.Gfx() );
 	}	
+	light.Draw(wnd.Gfx());
 
 	#pragma region imgui绘制实例过程
 	// imgui 实例; 若放在渲染d3d之前,则imgui位于背景,而D3D在前; Imgui没有z缓冲
@@ -135,7 +147,7 @@ void App::DoFrame()
 	//ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());// 把内部格式数据转换到dx11平台上
 	#pragma endregion imgui绘制实例过程,弃用
 
-	static char buffer[1024];
+	//static char buffer[1024];
 	/// "速度创建"窗口
 	if (ImGui::Begin("the windos's Title : Simulation Speed"))
 	{		
@@ -149,6 +161,8 @@ void App::DoFrame()
 	ImGui::End();
 	// 必须在速度创建窗口被绘制出来之后 才允许绘制 这个控制器窗口
 	cam.SpawnControlWindow();
+
+	light.SpawnControlWindow();
 
 	// 使用交换链拿到后台缓存上屏,同时把imgui内部格式数据转换到dx11平台上
 	wnd.Gfx().EndFrame();
