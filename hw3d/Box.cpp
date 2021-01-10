@@ -73,8 +73,10 @@ Box::Box( Graphics& gfx,
 	// 自定义1个PS材质常量结构体
 	struct PSMaterialConstant
 	{
-		dx::XMFLOAT3 color;
-		float padding;
+		alignas(16) dx::XMFLOAT3 color;// 材质颜色
+		float specularIntensity = 0.6f;// 镜面强度
+		float specularPower = 30.0f;   // 镜面幂级数
+		float padding[2];
 	} colorConst;
 	colorConst.color = material;
 	// 常量绑定到插槽1号

@@ -12,15 +12,15 @@ TransformCbuf::TransformCbuf( Graphics& gfx,const Drawable& parent, UINT slot)
 
 void TransformCbuf::Bind( Graphics& gfx ) noexcept
 {
-	// 拿到模型矩阵 
-	const auto model = parent.GetTransformXM();
+	// 拿到模型视图矩阵 
+	const auto modelView = parent.GetTransformXM() * gfx.GetCamera();
 	// 自定义1个结构体;模型矩阵的转置、和MVP的转置
 	const Transforms tf =
 	{
-		DirectX::XMMatrixTranspose( model ),
+		DirectX::XMMatrixTranspose(modelView),
 		DirectX::XMMatrixTranspose(
-			model *
-			gfx.GetCamera() *
+			modelView *
+			
 			gfx.GetProjection()
 		)
 	};
