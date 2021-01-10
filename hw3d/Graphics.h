@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include "ChiliWin.h"
 #include "ChiliException.h"
 #include <d3d11.h>
@@ -54,28 +54,21 @@ public:
 	Graphics( HWND hWnd );
 	Graphics( const Graphics& ) = delete;
 	Graphics& operator=( const Graphics& ) = delete;
-	~Graphics() = default;
-	/* // 在imgui开关打开的情况下3个new构造imgui实例并同时生成颜色填充清除渲染目标和清除zbuffer*/
-	void BeginFrame(float red, float green, float blue) noexcept;
+	~Graphics();
 	void EndFrame();
-	//void ClearBuffer( float red,float green,float blue ) noexcept;
+	void BeginFrame( float red,float green,float blue ) noexcept;
 	void DrawIndexed( UINT count ) noexcept(!IS_DEBUG);
-
-	void SetCamera(DirectX::FXMMATRIX cam) noexcept;
-	DirectX::XMMATRIX GetCamera() const noexcept;
-
 	void SetProjection( DirectX::FXMMATRIX proj ) noexcept;
 	DirectX::XMMATRIX GetProjection() const noexcept;
-
+	void SetCamera( DirectX::FXMMATRIX cam ) noexcept;
+	DirectX::XMMATRIX GetCamera() const noexcept;
 	void EnableImgui() noexcept;
 	void DisableImgui() noexcept;
 	bool IsImguiEnabled() const noexcept;
 private:
 	DirectX::XMMATRIX projection;
 	DirectX::XMMATRIX camera;
-
 	bool imguiEnabled = true;
-
 #ifndef NDEBUG
 	DxgiInfoManager infoManager;
 #endif

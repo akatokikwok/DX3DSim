@@ -1,4 +1,4 @@
-﻿#include "InputLayout.h"
+#include "InputLayout.h"
 #include "GraphicsThrowMacros.h"
 
 InputLayout::InputLayout( Graphics& gfx,

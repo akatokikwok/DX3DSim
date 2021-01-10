@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include "IndexedTriangleList.h"
 #include <DirectXMath.h>
 #include <initializer_list>
@@ -34,7 +34,6 @@ public:
 			}
 		};
 	}
-	// 展开立方体UV的Makin方法;V是顶点结构体型
 	template<class V>
 	static IndexedTriangleList<V> MakeSkinned()
 	{
@@ -43,8 +42,7 @@ public:
 		constexpr float side = 1.0f / 2.0f;
 
 		std::vector<V> vertices( 14 );
-		// 具有重复的顶点,这些重复顶点将在unwrap或者展UV时候起到作用;
-		// 立方体展开之后的贴图有14个顶点,参考十字架方块
+
 		vertices[0].pos = { -side,-side,-side };
 		vertices[0].tex = { 2.0f / 3.0f,0.0f / 4.0f };
 		vertices[1].pos = { side,-side,-side };
@@ -85,14 +83,12 @@ public:
 			}
 		};
 	}
-
-	// 可以构造独立顶点的方法
 	template<class V>
 	static IndexedTriangleList<V> MakeIndependent()
 	{
 		constexpr float side = 1.0f / 2.0f;
 
-		std::vector<V> vertices(24);
+		std::vector<V> vertices( 24 );
 		vertices[0].pos = { -side,-side,-side };// 0 near side
 		vertices[1].pos = { side,-side,-side };// 1
 		vertices[2].pos = { -side,side,-side };// 2
@@ -119,7 +115,7 @@ public:
 		vertices[23].pos = { side,side,side };// 23
 
 		return{
-			std::move(vertices),{
+			std::move( vertices ),{
 				0,2, 1,    2,3,1,
 				4,5, 7,    4,7,6,
 				8,10, 9,  10,11,9,

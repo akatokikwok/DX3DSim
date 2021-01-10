@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include "Bindable.h"
 #include "GraphicsThrowMacros.h"
 

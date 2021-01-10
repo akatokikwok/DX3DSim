@@ -1,8 +1,7 @@
-﻿#include "Box.h"
+#include "Box.h"
 #include "BindableBase.h"
 #include "GraphicsThrowMacros.h"
 #include "Cube.h"
-#include "Sampler.h"
 
 
 Box::Box( Graphics& gfx,
@@ -38,48 +37,13 @@ Box::Box( Graphics& gfx,
 
 		AddStaticBind( std::make_unique<VertexBuffer>( gfx,model.vertices ) );
 
-		AddStaticBind(std::make_unique<Sampler>(gfx));
-
-		//auto pvs = std::make_unique<VertexShader>( gfx,L"ColorIndexVS.cso" );
-		auto pvs = std::make_unique<VertexShader>(gfx, L"PhongVS.cso");
+		auto pvs = std::make_unique<VertexShader>( gfx,L"PhongVS.cso" );
 		auto pvsbc = pvs->GetBytecode();
-		AddStaticBind( std::move( pvs ) );		
+		AddStaticBind( std::move( pvs ) );
 
-		//AddStaticBind( std::make_unique<PixelShader>( gfx,L"ColorIndexPS.cso" ) );
-		AddStaticBind(std::make_unique<PixelShader>(gfx, L"PhongPS.cso"));
+		AddStaticBind( std::make_unique<PixelShader>( gfx,L"PhongPS.cso" ) );
 
 		AddStaticIndexBuffer( std::make_unique<IndexBuffer>( gfx,model.indices ) );
-
-		/*struct PixelShaderConstants
-		{
-			struct
-			{
-				float r;
-				float g;
-				float b;
-				float a;
-			} face_colors[8];
-		};
-		const PixelShaderConstants cb2 =
-		{
-			{
-				{ 1.0f,1.0f,1.0f },
-				{ 1.0f,0.0f,0.0f },
-				{ 0.0f,1.0f,0.0f },
-				{ 1.0f,1.0f,0.0f },
-				{ 0.0f,0.0f,1.0f },
-				{ 1.0f,0.0f,1.0f },
-				{ 0.0f,1.0f,1.0f },
-				{ 0.0f,0.0f,0.0f },
-			}
-		};
-		AddStaticBind( std::make_unique<PixelConstantBuffer<PixelShaderConstants>>( gfx,cb2 ) );*/
-
-		struct PSLightConstants
-		{
-			dx::XMVECTOR pos;
-		};
-		AddStaticBind(std::make_unique<PixelConstantBuffer<PSLightConstants>>(gfx));
 
 		const std::vector<D3D11_INPUT_ELEMENT_DESC> ied =
 		{
@@ -120,5 +84,5 @@ DirectX::XMMATRIX Box::GetTransformXM() const noexcept
 	return dx::XMLoadFloat3x3( &mt ) *
 		dx::XMMatrixRotationRollPitchYaw( pitch,yaw,roll ) *
 		dx::XMMatrixTranslation( r,0.0f,0.0f ) *
-		dx::XMMatrixRotationRollPitchYaw(theta, phi, chi);
+		dx::XMMatrixRotationRollPitchYaw( theta,phi,chi );
 }

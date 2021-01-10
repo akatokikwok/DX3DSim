@@ -6,7 +6,7 @@ template<typename C>
 class ConstantBuffer : public Bindable
 {
 public:
-	// 接受参数矩阵来更新常量缓存
+	// 按参数常量并以map形式更新常量缓存
 	void Update( Graphics& gfx,const C& consts )
 	{
 		INFOMAN( gfx );
@@ -60,6 +60,7 @@ class VertexConstantBuffer : public ConstantBuffer<C>
 	using Bindable::GetContext;
 public:
 	using ConstantBuffer<C>::ConstantBuffer;
+	// 管线上绑定 顶点着色器常数缓存
 	void Bind( Graphics& gfx ) noexcept override
 	{
 		GetContext( gfx )->VSSetConstantBuffers( 0u,1u,pConstantBuffer.GetAddressOf() );
@@ -73,6 +74,7 @@ class PixelConstantBuffer : public ConstantBuffer<C>
 	using Bindable::GetContext;
 public:
 	using ConstantBuffer<C>::ConstantBuffer;
+	// 管线上绑定 像素着色器常数缓存
 	void Bind( Graphics& gfx ) noexcept override
 	{
 		GetContext( gfx )->PSSetConstantBuffers( 0u,1u,pConstantBuffer.GetAddressOf() );

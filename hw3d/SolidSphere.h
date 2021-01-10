@@ -1,13 +1,16 @@
 ﻿#pragma once
 #include "DrawableBase.h"
 
+// 灯泡网格类;继承自 drawablebase<T>
 class SolidSphere : public DrawableBase<SolidSphere>
 {
 public:
-	SolidSphere(Graphics& gfx, float radius);
-	void Update(float dt) noexcept override;
-	void SetPos(DirectX::XMFLOAT3 pos) noexcept;
+	SolidSphere( Graphics& gfx,float radius );
+	void Update( float dt ) noexcept override;
+	
 	DirectX::XMMATRIX GetTransformXM() const noexcept override;
+	// 设置灯泡位置
+	void SetPos(DirectX::XMFLOAT3 pos) noexcept;
 private:
 	DirectX::XMFLOAT3 pos = { 1.0f,1.0f,1.0f };
 };

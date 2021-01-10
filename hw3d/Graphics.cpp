@@ -1,11 +1,11 @@
-﻿#include "Graphics.h"
+#include "Graphics.h"
 #include "dxerr.h"
 #include <sstream>
 #include <d3dcompiler.h>
 #include <cmath>
 #include <DirectXMath.h>
 #include "GraphicsThrowMacros.h"
-#include "imgui\imgui_impl_dx11.h"
+#include "imgui/imgui_impl_dx11.h"
 #include "imgui/imgui_impl_win32.h"
 
 namespace wrl = Microsoft::WRL;
@@ -109,34 +109,23 @@ Graphics::Graphics( HWND hWnd )
 	vp.TopLeftX = 0.0f;
 	vp.TopLeftY = 0.0f;
 	pContext->RSSetViewports( 1u,&vp );
-
-	// 在构造函数里顺带初始化imgui
-	ImGui_ImplDX11_Init(pDevice.Get(), pContext.Get());
-
+	
+	// init imgui d3d impl
+	ImGui_ImplDX11_Init( pDevice.Get(),pContext.Get() );
 }
 
-void Graphics::BeginFrame(float red, float green, float blue) noexcept
+Graphics::~Graphics()
 {
-	// imgui begin frame调用3个new
-	if (imguiEnabled)
-	{
-		ImGui_ImplDX11_NewFrame();
-		ImGui_ImplWin32_NewFrame();
-		ImGui::NewFrame();
-	}
-
-	const float color[] = { red,green,blue,1.0f };
-	pContext->ClearRenderTargetView(pTarget.Get(), color);// 清除渲染目标
-	pContext->ClearDepthStencilView(pDSV.Get(), D3D11_CLEAR_DEPTH, 1.0f, 0u);// 清除深度缓冲	
+	ImGui_ImplDX11_Shutdown();
 }
 
 void Graphics::EndFrame()
 {
 	// imgui frame end
-	if (imguiEnabled)
+	if( imguiEnabled )
 	{
 		ImGui::Render();
-		ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
+		ImGui_ImplDX11_RenderDrawData( ImGui::GetDrawData() );
 	}
 
 	HRESULT hr;
@@ -156,12 +145,20 @@ void Graphics::EndFrame()
 	}
 }
 
-//void Graphics::ClearBuffer( float red,float green,float blue ) noexcept
-//{
-//	const float color[] = { red,green,blue,1.0f };
-//	pContext->ClearRenderTargetView( pTarget.Get(),color );
-//	pContext->ClearDepthStencilView( pDSV.Get(),D3D11_CLEAR_DEPTH,1.0f,0u );
-//}
+void Graphics::BeginFrame( float red,float green,float blue ) noexcept
+{
+	// imgui begin frame
+	if( imguiEnabled )
+	{
+		ImGui_ImplDX11_NewFrame();
+		ImGui_ImplWin32_NewFrame();
+		ImGui::NewFrame();
+	}
+
+	const float color[] = { red,green,blue,1.0f };
+	pContext->ClearRenderTargetView( pTarget.Get(),color );
+	pContext->ClearDepthStencilView( pDSV.Get(),D3D11_CLEAR_DEPTH,1.0f,0u );
+}
 
 void Graphics::DrawIndexed( UINT count ) noexcept(!IS_DEBUG)
 {
@@ -178,7 +175,7 @@ DirectX::XMMATRIX Graphics::GetProjection() const noexcept
 	return projection;
 }
 
-void Graphics::SetCamera(DirectX::FXMMATRIX cam) noexcept
+void Graphics::SetCamera( DirectX::FXMMATRIX cam ) noexcept
 {
 	camera = cam;
 }

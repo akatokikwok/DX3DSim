@@ -1,4 +1,4 @@
-ï»¿#pragma once
+#pragma once
 #include "Graphics.h"
 #include <DirectXMath.h>
 
@@ -11,12 +11,14 @@ class Drawable
 public:
 	Drawable() = default;
 	Drawable( const Drawable& ) = delete;
-	virtual DirectX::XMMATRIX GetTransformXM() const noexcept = 0;
-	/* æŠŠå„ç»‘å®šå®ä¾‹ç»‘å®šç‰©ç»‘å®šåˆ°ç®¡çº¿ä¸Š,å¹¶æŒ‰ç…§Indexed()å»ç»˜åˆ¶*/
-	void Draw( Graphics& gfx ) const noexcept(!IS_DEBUG);
-	/* æ ¹æ®æ—¶é•¿å˜åŒ–æ›´æ–°ä¸€å¤§å †yaw pitch rollå‚æ•°*/
-	virtual void Update( float dt ) noexcept = 0;
 	virtual ~Drawable() = default;
+	// ÈÃ»æÖÆÎï ÄÃÈ¡ÒÔÄ£ĞÍ¾ØÕó³ËÒÔ¸÷×Ô¶¨ÒåµÄĞı×ª¾ØÕó\»òÕß±ä»»¾ØÕó
+	virtual DirectX::XMMATRIX GetTransformXM() const noexcept = 0;
+	// ÈÃ»æÖÆÎï °ó¶¨µ½Á÷Ë®ÏßÍ¬Ê±°´Ë÷Òı»æÖÆ
+	void Draw( Graphics& gfx ) const noexcept(!IS_DEBUG);
+	// ÈÃ»æÖÆÎï °´Ê±³¤¸üĞÂ¸÷×ÔµÄyaw\pith\roll\theta 
+	virtual void Update( float dt ) noexcept = 0;
+	
 protected:
 	void AddBind( std::unique_ptr<Bindable> bind ) noexcept(!IS_DEBUG);
 	void AddIndexBuffer( std::unique_ptr<class IndexBuffer> ibuf ) noexcept(!IS_DEBUG);

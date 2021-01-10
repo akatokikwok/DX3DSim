@@ -1,4 +1,4 @@
-﻿#include "ChiliTimer.h"
+#include "ChiliTimer.h"
 
 using namespace std::chrono;
 

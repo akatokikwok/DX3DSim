@@ -1,4 +1,4 @@
-ï»¿#include "TransformCbuf.h"
+#include "TransformCbuf.h"
 
 TransformCbuf::TransformCbuf( Graphics& gfx,const Drawable& parent )
 	:
@@ -6,24 +6,26 @@ TransformCbuf::TransformCbuf( Graphics& gfx,const Drawable& parent )
 {
 	if( !pVcbuf )
 	{
-		pVcbuf = std::make_unique<VertexConstantBuffer<Transforms>>(gfx);
+		pVcbuf = std::make_unique<VertexConstantBuffer<Transforms>>( gfx );
 	}
 }
 
 void TransformCbuf::Bind( Graphics& gfx ) noexcept
 {
+	// ÄÃµ½Ä£ÐÍ¾ØÕó 
 	const auto model = parent.GetTransformXM();
+	// ×Ô¶¨Òå1¸ö½á¹¹Ìå;Ä£ÐÍ¾ØÕóµÄ×ªÖÃ¡¢ºÍMVPµÄ×ªÖÃ
 	const Transforms tf =
 	{
-		DirectX::XMMatrixTranspose(model),
+		DirectX::XMMatrixTranspose( model ),
 		DirectX::XMMatrixTranspose(
 			model *
 			gfx.GetCamera() *
 			gfx.GetProjection()
 		)
 	};
-	pVcbuf->Update(gfx, tf);
-	pVcbuf->Bind(gfx);
+	pVcbuf->Update( gfx,tf ); // ÓÃ¾ØÕó½á¹¹Ìå³£Á¿¸üÐÂ¶¥µã³£Êý»º´æ
+	pVcbuf->Bind( gfx );	  // ¹ÜÏßÉÏ°ó¶¨³£Êý»º´æ	
 }
 
 std::unique_ptr<VertexConstantBuffer<TransformCbuf::Transforms>> TransformCbuf::pVcbuf;

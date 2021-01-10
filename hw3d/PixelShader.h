@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include "Bindable.h"
 
 class PixelShader : public Bindable
@@ -8,5 +8,4 @@ public:
 	void Bind( Graphics& gfx ) noexcept override;
 protected:
 	Microsoft::WRL::ComPtr<ID3D11PixelShader> pPixelShader;
-	//Microsoft::WRL::ComPtr<ID3D11SamplerState> pSamplerState;
 };

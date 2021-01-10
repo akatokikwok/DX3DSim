@@ -1,8 +1,27 @@
-﻿#include "Window.h"
+/******************************************************************************************
+*	Chili Direct3D Engine																  *
+*	Copyright 2018 PlanetChili <http://www.planetchili.net>								  *
+*																						  *
+*	This file is part of Chili Direct3D Engine.											  *
+*																						  *
+*	Chili Direct3D Engine is free software: you can redistribute it and/or modify		  *
+*	it under the terms of the GNU General Public License as published by				  *
+*	the Free Software Foundation, either version 3 of the License, or					  *
+*	(at your option) any later version.													  *
+*																						  *
+*	The Chili Direct3D Engine is distributed in the hope that it will be useful,		  *
+*	but WITHOUT ANY WARRANTY; without even the implied warranty of						  *
+*	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the						  *
+*	GNU General Public License for more details.										  *
+*																						  *
+*	You should have received a copy of the GNU General Public License					  *
+*	along with The Chili Direct3D Engine.  If not, see <http://www.gnu.org/licenses/>.    *
+******************************************************************************************/
+#include "Window.h"
 #include <sstream>
 #include "resource.h"
 #include "WindowsThrowMacros.h"
-#include "imgui/imgui_impl_win32.h"// 包含它让其能够读取鼠标键盘的输入并处理
+#include "imgui/imgui_impl_win32.h"
 
 
 // Window Class Stuff
@@ -80,10 +99,8 @@ Window::Window( int width,int height,const char* name )
 	}
 	// newly created windows start off as hidden
 	ShowWindow( hWnd,SW_SHOWDEFAULT );
-
-	// 初始化Imgui的实现类
-	ImGui_ImplWin32_Init(hWnd);
-
+	// Init ImGui Win32 Impl
+	ImGui_ImplWin32_Init( hWnd );
 	// create graphics object
 	pGfx = std::make_unique<Graphics>( hWnd );
 }
@@ -162,12 +179,11 @@ LRESULT CALLBACK Window::HandleMsgThunk( HWND hWnd,UINT msg,WPARAM wParam,LPARAM
 
 LRESULT Window::HandleMsg( HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam ) noexcept
 {
-	if (ImGui_ImplWin32_WndProcHandler(hWnd, msg, wParam, lParam))
+	if( ImGui_ImplWin32_WndProcHandler( hWnd,msg,wParam,lParam ) )
 	{
 		return true;
 	}
-	// Imgui的IO
-	const auto imio = ImGui::GetIO();
+	const auto& imio = ImGui::GetIO();
 
 	switch( msg )
 	{
@@ -185,13 +201,11 @@ LRESULT Window::HandleMsg( HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam ) noex
 	case WM_KEYDOWN:
 	// syskey commands need to be handled to track ALT key (VK_MENU) and F10
 	case WM_SYSKEYDOWN:
-
-		// 在应用程序收到任何消息的时候，先检查Imgui是否在接受键盘输入
-		if (imio.WantCaptureKeyboard)
+		// stifle this keyboard message if imgui wants to capture
+		if( imio.WantCaptureKeyboard )
 		{
 			break;
 		}
-
 		if( !(lParam & 0x40000000) || kbd.AutorepeatIsEnabled() ) // filter autorepeat
 		{
 			kbd.OnKeyPressed( static_cast<unsigned char>(wParam) );
@@ -199,22 +213,19 @@ LRESULT Window::HandleMsg( HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam ) noex
 		break;
 	case WM_KEYUP:
 	case WM_SYSKEYUP:
-		
 		// stifle this keyboard message if imgui wants to capture
-		if (imio.WantCaptureKeyboard)
+		if( imio.WantCaptureKeyboard )
 		{
 			break;
 		}
-
 		kbd.OnKeyReleased( static_cast<unsigned char>(wParam) );
 		break;
 	case WM_CHAR:
 		// stifle this keyboard message if imgui wants to capture
-		if (imio.WantCaptureKeyboard)
+		if( imio.WantCaptureKeyboard )
 		{
 			break;
 		}
-
 		kbd.OnChar( static_cast<unsigned char>(wParam) );
 		break;
 	/*********** END KEYBOARD MESSAGES ***********/
@@ -223,11 +234,10 @@ LRESULT Window::HandleMsg( HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam ) noex
 	case WM_MOUSEMOVE:
 	{
 		// stifle this mouse message if imgui wants to capture
-		if (imio.WantCaptureMouse)
+		if( imio.WantCaptureMouse )
 		{
 			break;
 		}
-
 		const POINTS pt = MAKEPOINTS( lParam );
 		// in client region -> log move, and log enter + capture mouse (if not previously in window)
 		if( pt.x >= 0 && pt.x < width && pt.y >= 0 && pt.y < height )
@@ -257,26 +267,23 @@ LRESULT Window::HandleMsg( HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam ) noex
 	}
 	case WM_LBUTTONDOWN:
 	{
-		SetForegroundWindow(hWnd);
+		SetForegroundWindow( hWnd );
 		// stifle this mouse message if imgui wants to capture
-		if (imio.WantCaptureMouse)
+		if( imio.WantCaptureMouse )
 		{
 			break;
 		}
-
 		const POINTS pt = MAKEPOINTS( lParam );
 		mouse.OnLeftPressed( pt.x,pt.y );
-		//SetForegroundWindow( hWnd );
 		break;
 	}
 	case WM_RBUTTONDOWN:
 	{
 		// stifle this mouse message if imgui wants to capture
-		if (imio.WantCaptureMouse)
+		if( imio.WantCaptureMouse )
 		{
 			break;
 		}
-
 		const POINTS pt = MAKEPOINTS( lParam );
 		mouse.OnRightPressed( pt.x,pt.y );
 		break;
@@ -284,11 +291,10 @@ LRESULT Window::HandleMsg( HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam ) noex
 	case WM_LBUTTONUP:
 	{
 		// stifle this mouse message if imgui wants to capture
-		if (imio.WantCaptureMouse)
+		if( imio.WantCaptureMouse )
 		{
 			break;
 		}
-
 		const POINTS pt = MAKEPOINTS( lParam );
 		mouse.OnLeftReleased( pt.x,pt.y );
 		// release mouse if outside of window
@@ -302,11 +308,10 @@ LRESULT Window::HandleMsg( HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam ) noex
 	case WM_RBUTTONUP:
 	{
 		// stifle this mouse message if imgui wants to capture
-		if (imio.WantCaptureMouse)
+		if( imio.WantCaptureMouse )
 		{
 			break;
 		}
-
 		const POINTS pt = MAKEPOINTS( lParam );
 		mouse.OnRightReleased( pt.x,pt.y );
 		// release mouse if outside of window
@@ -320,11 +325,10 @@ LRESULT Window::HandleMsg( HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam ) noex
 	case WM_MOUSEWHEEL:
 	{
 		// stifle this mouse message if imgui wants to capture
-		if (imio.WantCaptureMouse)
+		if( imio.WantCaptureMouse )
 		{
 			break;
 		}
-
 		const POINTS pt = MAKEPOINTS( lParam );
 		const int delta = GET_WHEEL_DELTA_WPARAM( wParam );
 		mouse.OnWheelDelta( pt.x,pt.y,delta );

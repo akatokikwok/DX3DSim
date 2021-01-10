@@ -1,9 +1,10 @@
-ï»¿#pragma once
+#pragma once
 #include "Graphics.h"
 
 class Bindable
 {
 public:
+	// ÈÃ°ó¶¨Îï×ÓÀà¸÷×Ô°ó¶¨µ½¸÷×ÔµÄÁ÷Ë®Ïß
 	virtual void Bind( Graphics& gfx ) noexcept = 0;
 	virtual ~Bindable() = default;
 protected:

@@ -3,7 +3,8 @@
 #include "ChiliTimer.h"
 #include "ImguiManager.h"
 #include "Camera.h"
- 
+#include "PointLight.h"
+
 class App
 {
 public:
@@ -14,13 +15,12 @@ public:
 private:
 	void DoFrame();
 private:
-	ImguiManager imgui;// 字段:imgui 管理器
-
+	ImguiManager imgui;
 	Window wnd;
 	ChiliTimer timer;
 	std::vector<std::unique_ptr<class Drawable>> drawables;
-	static constexpr size_t nDrawables = 180;
-	/*bool show_demo_window = true;*/
 	float speed_factor = 1.0f;
-	Camera cam;// 有一台摄像机
+	Camera cam;// 摄像机
+	PointLight light; //点光源
+	static constexpr size_t nDrawables = 180;
 };

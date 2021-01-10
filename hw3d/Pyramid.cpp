@@ -1,8 +1,7 @@
-﻿#include "Pyramid.h"
+#include "Pyramid.h"
 #include "BindableBase.h"
 #include "GraphicsThrowMacros.h"
 #include "Cone.h"
-#include "Sampler.h"
 
 
 Pyramid::Pyramid( Graphics& gfx,
@@ -50,8 +49,6 @@ Pyramid::Pyramid( Graphics& gfx,
 		model.Transform( dx::XMMatrixScaling( 1.0f,1.0f,0.7f ) );
 
 		AddStaticBind( std::make_unique<VertexBuffer>( gfx,model.vertices ) );
-		
-		AddStaticBind(std::make_unique<Sampler>(gfx));
 
 		auto pvs = std::make_unique<VertexShader>( gfx,L"ColorBlendVS.cso" );
 		auto pvsbc = pvs->GetBytecode();
@@ -93,5 +90,5 @@ DirectX::XMMATRIX Pyramid::GetTransformXM() const noexcept
 	namespace dx = DirectX;
 	return dx::XMMatrixRotationRollPitchYaw( pitch,yaw,roll ) *
 		dx::XMMatrixTranslation( r,0.0f,0.0f ) *
-		dx::XMMatrixRotationRollPitchYaw(theta, phi, chi);
+		dx::XMMatrixRotationRollPitchYaw( theta,phi,chi );
 }

@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include "DrawableBase.h"
 
 class Sheet : public DrawableBase<Sheet>
