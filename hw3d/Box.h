@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "DrawableBase.h"
 
 class Box : public DrawableBase<Box>
@@ -10,7 +10,9 @@ public:
 		std::uniform_real_distribution<float>& odist,
 		std::uniform_real_distribution<float>& rdist,
 		std::uniform_real_distribution<float>& bdist );
+	// 按时长更新一堆欧拉常数
 	void Update( float dt ) noexcept override;
+	// 拿取模型的变换 
 	DirectX::XMMATRIX GetTransformXM() const noexcept override;
 private:
 	// positional

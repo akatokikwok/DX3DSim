@@ -1,4 +1,4 @@
-#include "Box.h"
+﻿#include "Box.h"
 #include "BindableBase.h"
 #include "GraphicsThrowMacros.h"
 #include "Cube.h"
@@ -43,7 +43,15 @@ Box::Box( Graphics& gfx,
 
 		AddStaticBind( std::make_unique<PixelShader>( gfx,L"PhongPS.cso" ) );
 
-		AddStaticIndexBuffer( std::make_unique<IndexBuffer>( gfx,model.indices ) );
+		AddStaticIndexBuffer( std::make_unique<IndexBuffer>( gfx,model.indices ) ); 
+
+		// 注释掉,不应在box里使用灯光的像素常量缓存,因为光照是全局的,与哪个绘制物无关 
+		/*struct PSLightConstants
+		{
+			dx::XMVECTOR pos;
+		};
+		AddStaticBind(std::make_unique<PixelConstantBuffer<PSLightConstants>>(gfx));*/
+
 
 		const std::vector<D3D11_INPUT_ELEMENT_DESC> ied =
 		{

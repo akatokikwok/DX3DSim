@@ -15,7 +15,8 @@ public:
 	void Reset() noexcept;
 	// 设置灯泡网格位置并按索引绘制该网格
 	void Draw( Graphics& gfx ) const noexcept(!IS_DEBUG);
-	// 更新像素常量缓存(此处为灯泡位置)并同时绑定到管线
+	// 更新像素常量缓存(此处为灯泡位置)并同时绑定到管线;
+	// 注意要此方法内实现的时候也要供调用者每帧绑定到管线
 	void Bind( Graphics& gfx ) const noexcept;
 private:
 	// 像素着色器常量缓存结构体
