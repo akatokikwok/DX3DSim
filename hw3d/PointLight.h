@@ -19,14 +19,23 @@ public:
 	// 注意要此方法内实现的时候也要供调用者每帧绑定到管线
 	void Bind( Graphics& gfx ) const noexcept;
 private:
-	// 像素着色器常量缓存结构体
+	// 点光源的 像素着色器常量缓存结构体
 	struct PointLightCBuf
 	{
 		DirectX::XMFLOAT3 pos;
-		float padding;
+		/*float padding;*/
+
+		DirectX::XMFLOAT3 materialColor;
+		DirectX::XMFLOAT3 ambient;
+		DirectX::XMFLOAT3 diffuseColor;
+		float diffuseIntensity;
+		float attConst;
+		float attLin;
+		float attQuad;
 	};
 private:
-	DirectX::XMFLOAT3 pos = { 0.0f,0.0f,0.0f };;	 // 灯泡网格位置
+	PointLightCBuf cbData;							 // 常量结构体实例
+
 	mutable SolidSphere mesh;						 // 灯泡网格体
 	mutable PixelConstantBuffer<PointLightCBuf> cbuf;// 像素常数缓存
 };

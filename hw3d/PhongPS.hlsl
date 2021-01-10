@@ -1,20 +1,28 @@
 cbuffer LightCBuf
 {
 	float3 lightPos;
+	
+    float3 materialColor;
+    float3 ambient;
+    float3 diffuseColor;
+    float diffuseIntensity;
+    float attConst;
+    float attLin;
+    float attQuad;
 };
 
-static const float3 materialColor = { 0.7f,0.7f,0.9f };
-static const float3 ambient = { 0.05f,0.05f,0.05f };
-static const float3 diffuseColor = { 1.0f,1.0f,1.0f };
-static const float diffuseIntensity = 1.0f;
+//static const float3 materialColor = { 0.7f,0.7f,0.9f };
+//static const float3 ambient = { 0.05f,0.05f,0.05f };
+//static const float3 diffuseColor = { 1.0f,1.0f,1.0f };
+//static const float diffuseIntensity = 1.0f;
 
-// 光照衰减范围由下面这些决定
-static const float attConst = 1.0f;
-static const float attLin = 0.045f;
-//static const float attLin = 0.001f;
+//// 光照衰减范围由下面这些决定
+//static const float attConst = 1.0f;
+//static const float attLin = 0.045f;
+////static const float attLin = 0.001f;
 
-static const float attQuad = 0.0075f;
-//static const float attQuad = 0.0002f;
+//static const float attQuad = 0.0075f;
+////static const float attQuad = 0.0002f;
 
 // 带法线的着色器,用于接受光源的照射;供给给那些承受光照的绘制物使用
 float4 main( float3 worldPos : Position,float3 n : Normal ) : SV_Target
