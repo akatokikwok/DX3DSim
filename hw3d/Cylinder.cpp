@@ -1,4 +1,4 @@
-#include "Cylinder.h"
+﻿#include "Cylinder.h"
 #include "Prism.h"
 #include "BindableBase.h"
 
@@ -44,7 +44,8 @@ Cylinder::Cylinder(Graphics& gfx, std::mt19937& rng,
 
 		struct PSMaterialConstant
 		{
-			alignas(16) dx::XMFLOAT3A colors[6] = {
+			// 使用查找表查找值
+			/*alignas(16)*/ dx::XMFLOAT3A colors[6] = {
 				{1.0f,0.0f,0.0f},
 				{0.0f,1.0f,0.0f},
 				{0.0f,0.0f,1.0f},

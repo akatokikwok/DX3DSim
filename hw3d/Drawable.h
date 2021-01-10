@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 #include "Graphics.h"
 #include <DirectXMath.h>
 
@@ -12,11 +12,11 @@ public:
 	Drawable() = default;
 	Drawable( const Drawable& ) = delete;
 	virtual ~Drawable() = default;
-	// ÈÃ»æÖÆÎï ÄÃÈ¡ÒÔÄ£ĞÍ¾ØÕó³ËÒÔ¸÷×Ô¶¨ÒåµÄĞı×ª¾ØÕó\»òÕß±ä»»¾ØÕó
+	// è®©ç»˜åˆ¶ç‰© æ‹¿å–ä»¥æ¨¡å‹çŸ©é˜µä¹˜ä»¥å„è‡ªå®šä¹‰çš„æ—‹è½¬çŸ©é˜µ\æˆ–è€…å˜æ¢çŸ©é˜µ
 	virtual DirectX::XMMATRIX GetTransformXM() const noexcept = 0;
-	// ÈÃ»æÖÆÎï °ó¶¨µ½Á÷Ë®ÏßÍ¬Ê±°´Ë÷Òı»æÖÆ
+	// è®©ç»˜åˆ¶ç‰© ç»‘å®šåˆ°æµæ°´çº¿åŒæ—¶æŒ‰ç´¢å¼•ç»˜åˆ¶
 	void Draw( Graphics& gfx ) const noexcept(!IS_DEBUG);
-	// ÈÃ»æÖÆÎï °´Ê±³¤¸üĞÂ¸÷×ÔµÄyaw\pith\roll\theta 
+	// è®©ç»˜åˆ¶ç‰© æŒ‰æ—¶é•¿æ›´æ–°å„è‡ªçš„yaw\pith\roll\theta 
 	virtual void Update( float dt ) noexcept = 0;
 	
 protected:

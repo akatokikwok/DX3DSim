@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "TestObject.h"
 
 class Cylinder : public TestObject<Cylinder>
