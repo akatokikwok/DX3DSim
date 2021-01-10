@@ -1,14 +1,20 @@
+// 光照常数应该在插槽0
 cbuffer LightCBuf
 {
 	float3 lightPos;
 	
-    float3 materialColor;
     float3 ambient;
     float3 diffuseColor;
     float diffuseIntensity;
     float attConst;
     float attLin;
     float attQuad;
+};
+// 绘制物常数应该在插槽1
+cbuffer ObjectCBuf
+{
+	// 材质应该独立出光照,材质颜色是由物体本身决定的
+    float3 materialColor;
 };
 
 //static const float3 materialColor = { 0.7f,0.7f,0.9f };

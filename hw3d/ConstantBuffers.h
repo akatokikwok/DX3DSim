@@ -20,7 +20,11 @@ public:
 		memcpy( msr.pData,&consts,sizeof( consts ) );
 		GetContext( gfx )->Unmap( pConstantBuffer.Get(),0u );
 	}
-	ConstantBuffer( Graphics& gfx,const C& consts )
+
+	/* 带常数, 插槽的构造;负责创建出常量缓存*/
+	ConstantBuffer(Graphics& gfx, const C& consts, UINT slot = 0u)
+		:
+		slot(slot)// 初始化插槽槽位
 	{
 		INFOMAN( gfx );
 
@@ -36,7 +40,11 @@ public:
 		csd.pSysMem = &consts;
 		GFX_THROW_INFO( GetDevice( gfx )->CreateBuffer( &cbd,&csd,&pConstantBuffer ) );
 	}
-	ConstantBuffer( Graphics& gfx )
+
+	/* 不带常数,只带插槽的构造;负责创建出常量缓存*/
+	ConstantBuffer(Graphics& gfx, UINT slot = 0u)
+		:
+		slot(slot)// 初始化插槽槽位
 	{
 		INFOMAN( gfx );
 
@@ -50,33 +58,41 @@ public:
 		GFX_THROW_INFO( GetDevice( gfx )->CreateBuffer( &cbd,nullptr,&pConstantBuffer ) );
 	}
 protected:
-	Microsoft::WRL::ComPtr<ID3D11Buffer> pConstantBuffer;
+	Microsoft::WRL::ComPtr<ID3D11Buffer> pConstantBuffer;// 常数缓存
+	UINT slot;											 // 插槽
 };
+
+/// <summary>
+/// 常量缓存的派生类: 顶点shader常数缓存和像素shader常数缓存
+/// </summary>
+/// <typeparam name="C"></typeparam>
 
 template<typename C>
 class VertexConstantBuffer : public ConstantBuffer<C>
 {
-	using ConstantBuffer<C>::pConstantBuffer;
-	using Bindable::GetContext;
+	using ConstantBuffer<C>::pConstantBuffer; // 复用基类常数缓存
+	using ConstantBuffer<C>::slot;			  // 复用基类插槽	
+	using Bindable::GetContext;					
 public:
 	using ConstantBuffer<C>::ConstantBuffer;
 	// 管线上绑定 顶点着色器常数缓存
 	void Bind( Graphics& gfx ) noexcept override
 	{
-		GetContext( gfx )->VSSetConstantBuffers( 0u,1u,pConstantBuffer.GetAddressOf() );
+		GetContext( gfx )->VSSetConstantBuffers( slot, 1u,pConstantBuffer.GetAddressOf() );
 	}
 };
 
 template<typename C>
 class PixelConstantBuffer : public ConstantBuffer<C>
 {
-	using ConstantBuffer<C>::pConstantBuffer;
+	using ConstantBuffer<C>::pConstantBuffer;// 复用基类常数缓存
+	using ConstantBuffer<C>::slot;			 // 复用基类插槽	
 	using Bindable::GetContext;
 public:
 	using ConstantBuffer<C>::ConstantBuffer;
 	// 管线上绑定 像素着色器常数缓存
 	void Bind( Graphics& gfx ) noexcept override
 	{
-		GetContext( gfx )->PSSetConstantBuffers( 0u,1u,pConstantBuffer.GetAddressOf() );
+		GetContext( gfx )->PSSetConstantBuffers( slot, 1u,pConstantBuffer.GetAddressOf() );
 	}
 };
