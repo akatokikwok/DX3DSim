@@ -26,9 +26,12 @@ App::App()
 		{}
 		std::unique_ptr<Drawable> operator()()
 		{
+			//  随机构造一个模型材质参数
+			const DirectX::XMFLOAT3 mat = { cdist(rng),cdist(rng),cdist(rng) };
 			return std::make_unique<Box>(
 				gfx,rng,adist,ddist,
 				odist,rdist,bdist
+				,mat
 			);
 		}
 	private:
@@ -39,6 +42,8 @@ App::App()
 		std::uniform_real_distribution<float> odist{ 0.0f,PI * 0.08f };
 		std::uniform_real_distribution<float> rdist{ 6.0f,20.0f };
 		std::uniform_real_distribution<float> bdist{ 0.4f,3.0f };
+
+		std::uniform_real_distribution<float> cdist{ 0.0f,1.0f };// 新增1个变量用于初始化材质
 	};
 
 	drawables.reserve( nDrawables );
