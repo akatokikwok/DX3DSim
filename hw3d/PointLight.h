@@ -22,12 +22,13 @@ private:
 	// 点光源的 像素着色器常量缓存结构体
 	struct PointLightCBuf
 	{
-		DirectX::XMFLOAT3 pos;
+		// 使用16字节对齐来驱使 编译时候缓存充足不报错
+		alignas(16) DirectX::XMFLOAT3 pos;
 		/*float padding;*/
 
-		DirectX::XMFLOAT3 materialColor;
-		DirectX::XMFLOAT3 ambient;
-		DirectX::XMFLOAT3 diffuseColor;
+		alignas(16) DirectX::XMFLOAT3 materialColor;
+		alignas(16) DirectX::XMFLOAT3 ambient;
+		alignas(16) DirectX::XMFLOAT3 diffuseColor;
 		float diffuseIntensity;
 		float attConst;
 		float attLin;
