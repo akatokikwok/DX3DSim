@@ -51,6 +51,7 @@ float4 main( float3 worldPos : Position,float3 n : Normal ) : SV_Target
     const float3 r = w * 2.0f - vToL;
 	// calculate specular intensity based on angle between viewing vector and reflection vector, narrow with power function
 	// 镜面光== (漫反射颜色*漫反射强度)* 镜面光强度 * ()的镜面级数
+	// 此时就可以实现让距离不同的绘制对象显示出的高光强弱有差异
     const float3 specular = att * (diffuseColor * diffuseIntensity) * specularIntensity * pow(max(0.0f, dot(normalize(-r), normalize(worldPos))), specularPower);
 	
 	// final color
