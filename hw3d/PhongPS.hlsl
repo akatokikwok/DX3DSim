@@ -1,4 +1,4 @@
-cbuffer LightCBuf
+ï»¿cbuffer LightCBuf
 {
 	float3 lightPos;
 };
@@ -8,7 +8,7 @@ static const float3 ambient = { 0.05f,0.05f,0.05f };
 static const float3 diffuseColor = { 1.0f,1.0f,1.0f };
 static const float diffuseIntensity = 1.0f;
 
-// ¹âÕÕË¥¼õ·¶Î§ÓÉÏÂÃæÕâĞ©¾ö¶¨
+// å…‰ç…§è¡°å‡èŒƒå›´ç”±ä¸‹é¢è¿™äº›å†³å®š
 static const float attConst = 1.0f;
 static const float attLin = 0.045f;
 //static const float attLin = 0.001f;
@@ -16,7 +16,7 @@ static const float attLin = 0.045f;
 static const float attQuad = 0.0075f;
 //static const float attQuad = 0.0002f;
 
-// ´ø·¨ÏßµÄ×ÅÉ«Æ÷,ÓÃÓÚ½ÓÊÜ¹âÔ´µÄÕÕÉä;¹©¸ø¸øÄÇĞ©³ĞÊÜ¹âÕÕµÄ»æÖÆÎïÊ¹ÓÃ
+// å¸¦æ³•çº¿çš„ç€è‰²å™¨,ç”¨äºæ¥å—å…‰æºçš„ç…§å°„;ä¾›ç»™ç»™é‚£äº›æ‰¿å—å…‰ç…§çš„ç»˜åˆ¶ç‰©ä½¿ç”¨
 float4 main( float3 worldPos : Position,float3 n : Normal ) : SV_Target
 {
 	// fragment to light vector data

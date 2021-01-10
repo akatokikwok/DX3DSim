@@ -1,4 +1,4 @@
-cbuffer CBuf
+锘縞buffer CBuf
 {
 	matrix model;
 	matrix modelViewProj;
@@ -14,8 +14,8 @@ struct VSOut
 VSOut main( float3 pos : Position,float3 n : Normal )
 {
 	VSOut vso;
-	vso.worldPos = (float3)mul( float4(pos,1.0f),model );// 世界位置等于 参数pos乘以模型矩阵
-	vso.normal = mul( n,(float3x3)model );				 // 法线位置等于 参数noraml乘以模型矩阵
-	vso.pos = mul( float4(pos,1.0f),modelViewProj );	 // 位置    等于 参数pos乘以MVP矩阵	
+	vso.worldPos = (float3)mul( float4(pos,1.0f),model );// 涓栫晫浣嶇疆绛変簬 鍙傛暟pos涔樹互妯″瀷鐭╅樀
+	vso.normal = mul( n,(float3x3)model );				 // 娉曠嚎浣嶇疆绛変簬 鍙傛暟noraml涔樹互妯″瀷鐭╅樀
+	vso.pos = mul( float4(pos,1.0f),modelViewProj );	 // 浣嶇疆    绛変簬 鍙傛暟pos涔樹互MVP鐭╅樀	
 	return vso;
 }
