@@ -17,7 +17,7 @@ public:
 	void Draw( Graphics& gfx ) const noexcept(!IS_DEBUG);
 	// 更新像素常量缓存(此处为灯泡位置)并同时绑定到管线;
 	// 注意要此方法内实现的时候也要供调用者每帧绑定到管线
-	void Bind( Graphics& gfx ) const noexcept;
+	void Bind(Graphics& gfx, DirectX::FXMMATRIX view) const noexcept;
 private:
 	// 点光源的 像素着色器常量缓存结构体
 	struct PointLightCBuf

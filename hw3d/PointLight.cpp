@@ -59,8 +59,16 @@ void PointLight::Draw( Graphics& gfx ) const noexcept(!IS_DEBUG)
 	mesh.Draw( gfx );
 }
 
-void PointLight::Bind( Graphics& gfx ) const noexcept
+void PointLight::Bind(Graphics& gfx, DirectX::FXMMATRIX view) const noexcept
 {
-	cbuf.Update(gfx, cbData);
+
+	/// 目的就是把灯光所有参数更正为 相机坐标系而非原先的世界坐标系
+	//cbuf.Update(gfx, cbData);
+
+	auto dataCopy = cbData;// 拿到一份常量结构体
+	const auto pos = DirectX::XMLoadFloat3(&cbData.pos);// 取出pos
+	DirectX::XMStoreFloat3(&dataCopy.pos, DirectX::XMVector3Transform(pos, view));// 乘以参数视图矩阵后被更新的pos存进结构体里
+
+	cbuf.Update(gfx, dataCopy);
 	cbuf.Bind( gfx );
 }
