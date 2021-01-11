@@ -25,14 +25,24 @@ Pyramid::Pyramid(Graphics& gfx, std::mt19937& rng,
 			char padding;
 		};
 
-		auto model = Cone::MakeTesselatedIndependentFaces<Vertex>(tdist(rng));
-		// set vertex colors for mesh
+		/*auto model = Cone::MakeTesselatedIndependentFaces<Vertex>(tdist(rng));*/
+
+		// 首先拿到模型的细分;tesselation是细分程度,它是个随机数
+		const auto tesselation = tdist(rng);
+		// 生成不带法线的Cone模型
+		auto model = Cone::MakeTesselatedIndependentFaces<Vertex>(tesselation);
+		// 对每个顶点取颜色
 		for (auto& v : model.vertices)
 		{
-			v.color = { (char)40,(char)40,(char)255 };
+			v.color = { (char)10,(char)10,(char)255 };
+		}		
+		for (int i = 0; i < tesselation; i++)
+		{
+			model.vertices[i * 3].color = { (char)255,(char)10,(char)10 };
 		}
-		// 拿到顶点集合里起始元素的引用的颜色(非迭代器)
-		model.vertices.front().color = { (char)255,(char)20,(char)20 }; 
+
+		//// 拿到顶点集合里起始元素的引用的颜色(非迭代器)
+		//model.vertices.front().color = { (char)255,(char)20,(char)20 }; 
 		// 沿z方向挤压网格
 		model.Transform(dx::XMMatrixScaling(1.0f, 1.0f, 0.7f));
 		// 为模型构造法线
@@ -54,6 +64,14 @@ Pyramid::Pyramid(Graphics& gfx, std::mt19937& rng,
 		};
 		AddStaticBind(std::make_unique<InputLayout>(gfx, ied, pvsbc));
 		AddStaticBind(std::make_unique<Topology>(gfx, D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST));
+
+		struct PSMaterialConstant
+		{
+			float specularIntensity = 0.6f;
+			float specularPower = 30.0f;
+			float padding[2];
+		} colorConst;
+		AddStaticBind(std::make_unique<PixelConstantBuffer<PSMaterialConstant>>(gfx, colorConst, 1u));
 	}
 	else
 	{

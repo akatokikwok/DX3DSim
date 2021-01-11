@@ -93,6 +93,7 @@ void App::DoFrame()
 		d->Update( wnd.kbd.KeyIsPressed( VK_SPACE ) ? 0.0f : dt );
 		d->Draw( wnd.Gfx() );
 	}
+	// 按索引绘制光源
 	light.Draw( wnd.Gfx() );
 
 	// imgui window to control simulation speed
