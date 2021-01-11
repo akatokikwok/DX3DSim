@@ -366,6 +366,12 @@
     <FxCompile Include="IndexedPhongPS.hlsl">
       <Filter>Shader</Filter>
     </FxCompile>
+    <FxCompile Include="BlendedPhongPS.hlsl">
+      <Filter>Shader</Filter>
+    </FxCompile>
+    <FxCompile Include="BlendedPhongVS.hlsl">
+      <Filter>Shader</Filter>
+    </FxCompile>
   </ItemGroup>
   <ItemGroup>
     <Image Include="The Cat.ico">

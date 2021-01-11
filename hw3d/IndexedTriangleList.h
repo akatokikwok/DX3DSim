@@ -26,7 +26,8 @@ public:
 			);
 		}
 	}
-	// asserts face-independent vertices w/ normals cleared to zero
+	
+	// 为每个三角面顶点单独构造法线
 	void SetNormalsIndependentFlat() noexcept(!IS_DEBUG)
 	{
 		using namespace DirectX;

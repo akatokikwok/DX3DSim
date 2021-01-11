@@ -8,6 +8,7 @@
 #include "imgui/imgui.h"
 #include <iterator>
 #include "Cylinder.h"
+#include "Pyramid.h"
 
 namespace dx = DirectX;
 
@@ -47,6 +48,11 @@ App::App()
 					gfx, rng, adist, ddist, odist,
 					rdist, bdist, tdist
 					);
+			case 2:
+				return std::make_unique<Pyramid>(
+					gfx, rng, adist, ddist, odist,
+					rdist, tdist
+					);
 			default:
 				assert(false && "impossible drawable option in factory");
 				return {};
@@ -56,7 +62,7 @@ App::App()
 		Graphics& gfx;
 		std::mt19937 rng{ std::random_device{}() };
 
-		std::uniform_int_distribution<int> sdist{ 0,1 };
+		std::uniform_int_distribution<int> sdist{ 0,2 };// 控制上述Switch种类的case数量
 
 		std::uniform_real_distribution<float> adist{ 0.0f,PI * 2.0f };
 		std::uniform_real_distribution<float> ddist{ 0.0f,PI * 0.5f };
