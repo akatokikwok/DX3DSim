@@ -9,6 +9,7 @@
 #include <iterator>
 #include "Cylinder.h"
 #include "Pyramid.h"
+#include "SkinnedBox.h"
 
 namespace dx = DirectX;
 
@@ -30,12 +31,7 @@ App::App()
 		{
 			//  随机构造一个模型材质参数
 			const DirectX::XMFLOAT3 mat = { cdist(rng),cdist(rng),cdist(rng) };
-			/*return std::make_unique<Box>(
-				gfx,rng,adist,ddist,
-				odist,rdist,bdist
-				,mat
-			);*/
-
+			
 			switch (sdist(rng))
 			{
 			case 0:
@@ -53,6 +49,11 @@ App::App()
 					gfx, rng, adist, ddist, odist,
 					rdist, tdist
 					);
+			case 3:
+				return std::make_unique<SkinnedBox>(
+					gfx, rng, adist, ddist,
+					odist, rdist
+					);
 			default:
 				assert(false && "impossible drawable option in factory");
 				return {};
@@ -62,7 +63,7 @@ App::App()
 		Graphics& gfx;
 		std::mt19937 rng{ std::random_device{}() };
 
-		std::uniform_int_distribution<int> sdist{ 0,2 };// 控制上述Switch种类的case数量
+		std::uniform_int_distribution<int> sdist{ 0,3 };// 控制上述Switch种类的case数量
 
 		std::uniform_real_distribution<float> adist{ 0.0f,PI * 2.0f };
 		std::uniform_real_distribution<float> ddist{ 0.0f,PI * 0.5f };
