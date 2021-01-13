@@ -3,6 +3,7 @@
 #include "GraphicsThrowMacros.h"
 #include "Cube.h"
 #include "TestObject.h"
+#include "imgui/imgui.h"
 
 
 Box::Box( Graphics& gfx,
@@ -62,19 +63,23 @@ Box::Box( Graphics& gfx,
 
 	AddBind( std::make_unique<TransformCbuf>( gfx,*this ) );
 
-	// 自定义1个PS材质常量结构体
-	struct PSMaterialConstant
-	{
-		//内存对齐
-		/*alignas(16)*/ dx::XMFLOAT3 color;// 材质颜色
-		float specularIntensity = 0.6f;// 镜面强度
-		float specularPower = 30.0f;   // 镜面幂级数
-		//float padding[2];
-		float padding[3];
-	} colorConst;
-	colorConst.color = material;
-	// 常量绑定到插槽1号
-	AddBind(std::make_unique<PixelConstantBuffer<PSMaterialConstant>>(gfx, colorConst, 1u));
+	
+	//// 自定义1个PS材质常量结构体
+	//struct PSMaterialConstant
+	//{
+	//	//内存对齐
+	//	/*alignas(16)*/ dx::XMFLOAT3 color;// 材质颜色
+	//	float specularIntensity = 0.6f;// 镜面强度
+	//	float specularPower = 30.0f;   // 镜面幂级数
+	//	//float padding[2];
+	//	float padding[3];
+	//} colorConst;
+	//colorConst.color = material;
+	//// 常量绑定到插槽1号
+	//AddBind(std::make_unique<PixelConstantBuffer<PSMaterialConstant>>(gfx, colorConst, 1u));
+
+	materialConstants.color = material;
+	AddBind(std::make_unique<MaterialCbuf>(gfx, materialConstants, 1u));	
 	
 	// model deformation transform (per instance, not stored as bind)
 	dx::XMStoreFloat3x3(
@@ -102,4 +107,34 @@ DirectX::XMMATRIX Box::GetTransformXM() const noexcept
 		dx::XMMatrixRotationRollPitchYaw( theta,phi,chi );*/
 
 	return dx::XMLoadFloat3x3(&mt) * TestObject::GetTransformXM();
+}
+
+void Box::SpawnControlWindow(int id, Graphics& gfx) noexcept
+{
+	using namespace std::string_literals;
+
+	bool dirty = false;
+	if (ImGui::Begin(("Box "s + std::to_string(id)).c_str()))
+	{
+		dirty = dirty || ImGui::ColorEdit3("Material Color", &materialConstants.color.x);
+		dirty = dirty || ImGui::SliderFloat("Specular Intensity", &materialConstants.specularIntensity, 0.05f, 4.0f, "%.2f", 2);
+		dirty = dirty || ImGui::SliderFloat("Specular Power", &materialConstants.specularPower, 1.0f, 200.0f, "%.2f", 2);
+	}
+	ImGui::End();
+
+	// 检查材质是否变化,若变化就调用材质同步
+	if (dirty)
+	{
+		SyncMaterial(gfx);
+	}
+}
+
+void Box::SyncMaterial(Graphics& gfx) noexcept(!IS_DEBUG)
+{
+	// 查找到绑定物，该绑定物是材质常量缓存
+	auto pConstPS = QueryBindable<MaterialCbuf>();
+	// 只有找到了才允许下一步
+	assert(pConstPS != nullptr);
+	// 更新常量缓存
+	pConstPS->Update(gfx, materialConstants);
 }

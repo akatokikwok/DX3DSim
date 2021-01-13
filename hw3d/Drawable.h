@@ -20,6 +20,21 @@ public:
 	virtual void Update( float dt ) noexcept = 0;
 	
 protected:
+
+	// 此方法允许查询拿到所需Bindable对象
+	template<class T>
+	T* QueryBindable() noexcept
+	{
+		for (auto& pb : binds)
+		{
+			if (auto pt = dynamic_cast<T*>(pb.get()))
+			{
+				return pt;
+			}
+		}
+		return nullptr;
+	}
+
 	void AddBind( std::unique_ptr<Bindable> bind ) noexcept(!IS_DEBUG);
 	void AddIndexBuffer( std::unique_ptr<class IndexBuffer> ibuf ) noexcept(!IS_DEBUG);
 private:

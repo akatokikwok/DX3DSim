@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include "DrawableBase.h"
 #include "TestObject.h"
+#include "ConstantBuffers.h"
 
 class Box : public TestObject<Box>
 {
@@ -17,22 +18,21 @@ public:
 	//// void Update( float dt ) noexcept override;
 	// 拿取模型的变换 
 	DirectX::XMMATRIX GetTransformXM() const noexcept override;
+	// 生成Box的控制窗口
+	void SpawnControlWindow(int id, Graphics& gfx) noexcept;
 private:
-	//// positional
-	//float r;
-	//float roll = 0.0f;
-	//float pitch = 0.0f;
-	//float yaw = 0.0f;
-	//float theta;
-	//float phi;
-	//float chi;
-	//// speed (delta/s)
-	//float droll;
-	//float dpitch;
-	//float dyaw;
-	//float dtheta;
-	//float dphi;
-	//float dchi;
-	// model transform
+	// 允许将每个盒子的材质参数保持一致
+	void SyncMaterial(Graphics& gfx) noexcept(!IS_DEBUG);
+private:
+	struct PSMaterialConstant
+	{
+		DirectX::XMFLOAT3 color;
+		float specularIntensity = 0.6f;
+		float specularPower = 30.0f;
+		float padding[3];
+	} materialConstants; 
+	// 材质常量缓存
+	using MaterialCbuf = PixelConstantBuffer<PSMaterialConstant>;
+	// 模型三维
 	DirectX::XMFLOAT3X3 mt;
 };

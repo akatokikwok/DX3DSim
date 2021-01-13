@@ -78,6 +78,15 @@ App::App()
 	drawables.reserve( nDrawables );
 	std::generate_n( std::back_inserter( drawables ),nDrawables,Factory{ wnd.Gfx() } );
 
+	// 遍历所有的绘制物,如果绘制物是盒子实例,就把该盒子添加进渲染box集合
+	for (auto& pd : drawables)
+	{
+		if (auto pb = dynamic_cast<Box*>(pd.get()))
+		{
+			boxes.push_back(pb);
+		}
+	}
+
 	wnd.Gfx().SetProjection( dx::XMMatrixPerspectiveLH( 1.0f,3.0f / 4.0f,0.5f,40.0f ) );
 }
 
@@ -108,6 +117,9 @@ void App::DoFrame()
 	// imgui windows to control camera and light
 	cam.SpawnControlWindow();
 	light.SpawnControlWindow();
+
+	// 为BOX集合中的第一个引用生成IMGUI
+	boxes.front()->SpawnControlWindow(69, wnd.Gfx());
 
 	// present
 	wnd.Gfx().EndFrame();
