@@ -5,6 +5,7 @@
 #include "Camera.h"
 #include "PointLight.h"
 #include "Box.h"
+#include <set>
 
 class App
 {
@@ -15,6 +16,11 @@ public:
 	~App();
 private:
 	void DoFrame();
+
+	void SpawnSimulationWindow() noexcept;
+	void SpawnBoxWindowManagerWindow() noexcept;
+	void SpawnBoxWindows() noexcept;
+
 private:
 	ImguiManager imgui;
 	Window wnd;
@@ -25,4 +31,8 @@ private:
 	Camera cam;// 摄像机
 	PointLight light; //点光源
 	static constexpr size_t nDrawables = 180;
+
+	// 为了控制不同BOX实例的IMGUI窗口
+	std::optional<int> comboBoxIndex; // 被点击的盒子ID
+	std::set<int> boxControlIds;// 被控制的盒子ID
 };
