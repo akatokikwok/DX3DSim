@@ -1,7 +1,8 @@
-#pragma once
+ï»¿#pragma once
 #include "DrawableBase.h"
+#include "ChiliMath.h"
 
-// ÔÚ»æÖÆÎïºÍDrawablebaseÖ®¼äÔÙ·â×°Ò»²ã;Ä¿µÄÊÇÎªÁË¸üºÃµÄ¹ÜÀíËæ»úÊıºÍÄ£ĞÍ±ä»»
+// åœ¨ç»˜åˆ¶ç‰©å’ŒDrawablebaseä¹‹é—´å†å°è£…ä¸€å±‚;ç›®çš„æ˜¯ä¸ºäº†æ›´å¥½çš„ç®¡ç†éšæœºæ•°å’Œæ¨¡å‹å˜æ¢
 template<class T>
 class TestObject : public DrawableBase<T>
 {
@@ -26,12 +27,20 @@ public:
 	{}
 	void Update(float dt) noexcept
 	{
-		roll += droll * dt;
+		/*roll += droll * dt;
 		pitch += dpitch * dt;
 		yaw += dyaw * dt;
 		theta += dtheta * dt;
 		phi += dphi * dt;
-		chi += dchi * dt;
+		chi += dchi * dt;*/
+
+		// åˆ©ç”¨æ•°å­¦æ–¹æ³•æŠŠå€¼é™å®šåœ¨-Î åˆ°+Î ä¹‹é—´,é˜²æ­¢æ•°å€¼è¿‡å¤§è¶…å‡ºè®¡ç®—èŒƒå›´
+		roll = wrap_angle(roll + droll * dt);
+		pitch = wrap_angle(pitch + dpitch * dt);
+		yaw = wrap_angle(yaw + dyaw * dt);
+		theta = wrap_angle(theta + dtheta * dt);
+		phi = wrap_angle(phi + dphi * dt);
+		chi = wrap_angle(chi + dchi * dt);
 	}
 	DirectX::XMMATRIX GetTransformXM() const noexcept
 	{
@@ -41,7 +50,7 @@ public:
 			dx::XMMatrixRotationRollPitchYaw(theta, phi, chi);
 	}
 
-	// ¸Ä³É±£»¤ÊôĞÔ,½ö¹©×ÓÀàÊ¹ÓÃÕâĞ©Ğı×ª²ÎÊı
+	// æ”¹æˆä¿æŠ¤å±æ€§,ä»…ä¾›å­ç±»ä½¿ç”¨è¿™äº›æ—‹è½¬å‚æ•°
 protected:
 	// positional
 	float r;
