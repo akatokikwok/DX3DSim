@@ -18,8 +18,8 @@ public:
 	//// void Update( float dt ) noexcept override;
 	// 拿取模型的变换 
 	DirectX::XMMATRIX GetTransformXM() const noexcept override;
-	// 生成Box的控制窗口
-	void SpawnControlWindow(int id, Graphics& gfx) noexcept;
+	// 生成Box的控制窗口;若生成过了就返回真
+	bool SpawnControlWindow(int id, Graphics& gfx) noexcept;
 private:
 	// 允许将每个盒子的材质参数保持一致
 	void SyncMaterial(Graphics& gfx) noexcept(!IS_DEBUG);

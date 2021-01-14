@@ -33,6 +33,6 @@ private:
 	static constexpr size_t nDrawables = 180;
 
 	// 为了控制不同BOX实例的IMGUI窗口
-	std::optional<int> comboBoxIndex; // 被点击的盒子ID
+	std::optional<int> comboBoxIndex; // 下拉框里被点击的盒子ID
 	std::set<int> boxControlIds;// 被控制的盒子ID
 };

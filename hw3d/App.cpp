@@ -168,7 +168,9 @@ void App::SpawnBoxWindowManagerWindow() noexcept
 	if (ImGui::Begin("Boxes"))
 	{
 		using namespace std::string_literals;
+		// 提交框里显示的文字
 		const auto preview = comboBoxIndex ? std::to_string(*comboBoxIndex) : "Choose a box..."s;
+
 		if (ImGui::BeginCombo("Box Number", preview.c_str()))
 		{
 			for (int i = 0; i < boxes.size(); i++)
@@ -185,6 +187,7 @@ void App::SpawnBoxWindowManagerWindow() noexcept
 			}
 			ImGui::EndCombo();
 		}
+
 		if (ImGui::Button("Spawn Control Window") && comboBoxIndex)
 		{
 			boxControlIds.insert(*comboBoxIndex);
@@ -196,9 +199,17 @@ void App::SpawnBoxWindowManagerWindow() noexcept
 
 void App::SpawnBoxWindows() noexcept
 {
-	for (auto id : boxControlIds)
+	for (auto i = boxControlIds.begin(); i != boxControlIds.end(); )
 	{
-		boxes[id]->SpawnControlWindow(id, wnd.Gfx());
+		// 检查每一个盒子是否生成过了,若没有生成,则擦除这个ID;否则继续遍历
+		if (!boxes[*i]->SpawnControlWindow(*i, wnd.Gfx()))
+		{
+			i = boxControlIds.erase(i);
+		}
+		else
+		{
+			i++;
+		}
 	}
 }
 
