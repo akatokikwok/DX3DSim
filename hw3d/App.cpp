@@ -10,6 +10,9 @@
 #include "Cylinder.h"
 #include "Pyramid.h"
 #include "SkinnedBox.h"
+#include <assimp/Importer.hpp>
+#include <assimp/scene.h>
+#include <assimp/postprocess.h>
 
 namespace dx = DirectX;
 
@@ -20,6 +23,14 @@ App::App()
 	wnd( 800,600,"Renbin's Demo Window" ),
 	light( wnd.Gfx() )
 {
+	Assimp::Importer imp;
+	auto model = imp.ReadFile("models\\suzanne.obj",
+		aiProcess_Triangulate |
+		aiProcess_JoinIdenticalVertices
+	);
+
+
+
 	class Factory
 	{
 	public:
