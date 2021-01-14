@@ -40,7 +40,9 @@ public:
 			dx::XMMatrixTranslation(r, 0.0f, 0.0f) *
 			dx::XMMatrixRotationRollPitchYaw(theta, phi, chi);
 	}
-private:
+
+	// 改成保护属性,仅供子类使用这些旋转参数
+protected:
 	// positional
 	float r;
 
