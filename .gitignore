@@ -51,6 +51,7 @@ artifacts/
 *.ilk
 *.meta
 *.obj
+!HW3D/Models/*.obj
 *.pch
 *.pdb
 *.pgc
