@@ -14,22 +14,33 @@
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 #include "AssTest.h"
+#include "VertexLayout.h"
 
 namespace dx = DirectX;
 
 GDIPlusManager gdipm;
+
+void f()
+{
+	// 给布局附着几个元素,比如法线和位置
+	VertexLayout vl;
+	vl.Append<VertexLayout::Position3D>()
+		.Append<VertexLayout::Normal>();
+	// 基于该顶点布局创建1个顶点缓冲
+	VertexBuffer vb(std::move(vl));
+	// 使用EmplaceBack添加1个顶点
+	vb.EmplaceBack(dx::XMFLOAT3{ 1.0f,1.0f,5.0f }, dx::XMFLOAT3{ 2.0f,1.0f,4.0f });
+	// 按重载的[]来按索引再访问顶点缓存的属性
+	auto pos = vb[0].Attr<VertexLayout::Position3D>();
+}
+
 
 App::App()
 	:
 	wnd( 800,600,"Renbin's Demo Window" ),
 	light( wnd.Gfx() )
 {
-	//// assimp测试
-	//Assimp::Importer imp;
-	//auto model = imp.ReadFile("models\\suzanne.obj",
-	//	aiProcess_Triangulate |
-	//	aiProcess_JoinIdenticalVertices
-	//);
+	f();
 
 	class Factory
 	{
