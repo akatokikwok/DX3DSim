@@ -4,6 +4,7 @@
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
+#include "Vertex.h"
 
 AssTest::AssTest(Graphics& gfx, std::mt19937& rng,
 	std::uniform_real_distribution<float>& adist,
@@ -19,12 +20,15 @@ AssTest::AssTest(Graphics& gfx, std::mt19937& rng,
 
 	if (!IsStaticInitialized())
 	{
-		// 顶点含有位置pos和法线n
-		struct Vertex
-		{
-			dx::XMFLOAT3 pos;
-			dx::XMFLOAT3 n;
-		};
+
+		using hw3dexp::VertexLayout;
+		// 动态定义顶点缓存;以自定义的顶点布局来填充缓存
+		hw3dexp::VertexBuffer vbuf(std::move(
+			VertexLayout{}
+			.Append<VertexLayout::Position3D>()
+			.Append<VertexLayout::Normal>()
+		));
+
 		// 读入指定路径的3D模型
 		Assimp::Importer imp;
 		const auto pModel = imp.ReadFile("models\\suzanne.obj",
@@ -34,18 +38,24 @@ AssTest::AssTest(Graphics& gfx, std::mt19937& rng,
 		// 拿到模型的0号网格
 		const auto pMesh = pModel->mMeshes[0];
 
-		/* 加载用于承载数据的顶点数组 */
-		std::vector<Vertex> vertices;
-		// 给顶点数组预留模型顶点数数量
-		vertices.reserve(pMesh->mNumVertices);
-		// 遍历模型每一个顶点 都把它的位置和法线统计进来
+		///* Deprached; 加载用于承载数据的顶点数组 */
+		//std::vector<Vertex> vertices;
+		//// 给顶点数组预留模型顶点数数量
+		//vertices.reserve(pMesh->mNumVertices);
+
+		// 循环做顶点,并在原地使用;遍历模型每一个顶点 都把它的位置和法线统计进来;
 		for (unsigned int i = 0; i < pMesh->mNumVertices; i++)
 		{
-			vertices.push_back(
-				{				
-					{ pMesh->mVertices[i].x * scale,pMesh->mVertices[i].y * scale,pMesh->mVertices[i].z * scale },// 每个顶点位置取x,y,z并乘以参数scale构成顶点位置
-					*reinterpret_cast<dx::XMFLOAT3*>(&pMesh->mNormals[i])
-				});
+			//vertices.push_back(
+			//	{				
+			//		{ pMesh->mVertices[i].x * scale,pMesh->mVertices[i].y * scale,pMesh->mVertices[i].z * scale },// 每个顶点位置取x,y,z并乘以参数scale构成顶点位置
+			//		*reinterpret_cast<dx::XMFLOAT3*>(&pMesh->mNormals[i])
+			//	});
+
+			vbuf.EmplaceBack(
+				dx::XMFLOAT3{ pMesh->mVertices[i].x * scale,pMesh->mVertices[i].y * scale,pMesh->mVertices[i].z * scale },
+				*reinterpret_cast<dx::XMFLOAT3*>(&pMesh->mNormals[i])
+			);
 		}
 
 		/* 加载用于承载数据的索引数组 */
@@ -65,7 +75,9 @@ AssTest::AssTest(Graphics& gfx, std::mt19937& rng,
 		}
 
 		// 利用上述顶点数组创建顶点缓存
-		AddStaticBind(std::make_unique<VertexBuffer>(gfx, vertices));
+		// Deprached; AddStaticBind(std::make_unique<VertexBuffer>(gfx, vertices));
+		AddStaticBind(std::make_unique<VertexBuffer>(gfx, vbuf));
+
 		// 利用上述索引数组创建索引缓存
 		AddStaticIndexBuffer(std::make_unique<IndexBuffer>(gfx, indices));
 		// 利用带法线的shader创建顶点着色器
