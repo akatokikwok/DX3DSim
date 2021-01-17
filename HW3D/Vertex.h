@@ -2,6 +2,7 @@
 #include <vector>
 #include <DirectXMath.h>
 #include <type_traits>
+#include "Graphics.h"
 
 namespace hw3dexp
 {
@@ -26,7 +27,54 @@ namespace hw3dexp
 			Float3Color,
 			Float4Color,
 			BGRAColor,
+			Count,
 		};
+
+		template<ElementType> struct Map;// 允许将类型名称映射到某种包含编译时的数据结构体;用作编译时的查找表
+
+		template<> struct Map<Position2D>
+		{
+			using SysType = DirectX::XMFLOAT2;
+			DXGI_FORMAT dxgiFormat = DXGI_FORMAT_R32G32_FLOAT;
+			const char* semantic = "Position";// 着色器语义名
+		};
+		template<> struct Map<Position3D>
+		{
+			using SysType = DirectX::XMFLOAT3;
+			DXGI_FORMAT dxgiFormat = DXGI_FORMAT_R32G32B32_FLOAT;
+			const char* semantic = "Position";
+		};
+		template<> struct Map<Texture2D>
+		{
+			using SysType = DirectX::XMFLOAT2;
+			DXGI_FORMAT dxgiFormat = DXGI_FORMAT_R32G32_FLOAT;
+			const char* semantic = "Texcoord";
+		};
+		template<> struct Map<Normal>
+		{
+			using SysType = DirectX::XMFLOAT3;
+			DXGI_FORMAT dxgiFormat = DXGI_FORMAT_R32G32B32_FLOAT;
+			const char* semantic = "Normal";
+		};
+		template<> struct Map<Float3Color>
+		{
+			using SysType = DirectX::XMFLOAT3;
+			DXGI_FORMAT dxgiFormat = DXGI_FORMAT_R32G32B32_FLOAT;
+			const char* semantic = "Color";
+		};
+		template<> struct Map<Float4Color>
+		{
+			using SysType = DirectX::XMFLOAT4;
+			DXGI_FORMAT dxgiFormat = DXGI_FORMAT_R32G32B32A32_FLOAT;
+			const char* semantic = "Color";
+		};
+		template<> struct Map<BGRAColor>
+		{
+			using SysType = hw3dexp::BGRAColor;
+			DXGI_FORMAT dxgiFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
+			const char* semantic = "Color";
+		};
+
 
 		/// VertexLayout::Element类
 		class Element
@@ -57,22 +105,30 @@ namespace hw3dexp
 			static constexpr size_t SizeOf(ElementType type) noexcept(!IS_DEBUG)
 			{
 				using namespace DirectX;
+				// 使用查找表进行映射内部的成员SysType
 				switch (type)
 				{
 				case Position2D:
-					return sizeof(XMFLOAT2);
+					//return sizeof(XMFLOAT2);
+					return sizeof(Map<Position2D>::SysType);
 				case Position3D:
-					return sizeof(XMFLOAT3);
+					//return sizeof(XMFLOAT3);
+					return sizeof(Map<Position3D>::SysType);
 				case Texture2D:
-					return sizeof(XMFLOAT2);
+					//return sizeof(XMFLOAT2);
+					return sizeof(Map<Texture2D>::SysType);
 				case Normal:
-					return sizeof(XMFLOAT3);
+					//return sizeof(XMFLOAT3);
+					return sizeof(Map<Normal>::SysType);
 				case Float3Color:
-					return sizeof(XMFLOAT3);
+					//return sizeof(XMFLOAT3);
+					return sizeof(Map<Float3Color>::SysType);
 				case Float4Color:
-					return sizeof(XMFLOAT3);
+					//return sizeof(XMFLOAT3);
+					return sizeof(Map<Float4Color>::SysType);
 				case BGRAColor:
-					return sizeof(hw3dexp::BGRAColor);
+					//return sizeof(hw3dexp::BGRAColor);
+					return sizeof(Map<BGRAColor>::SysType);
 				}
 				assert("Invalid element type" && false);
 				return 0u;
@@ -110,11 +166,12 @@ namespace hw3dexp
 		return elements[i];
 	}
 	
+		/*template<ElementType Type>
+		VertexLayout& Append() noexcept(!IS_DEBUG)*/
 		/* 若要构建Layout整体数据,使用此方法将其附着到数组的最后*/
-		template<ElementType Type>
-		VertexLayout& Append() noexcept(!IS_DEBUG)
+		VertexLayout& Append(ElementType type) noexcept(!IS_DEBUG)
 		{
-			elements.emplace_back(Type, Size());
+			elements.emplace_back(type, Size());
 			return *this;
 		}
 	
@@ -146,77 +203,82 @@ namespace hw3dexp
 		template<VertexLayout::ElementType Type>
 		auto& Attr() noexcept(!IS_DEBUG)
 	{
-		using namespace DirectX;
-		// 获取相符合类型的数据
-		const auto& element = layout.Resolve<Type>();
-		// 获取element的实际地址;	==最开始的元素地址+从顶点开始的字节数偏移量
-		auto pAttribute = pData + element.GetOffset();
-		// 根据"顶点数据类型"来解析 实际地址的XMFLOAT
-		if constexpr (Type == VertexLayout::Position2D)
-		{
-			return *reinterpret_cast<XMFLOAT2*>(pAttribute);
-		}
-		else if constexpr (Type == VertexLayout::Position3D)
-		{
-			return *reinterpret_cast<XMFLOAT3*>(pAttribute);
-		}
-		else if constexpr (Type == VertexLayout::Texture2D)
-		{
-			return *reinterpret_cast<XMFLOAT2*>(pAttribute);
-		}
-		else if constexpr (Type == VertexLayout::Normal)
-		{
-			return *reinterpret_cast<XMFLOAT3*>(pAttribute);
-		}
-		else if constexpr (Type == VertexLayout::Float3Color)
-		{
-			return *reinterpret_cast<XMFLOAT3*>(pAttribute);
-		}
-		else if constexpr (Type == VertexLayout::Float4Color)
-		{
-			return *reinterpret_cast<XMFLOAT4*>(pAttribute);
-		}
-		else if constexpr (Type == VertexLayout::BGRAColor)
-		{
-			return *reinterpret_cast<BGRAColor*>(pAttribute);
-		}
-		else
-		{
-			assert("Bad element type" && false);
-			return *reinterpret_cast<char*>(pAttribute);
-		}
+		//using namespace DirectX;
+		//// 获取相符合类型的数据
+		//const auto& element = layout.Resolve<Type>();
+		//// 获取element的实际地址;	==最开始的元素地址+从顶点开始的字节数偏移量
+		//auto pAttribute = pData + element.GetOffset();
+		//// 根据"顶点数据类型"来解析 实际地址的XMFLOAT
+		//if constexpr (Type == VertexLayout::Position2D)
+		//{
+		//	return *reinterpret_cast<XMFLOAT2*>(pAttribute);
+		//}
+		//else if constexpr (Type == VertexLayout::Position3D)
+		//{
+		//	return *reinterpret_cast<XMFLOAT3*>(pAttribute);
+		//}
+		//else if constexpr (Type == VertexLayout::Texture2D)
+		//{
+		//	return *reinterpret_cast<XMFLOAT2*>(pAttribute);
+		//}
+		//else if constexpr (Type == VertexLayout::Normal)
+		//{
+		//	return *reinterpret_cast<XMFLOAT3*>(pAttribute);
+		//}
+		//else if constexpr (Type == VertexLayout::Float3Color)
+		//{
+		//	return *reinterpret_cast<XMFLOAT3*>(pAttribute);
+		//}
+		//else if constexpr (Type == VertexLayout::Float4Color)
+		//{
+		//	return *reinterpret_cast<XMFLOAT4*>(pAttribute);
+		//}
+		//else if constexpr (Type == VertexLayout::BGRAColor)
+		//{
+		//	return *reinterpret_cast<BGRAColor*>(pAttribute);
+		//}
+		//else
+		//{
+		//	assert("Bad element type" && false);
+		//	return *reinterpret_cast<char*>(pAttribute);
+		//}
+		
+		auto pAttribute = pData + layout.Resolve<Type>().GetOffset();// 当前的元素地址==开始的元素地址+偏移量
+		return *reinterpret_cast<typename VertexLayout::Map<Type>::SysType*>(pAttribute);//使用Map映射出来具体的SysType成员
+
 	}
+
 		// 通过索引来访问并设置所有的属性;要进行完美转发参数val;从而不丢失任何参数信息只是转发给下一个方法
 		template<typename T>
 		void SetAttributeByIndex(size_t i, T&& val) noexcept(!IS_DEBUG)
 	{
 		using namespace DirectX;
-		const auto& element = layout.ResolveByIndex(i);
+		const auto& element = layout.ResolveByIndex(i);//先根据给定索引解析出布局中的元素
 		// 获取element属性的实际地址;
 		auto pAttribute = pData + element.GetOffset();
 		// 进行转发
 		switch (element.GetType())
 		{
 		case VertexLayout::Position2D:
-			SetAttribute<XMFLOAT2>(pAttribute, std::forward<T>(val));
+			SetAttribute<VertexLayout::Position2D>(pAttribute, std::forward<T>(val));
 			break;
 		case VertexLayout::Position3D:
-			SetAttribute<XMFLOAT3>(pAttribute, std::forward<T>(val));
+			SetAttribute<VertexLayout::Position3D>(pAttribute, std::forward<T>(val));
 			break;
 		case VertexLayout::Texture2D:
-			SetAttribute<XMFLOAT2>(pAttribute, std::forward<T>(val));
+			SetAttribute<VertexLayout::Texture2D>(pAttribute, std::forward<T>(val));
 			break;
 		case VertexLayout::Normal:
-			SetAttribute<XMFLOAT3>(pAttribute, std::forward<T>(val));
+			SetAttribute<VertexLayout::Normal>(pAttribute, std::forward<T>(val));
 			break;
 		case VertexLayout::Float3Color:
-			SetAttribute<XMFLOAT3>(pAttribute, std::forward<T>(val));
+			SetAttribute<VertexLayout::Float3Color>(pAttribute, std::forward<T>(val));
 			break;
 		case VertexLayout::Float4Color:
-			SetAttribute<XMFLOAT4>(pAttribute, std::forward<T>(val));
+			SetAttribute<VertexLayout::Float4Color>(pAttribute, std::forward<T>(val));
 			break;
 		case VertexLayout::BGRAColor:
-			SetAttribute<BGRAColor>(pAttribute, std::forward<T>(val));
+			SetAttribute<VertexLayout::BGRAColor>(pAttribute, std::forward<T>(val));
 			break;
 		default:
 			assert("Bad element type" && false);
@@ -243,11 +305,15 @@ namespace hw3dexp
 			SetAttributeByIndex((i+1), std::forward<Rest>(rest)...);
 		}
 	
+		
+		/*template<typename Dest, typename Src>
+		void SetAttribute(char* pAttribute, Src&& val) noexcept(!IS_DEBUG)*/
 		// 私有接口方法;helper to reduce code duplication in SetAttributeByIndex;SRC是之前传过来的val参数
-		template<typename Dest, typename Src>
-		void SetAttribute(char* pAttribute, Src&& val) noexcept(!IS_DEBUG)
+		template<VertexLayout::ElementType DestLayoutEnum, typename SrcType>
+		void SetAttribute(char* pAttribute, SrcType&& val) noexcept(!IS_DEBUG)
 	{
-		if constexpr (std::is_assignable<Dest, Src>::value)
+		using Dest = typename VertexLayout::Map<DestLayoutEnum>::SysType;
+		if constexpr (std::is_assignable<Dest, SrcType>::value)
 		{
 			*reinterpret_cast<Dest*>(pAttribute) = val;
 		}

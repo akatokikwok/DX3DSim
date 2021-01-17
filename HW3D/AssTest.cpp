@@ -22,11 +22,14 @@ AssTest::AssTest(Graphics& gfx, std::mt19937& rng,
 	{
 
 		using hw3dexp::VertexLayout;
-		// 动态定义顶点缓存;以自定义的顶点布局来填充缓存
+
+		//动态定义顶点缓存;以自定义的顶点布局来填充缓存
 		hw3dexp::VertexBuffer vbuf(std::move(
 			VertexLayout{}
-			.Append<VertexLayout::Position3D>()
-			.Append<VertexLayout::Normal>()
+			//.Append<VertexLayout::Position3D>()
+			//.Append<VertexLayout::Normal>()
+			.Append(VertexLayout::Position3D)
+			.Append(VertexLayout::Normal)
 		));
 
 		// 读入指定路径的3D模型
