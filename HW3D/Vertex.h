@@ -306,7 +306,7 @@ namespace hw3dexp
 		{
 			return buffer.size() / layout.Size();
 		}
-		// 获取字节缓存的大小
+		// 获取字节缓存数组的大小
 		size_t SizeBytes() const noexcept(!IS_DEBUG)
 		{
 			return buffer.size();
