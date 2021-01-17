@@ -90,12 +90,15 @@ AssTest::AssTest(Graphics& gfx, std::mt19937& rng,
 		// 利用带法线的shader创建像素着色器
 		AddStaticBind(std::make_unique<PixelShader>(gfx, L"PhongPS.cso"));
 		// 自定义输入布局并创建
-		const std::vector<D3D11_INPUT_ELEMENT_DESC> ied =
+		/*const std::vector<D3D11_INPUT_ELEMENT_DESC> ied =
 		{
 			{ "Position",0,DXGI_FORMAT_R32G32B32_FLOAT,0,0,D3D11_INPUT_PER_VERTEX_DATA,0 },
 			{ "Normal",0,DXGI_FORMAT_R32G32B32_FLOAT,0,12,D3D11_INPUT_PER_VERTEX_DATA,0 },
 		};
-		AddStaticBind(std::make_unique<InputLayout>(gfx, ied, pvsbc));
+		AddStaticBind(std::make_unique<InputLayout>(gfx, ied, pvsbc));*/
+		// 动态加载输入布局
+		AddStaticBind(std::make_unique<InputLayout>(gfx, vbuf.GetLayout().GetD3DLayout(), pvsbc));
+
 		// 创建输入图元
 		AddStaticBind(std::make_unique<Topology>(gfx, D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST));
 		// 自定义材质结构体(带颜色、镜面光)并由参数材质决定颜色;同时创建出像素shader常量缓存并绑在1号插槽

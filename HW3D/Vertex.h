@@ -35,44 +35,44 @@ namespace hw3dexp
 		template<> struct Map<Position2D>
 		{
 			using SysType = DirectX::XMFLOAT2;
-			DXGI_FORMAT dxgiFormat = DXGI_FORMAT_R32G32_FLOAT;
-			const char* semantic = "Position";// 着色器语义名
+			static constexpr DXGI_FORMAT dxgiFormat = DXGI_FORMAT_R32G32_FLOAT;
+			static constexpr const char* semantic = "Position";// 着色器语义名
 		};
 		template<> struct Map<Position3D>
 		{
 			using SysType = DirectX::XMFLOAT3;
-			DXGI_FORMAT dxgiFormat = DXGI_FORMAT_R32G32B32_FLOAT;
-			const char* semantic = "Position";
+			static constexpr DXGI_FORMAT dxgiFormat = DXGI_FORMAT_R32G32B32_FLOAT;
+			static constexpr const char* semantic = "Position";
 		};
 		template<> struct Map<Texture2D>
 		{
 			using SysType = DirectX::XMFLOAT2;
-			DXGI_FORMAT dxgiFormat = DXGI_FORMAT_R32G32_FLOAT;
-			const char* semantic = "Texcoord";
+			static constexpr DXGI_FORMAT dxgiFormat = DXGI_FORMAT_R32G32_FLOAT;
+			static constexpr const char* semantic = "Texcoord";
 		};
 		template<> struct Map<Normal>
 		{
 			using SysType = DirectX::XMFLOAT3;
-			DXGI_FORMAT dxgiFormat = DXGI_FORMAT_R32G32B32_FLOAT;
-			const char* semantic = "Normal";
+			static constexpr DXGI_FORMAT dxgiFormat = DXGI_FORMAT_R32G32B32_FLOAT;
+			static constexpr const char* semantic = "Normal";
 		};
 		template<> struct Map<Float3Color>
 		{
 			using SysType = DirectX::XMFLOAT3;
-			DXGI_FORMAT dxgiFormat = DXGI_FORMAT_R32G32B32_FLOAT;
-			const char* semantic = "Color";
+			static constexpr DXGI_FORMAT dxgiFormat = DXGI_FORMAT_R32G32B32_FLOAT;
+			static constexpr const char* semantic = "Color";
 		};
 		template<> struct Map<Float4Color>
 		{
 			using SysType = DirectX::XMFLOAT4;
-			DXGI_FORMAT dxgiFormat = DXGI_FORMAT_R32G32B32A32_FLOAT;
-			const char* semantic = "Color";
+			static constexpr DXGI_FORMAT dxgiFormat = DXGI_FORMAT_R32G32B32A32_FLOAT;
+			static constexpr const char* semantic = "Color";
 		};
 		template<> struct Map<BGRAColor>
 		{
 			using SysType = hw3dexp::BGRAColor;
-			DXGI_FORMAT dxgiFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
-			const char* semantic = "Color";
+			static constexpr DXGI_FORMAT dxgiFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
+			static constexpr const char* semantic = "Color";
 		};
 
 
@@ -135,9 +135,40 @@ namespace hw3dexp
 			}
 			// 接口,拿取元素类型
 			ElementType GetType() const noexcept
-		{
-			return type;
-		}
+			{
+				return type;
+			}
+			// 为单元素返回一个输入元素 描述布局
+			D3D11_INPUT_ELEMENT_DESC GetDesc() const noexcept(!IS_DEBUG)
+			{
+				switch (type)
+				{
+				case Position2D:
+					return GenerateDesc<Position2D>(GetOffset());
+				case Position3D:
+					return GenerateDesc<Position3D>(GetOffset());
+				case Texture2D:
+					return GenerateDesc<Texture2D>(GetOffset());
+				case Normal:
+					return GenerateDesc<Normal>(GetOffset());
+				case Float3Color:
+					return GenerateDesc<Float3Color>(GetOffset());
+				case Float4Color:
+					return GenerateDesc<Float4Color>(GetOffset());
+				case BGRAColor:
+					return GenerateDesc<BGRAColor>(GetOffset());
+				}
+				assert("Invalid element type" && false);
+				return { "INVALID",0,DXGI_FORMAT_UNKNOWN,0,0,D3D11_INPUT_PER_VERTEX_DATA,0 };
+			}
+		private:
+			// 构建单元素的描述值({语义名,0,DXGI格式,0，偏移，(UINT)offset,D3D11_INPUT_PER_VERTEX_DATA,0 })
+			template<ElementType type>
+			static constexpr D3D11_INPUT_ELEMENT_DESC GenerateDesc(size_t offset) noexcept(!IS_DEBUG)
+			{
+				return { Map<type>::semantic,0,Map<type>::dxgiFormat,0,(UINT)offset,D3D11_INPUT_PER_VERTEX_DATA,0 };
+			}
+
 		private:
 			ElementType type;//元素类型
 			size_t offset;	//从顶点开始的字节数偏移量
@@ -185,7 +216,18 @@ namespace hw3dexp
 		{
 			return elements.size();
 		}
-	
+		// 获取输入布局
+		std::vector<D3D11_INPUT_ELEMENT_DESC> GetD3DLayout() const noexcept(!IS_DEBUG)
+		{
+			std::vector<D3D11_INPUT_ELEMENT_DESC> desc;
+			desc.reserve(GetElementCount());
+			for (const auto& e : elements)
+			{
+				desc.push_back(e.GetDesc());
+			}
+			return desc;
+		}
+
 	private:
 		std::vector<Element> elements;// Element实例数组
 	};
