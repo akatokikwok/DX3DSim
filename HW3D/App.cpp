@@ -14,7 +14,7 @@
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 #include "AssTest.h"
-#include "VertexLayout.h"
+#include "Vertex.h"
 
 namespace dx = DirectX;
 
@@ -22,16 +22,43 @@ GDIPlusManager gdipm;
 
 void f()
 {
-	// 给布局附着几个元素,比如法线和位置
-	VertexLayout vl;
-	vl.Append<VertexLayout::Position3D>()
-		.Append<VertexLayout::Normal>();
-	// 基于该顶点布局创建1个顶点缓冲
-	VertexBuffer vb(std::move(vl));
-	// 使用EmplaceBack添加1个顶点
-	vb.EmplaceBack(dx::XMFLOAT3{ 1.0f,1.0f,5.0f }, dx::XMFLOAT3{ 2.0f,1.0f,4.0f });
-	// 按重载的[]来按索引再访问顶点缓存的属性
+	//// 给布局附着几个元素,比如法线和位置
+	//VertexLayout vl;
+	//vl.Append<VertexLayout::Position3D>()
+	//	.Append<VertexLayout::Normal>();
+	//// 基于该顶点布局创建1个顶点缓冲
+	//VertexBuffer vb(std::move(vl));
+	//// 使用EmplaceBack添加1个顶点
+	//vb.EmplaceBack(dx::XMFLOAT3{ 1.0f,1.0f,5.0f }, dx::XMFLOAT3{ 2.0f,1.0f,4.0f });
+	//// 按重载的[]来按索引再访问顶点缓存的属性
+	//auto pos = vb[0].Attr<VertexLayout::Position3D>();
+
+	VertexBuffer vb(
+		std::move(
+			VertexLayout{}
+			.Append<VertexLayout::Position3D>()
+			.Append<VertexLayout::Normal>()
+			.Append<VertexLayout::Texture2D>()
+		));
+	vb.EmplaceBack(
+		dx::XMFLOAT3{ 1.0f,1.0f,5.0f },
+		dx::XMFLOAT3{ 2.0f,1.0f,4.0f },
+		dx::XMFLOAT2{ 6.0f,9.0f }
+	);
+	vb.EmplaceBack(
+		dx::XMFLOAT3{ 6.0f,9.0f,6.0f },
+		dx::XMFLOAT3{ 9.0f,6.0f,9.0f },
+		dx::XMFLOAT2{ 4.2f,0.0f }
+	);
+
 	auto pos = vb[0].Attr<VertexLayout::Position3D>();
+	auto nor = vb[0].Attr<VertexLayout::Normal>();
+	auto tex = vb[1].Attr<VertexLayout::Texture2D>();
+	vb.Back().Attr<VertexLayout::Position3D>().z = 420.0f;
+	pos = vb.Back().Attr<VertexLayout::Position3D>();
+
+	const auto& cvb = vb;
+	pos = cvb[1].Attr<VertexLayout::Position3D>();
 }
 
 

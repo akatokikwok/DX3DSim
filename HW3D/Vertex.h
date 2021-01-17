@@ -69,7 +69,7 @@ public:
 			case Float4Color:
 				return sizeof(XMFLOAT3);
 			case BGRAColor:
-				return sizeof(unsigned int);
+				return sizeof(::BGRAColor);
 			}
 			assert("Invalid element type" && false);
 			return 0u;
@@ -120,6 +120,12 @@ public:
 	{
 		return elements.empty() ? 0u : elements.back().GetOffsetAfter();
 	}
+	/* 接口,获取元素的数量*/
+	size_t GetElementCount() const noexcept
+	{
+		return elements.size();
+	}
+
 private:
 	std::vector<Element> elements;// Element实例数组
 };
@@ -214,7 +220,7 @@ public:
 		}
 	}
 
-private:
+protected:
 	Vertex(char* pData, const VertexLayout& layout) noexcept(!IS_DEBUG)
 		:
 		pData(pData),
@@ -223,6 +229,7 @@ private:
 		assert(pData != nullptr);
 	}
 	
+private:
 	// 私有接口方法;enables parameter pack setting of multiple parameters by element index
 	template<typename First, typename ...Rest>	
 	void SetAttributeByIndex(size_t i, First&& first,/*拆解出来的第一参数*/ Rest&&... rest/*拆解出来的剩余的参数包*/) noexcept(!IS_DEBUG)
@@ -230,7 +237,7 @@ private:
 		// 原句式是SetAttributeByIndex(size_t i, T&& val);递归到最后1+0的情况就会执行最原先的双参数SetAttributeByIndex()
 		SetAttributeByIndex(i, std::forward<First>(first));
 		// 递归设置其余属性
-		SetAttributeByIndex(i, std::forward<Rest>(rest)...);
+		SetAttributeByIndex((i+1), std::forward<Rest>(rest)...);
 	}
 
 	// 私有接口方法;helper to reduce code duplication in SetAttributeByIndex;SRC是之前传过来的val参数
@@ -252,6 +259,25 @@ private:
 	char* pData = nullptr;		// 最开始的Element的地址
 	const VertexLayout& layout; //一个对顶点布局类的引用
 };
+/// //////////////////////////////////////////////////////////////////////////
+
+/* 该视图仅能读取数据*/
+class ConstVertex
+{
+public:
+	ConstVertex(const Vertex& v) noexcept(!IS_DEBUG)
+		:
+		vertex(v)
+	{}
+	template<VertexLayout::ElementType Type>
+	const auto& Attr() const noexcept(!IS_DEBUG)
+	{
+		return const_cast<Vertex&>(vertex).Attr<Type>();
+	}
+private:
+	Vertex vertex;
+};
+
 /// //////////////////////////////////////////////////////////////////////////
 
 /* 实际上是真正的顶点数据,含有字节缓存和布局*/
@@ -278,6 +304,8 @@ public:
 	template<typename ...Params>
 	void EmplaceBack(Params&&... params) noexcept(!IS_DEBUG)
 	{
+		// 检查 确保传进来的参数包size必须匹配 输入布局里元素的数量
+		assert(sizeof...(params) == layout.GetElementCount() && "Param count doesn't match number of vertex elements");
 		// 重分配字节缓存大小
 		buffer.resize(buffer.size() + layout.Size());
 		// 对最后1个顶点 从[0]属性开始设置，然后将所有的参数包传递给它
@@ -301,6 +329,20 @@ public:
 		assert(i < Size());
 		return Vertex{ buffer.data() + layout.Size() * i,layout };
 	}
+
+	ConstVertex Back() const noexcept(!IS_DEBUG)
+	{
+		return const_cast<VertexBuffer*>(this)->Back();
+	}
+	ConstVertex Front() const noexcept(!IS_DEBUG)
+	{
+		return const_cast<VertexBuffer*>(this)->Front();
+	}
+	ConstVertex operator[](size_t i) const noexcept(!IS_DEBUG)
+	{
+		return const_cast<VertexBuffer&>(*this)[i];
+	}
+
 private:
 	std::vector<char> buffer; // 缓存字节数组
 	VertexLayout layout;	  // 布局的引用.它用于描述顶点的结构
