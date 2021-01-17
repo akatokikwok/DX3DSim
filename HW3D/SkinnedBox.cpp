@@ -24,7 +24,7 @@ SkinnedBox::SkinnedBox( Graphics& gfx,
 		{
 			dx::XMFLOAT3 pos;
 			dx::XMFLOAT3 n;
-			dx::XMFLOAT2 tc;
+			dx::XMFLOAT2 tc;//Texture Channel 纹理通道
 		};
 		//const auto model = Cube::MakeSkinned<Vertex>();
 

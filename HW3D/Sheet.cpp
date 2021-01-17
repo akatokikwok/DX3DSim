@@ -1,4 +1,4 @@
-#include "Sheet.h"
+﻿#include "Sheet.h"
 #include "BindableBase.h"
 #include "GraphicsThrowMacros.h"
 #include "Plane.h"
@@ -32,11 +32,12 @@ Sheet::Sheet( Graphics& gfx,
 		struct Vertex
 		{
 			dx::XMFLOAT3 pos;
+
 			struct
 			{
 				float u;
 				float v;
-			} tex;
+			} tex; // UV结构体
 		};
 		auto model = Plane::Make<Vertex>();
 		model.vertices[0].tex = { 0.0f,0.0f };

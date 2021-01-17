@@ -29,7 +29,7 @@ AssTest::AssTest(Graphics& gfx, std::mt19937& rng,
 		Assimp::Importer imp;
 		const auto pModel = imp.ReadFile("models\\suzanne.obj",
 			aiProcess_Triangulate |// 把加载模型选项里设置为"包括三角形部分-把所有四边形或者多边形分解成简单三角形"
-			aiProcess_JoinIdenticalVertices
+			aiProcess_JoinIdenticalVertices// 确保顶点可以被多个面使用，从而可以供索引使用
 		);
 		// 拿到模型的0号网格
 		const auto pMesh = pModel->mMeshes[0];
