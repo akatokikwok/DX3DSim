@@ -27,7 +27,7 @@ private:
 	PointLight light;//点光源
 	Model nano{ wnd.Gfx(),"Models\\nanosuit.obj" };// 指定一个 纳米服 模型
 
-	// 一些IMGUI配置
+	// 一些有关于导入模型的控制IMGUI配置
 	struct
 	{
 		float roll = 0.0f;

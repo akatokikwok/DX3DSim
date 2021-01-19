@@ -35,7 +35,7 @@ void App::DoFrame()
 
 	const auto transform = dx::XMMatrixRotationRollPitchYaw(pos.roll, pos.pitch, pos.yaw) *
 		dx::XMMatrixTranslation(pos.x, pos.y, pos.z);// 自定义变换==旋转矩阵*移动矩阵
-	nano.Draw(wnd.Gfx(), transform);
+	nano.Draw(wnd.Gfx(), transform);// 绘制指定的模型
 	light.Draw(wnd.Gfx());
 
 	// imgui windows
@@ -62,6 +62,15 @@ void App::ShowModelWindow()
 		ImGui::SliderFloat("X", &pos.x, -20.0f, 20.0f);
 		ImGui::SliderFloat("Y", &pos.y, -20.0f, 20.0f);
 		ImGui::SliderFloat("Z", &pos.z, -20.0f, 20.0f);
+		if (ImGui::Button("Reset"))
+		{
+			pos.roll = 0;
+			pos.pitch = 0;
+			pos.yaw = 0;
+			pos.x = 0;
+			pos.y = 0;
+			pos.z = 0;
+		}
 	}
 	ImGui::End();
 }
