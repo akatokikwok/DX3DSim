@@ -1,31 +1,35 @@
-#include "TransformCbuf.h"
+ï»¿#include "TransformCbuf.h"
 
-TransformCbuf::TransformCbuf( Graphics& gfx,const Drawable& parent, UINT slot)
-	:
-	parent( parent )
+namespace Bind
 {
-	if( !pVcbuf )
+
+	TransformCbuf::TransformCbuf(Graphics& gfx, const Drawable& parent, UINT slot)
+		:
+		parent(parent)
 	{
-		pVcbuf = std::make_unique<VertexConstantBuffer<Transforms>>( gfx, slot);
+		if (!pVcbuf)
+		{
+			pVcbuf = std::make_unique<VertexConstantBuffer<Transforms>>(gfx, slot);
+		}
 	}
-}
 
-void TransformCbuf::Bind( Graphics& gfx ) noexcept
-{
-	// ÄÃµ½Ä£ĞÍÊÓÍ¼¾ØÕó 
-	const auto modelView = parent.GetTransformXM() * gfx.GetCamera();
-	// ×Ô¶¨Òå1¸ö½á¹¹Ìå;Ä£ĞÍ¾ØÕóµÄ×ªÖÃ¡¢ºÍMVPµÄ×ªÖÃ
-	const Transforms tf =
+	void TransformCbuf::Bind(Graphics& gfx) noexcept
 	{
-		DirectX::XMMatrixTranspose(modelView),
-		DirectX::XMMatrixTranspose(
-			modelView *
-			
-			gfx.GetProjection()
-		)
-	};
-	pVcbuf->Update( gfx,tf ); // ÓÃ¾ØÕó½á¹¹Ìå³£Á¿¸üĞÂ¶¥µã³£Êı»º´æ
-	pVcbuf->Bind( gfx );	  // ¹ÜÏßÉÏ°ó¶¨³£Êı»º´æ	
-}
+		// æ‹¿åˆ°æ¨¡å‹è§†å›¾çŸ©é˜µ 
+		const auto modelView = parent.GetTransformXM() * gfx.GetCamera();
+		// è‡ªå®šä¹‰1ä¸ªç»“æ„ä½“;æ¨¡å‹çŸ©é˜µçš„è½¬ç½®ã€å’ŒMVPçš„è½¬ç½®
+		const Transforms tf =
+		{
+			DirectX::XMMatrixTranspose(modelView),
+			DirectX::XMMatrixTranspose(
+				modelView *
 
-std::unique_ptr<VertexConstantBuffer<TransformCbuf::Transforms>> TransformCbuf::pVcbuf;
+				gfx.GetProjection()
+			)
+		};
+		pVcbuf->Update(gfx, tf); // ç”¨çŸ©é˜µç»“æ„ä½“å¸¸é‡æ›´æ–°é¡¶ç‚¹å¸¸æ•°ç¼“å­˜
+		pVcbuf->Bind(gfx);	  // ç®¡çº¿ä¸Šç»‘å®šå¸¸æ•°ç¼“å­˜	
+	}
+
+	std::unique_ptr<VertexConstantBuffer<TransformCbuf::Transforms>> TransformCbuf::pVcbuf;
+}

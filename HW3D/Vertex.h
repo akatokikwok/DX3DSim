@@ -3,16 +3,18 @@
 #include <DirectXMath.h>
 #include <type_traits>
 #include "Graphics.h"
+#include "Color.h"
+#include "ConditionalNoexcept.h"
 
-namespace hw3dexp
+namespace Dvtx
 {
-	struct BGRAColor
+	/*struct BGRAColor
 	{
 		unsigned char a;
 		unsigned char r;
 		unsigned char g;
 		unsigned char b;
-	};
+	};*/
 	
 	class VertexLayout
 	{
@@ -70,7 +72,8 @@ namespace hw3dexp
 		};
 		template<> struct Map<BGRAColor>
 		{
-			using SysType = hw3dexp::BGRAColor;
+			//using SysType = hw3dexp::BGRAColor;
+			using SysType = ::BGRAColor;
 			static constexpr DXGI_FORMAT dxgiFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
 			static constexpr const char* semantic = "Color";
 		};
@@ -81,90 +84,23 @@ namespace hw3dexp
 		{
 		public:
 			// 构造函数,需要参数布局元素类型(normal/pos),和参数字节偏移
-			Element(ElementType type, size_t offset)
-			:
-			type(type),
-			offset(offset)
-		{}	
+			Element(ElementType type, size_t offset);	
 			// 拿取当前元素偏移量加上 单当前元素的大小,单位是字节
-			size_t GetOffsetAfter() const noexcept(!IS_DEBUG)
-		{
-			return offset + Size();
-		}
+			size_t GetOffsetAfter() const noxnd;
 			// 接口，获取从顶点开始的字节数偏移量
-			size_t GetOffset() const
-		{
-			return offset;
-		}
+			size_t GetOffset() const;
 			// 拿到元素类型大小
-			size_t Size() const noexcept(!IS_DEBUG)
-		{
-			return SizeOf(type);
-		}
+			size_t Size() const noxnd;
 			// 动态拿取相对应顶点型的值;因为使用字面值常量,所以不会占用运行时带宽;
-			static constexpr size_t SizeOf(ElementType type) noexcept(!IS_DEBUG)
-			{
-				using namespace DirectX;
-				// 使用查找表进行映射内部的成员SysType
-				switch (type)
-				{
-				case Position2D:
-					//return sizeof(XMFLOAT2);
-					return sizeof(Map<Position2D>::SysType);
-				case Position3D:
-					//return sizeof(XMFLOAT3);
-					return sizeof(Map<Position3D>::SysType);
-				case Texture2D:
-					//return sizeof(XMFLOAT2);
-					return sizeof(Map<Texture2D>::SysType);
-				case Normal:
-					//return sizeof(XMFLOAT3);
-					return sizeof(Map<Normal>::SysType);
-				case Float3Color:
-					//return sizeof(XMFLOAT3);
-					return sizeof(Map<Float3Color>::SysType);
-				case Float4Color:
-					//return sizeof(XMFLOAT3);
-					return sizeof(Map<Float4Color>::SysType);
-				case BGRAColor:
-					//return sizeof(hw3dexp::BGRAColor);
-					return sizeof(Map<BGRAColor>::SysType);
-				}
-				assert("Invalid element type" && false);
-				return 0u;
-			}
+			static constexpr size_t SizeOf(ElementType type) noxnd;
 			// 接口,拿取元素类型
-			ElementType GetType() const noexcept
-			{
-				return type;
-			}
+			ElementType GetType() const noexcept;
 			// 为单元素返回一个输入元素 描述布局
-			D3D11_INPUT_ELEMENT_DESC GetDesc() const noexcept(!IS_DEBUG)
-			{
-				switch (type)
-				{
-				case Position2D:
-					return GenerateDesc<Position2D>(GetOffset());
-				case Position3D:
-					return GenerateDesc<Position3D>(GetOffset());
-				case Texture2D:
-					return GenerateDesc<Texture2D>(GetOffset());
-				case Normal:
-					return GenerateDesc<Normal>(GetOffset());
-				case Float3Color:
-					return GenerateDesc<Float3Color>(GetOffset());
-				case Float4Color:
-					return GenerateDesc<Float4Color>(GetOffset());
-				case BGRAColor:
-					return GenerateDesc<BGRAColor>(GetOffset());
-				}
-				assert("Invalid element type" && false);
-				return { "INVALID",0,DXGI_FORMAT_UNKNOWN,0,0,D3D11_INPUT_PER_VERTEX_DATA,0 };
-			}
+			D3D11_INPUT_ELEMENT_DESC GetDesc() const noxnd;
 		private:
 			// 构建单元素的描述值({语义名,0,DXGI格式,0，偏移，(UINT)offset,D3D11_INPUT_PER_VERTEX_DATA,0 })
 			template<ElementType type>
-			static constexpr D3D11_INPUT_ELEMENT_DESC GenerateDesc(size_t offset) noexcept(!IS_DEBUG)
+			static constexpr D3D11_INPUT_ELEMENT_DESC GenerateDesc(size_t offset) noxnd
 			{
 				return { Map<type>::semantic,0,Map<type>::dxgiFormat,0,(UINT)offset,D3D11_INPUT_PER_VERTEX_DATA,0 };
 			}
@@ -178,7 +114,7 @@ namespace hw3dexp
 	public:
 		/* 给定指定的元素类型,然后解析这个型号的元素实例*/
 		template<ElementType Type>
-		const Element& Resolve() const noexcept(!IS_DEBUG)
+		const Element& Resolve() const noxnd
 		{
 			for (auto& e : elements)
 			{
@@ -192,41 +128,19 @@ namespace hw3dexp
 		}
 	
 		/* 按指定索引拿取元素引用*/
-		const Element& ResolveByIndex(size_t i) const noexcept(!IS_DEBUG)
-	{
-		return elements[i];
-	}
+		const Element& ResolveByIndex(size_t i) const noxnd;
 	
 		/*template<ElementType Type>
-		VertexLayout& Append() noexcept(!IS_DEBUG)*/
+		VertexLayout& Append() noxnd*/
 		/* 若要构建Layout整体数据,使用此方法将其附着到数组的最后*/
-		VertexLayout& Append(ElementType type) noexcept(!IS_DEBUG)
-		{
-			elements.emplace_back(type, Size());
-			return *this;
-		}
+		VertexLayout& Append(ElementType type) noxnd;
 	
 		/* 拿取元素数组里最后一个元素引用的偏移*/
-		size_t Size() const noexcept(!IS_DEBUG)
-		{
-			return elements.empty() ? 0u : elements.back().GetOffsetAfter();
-		}
+		size_t Size() const noxnd;
 		/* 接口,获取元素的数量*/
-		size_t GetElementCount() const noexcept
-		{
-			return elements.size();
-		}
+		size_t GetElementCount() const noexcept;
 		// 获取输入布局
-		std::vector<D3D11_INPUT_ELEMENT_DESC> GetD3DLayout() const noexcept(!IS_DEBUG)
-		{
-			std::vector<D3D11_INPUT_ELEMENT_DESC> desc;
-			desc.reserve(GetElementCount());
-			for (const auto& e : elements)
-			{
-				desc.push_back(e.GetDesc());
-			}
-			return desc;
-		}
+		std::vector<D3D11_INPUT_ELEMENT_DESC> GetD3DLayout() const noxnd;
 
 	private:
 		std::vector<Element> elements;// Element实例数组
@@ -243,7 +157,7 @@ namespace hw3dexp
 	public:
 		// 通过元素类型访问数据,获取每个单独顶点数据;Template参数是客户要访问的数据类型
 		template<VertexLayout::ElementType Type>
-		auto& Attr() noexcept(!IS_DEBUG)
+		auto& Attr() noxnd
 	{
 		//using namespace DirectX;
 		//// 获取相符合类型的数据
@@ -292,7 +206,7 @@ namespace hw3dexp
 
 		// 通过索引来访问并设置所有的属性;要进行完美转发参数val;从而不丢失任何参数信息只是转发给下一个方法
 		template<typename T>
-		void SetAttributeByIndex(size_t i, T&& val) noexcept(!IS_DEBUG)
+		void SetAttributeByIndex(size_t i, T&& val) noxnd
 	{
 		using namespace DirectX;
 		const auto& element = layout.ResolveByIndex(i);//先根据给定索引解析出布局中的元素
@@ -328,18 +242,12 @@ namespace hw3dexp
 	}
 	
 	protected:
-		Vertex(char* pData, const VertexLayout& layout) noexcept(!IS_DEBUG)
-		:
-		pData(pData),
-		layout(layout)
-	{
-		assert(pData != nullptr);
-	}
+		Vertex(char* pData, const VertexLayout& layout) noxnd;
 		
 	private:
 		// 私有接口方法;enables parameter pack setting of multiple parameters by element index
 		template<typename First, typename ...Rest>	
-		void SetAttributeByIndex(size_t i, First&& first,/*拆解出来的第一参数*/ Rest&&... rest/*拆解出来的剩余的参数包*/) noexcept(!IS_DEBUG)
+		void SetAttributeByIndex(size_t i, First&& first,/*拆解出来的第一参数*/ Rest&&... rest/*拆解出来的剩余的参数包*/) noxnd
 		{
 			// 原句式是SetAttributeByIndex(size_t i, T&& val);递归到最后1+0的情况就会执行最原先的双参数SetAttributeByIndex()
 			SetAttributeByIndex(i, std::forward<First>(first));
@@ -349,10 +257,10 @@ namespace hw3dexp
 	
 		
 		/*template<typename Dest, typename Src>
-		void SetAttribute(char* pAttribute, Src&& val) noexcept(!IS_DEBUG)*/
+		void SetAttribute(char* pAttribute, Src&& val) noxnd*/
 		// 私有接口方法;helper to reduce code duplication in SetAttributeByIndex;SRC是之前传过来的val参数
 		template<VertexLayout::ElementType DestLayoutEnum, typename SrcType>
-		void SetAttribute(char* pAttribute, SrcType&& val) noexcept(!IS_DEBUG)
+		void SetAttribute(char* pAttribute, SrcType&& val) noxnd
 	{
 		using Dest = typename VertexLayout::Map<DestLayoutEnum>::SysType;
 		if constexpr (std::is_assignable<Dest, SrcType>::value)
@@ -376,12 +284,9 @@ namespace hw3dexp
 	class ConstVertex
 	{
 	public:
-		ConstVertex(const Vertex& v) noexcept(!IS_DEBUG)
-			:
-			vertex(v)
-		{}
+		ConstVertex(const Vertex& v) noxnd;
 		template<VertexLayout::ElementType Type>
-		const auto& Attr() const noexcept(!IS_DEBUG)
+		const auto& Attr() const noxnd
 		{
 			return const_cast<Vertex&>(vertex).Attr<Type>();
 		}
@@ -395,35 +300,20 @@ namespace hw3dexp
 	class VertexBuffer
 	{
 	public:
-		VertexBuffer(VertexLayout layout) noexcept(!IS_DEBUG)
-			:
-			layout(std::move(layout))
-		{}
+		VertexBuffer(VertexLayout layout) noxnd;
 		// 获取字节缓存的地址
-		const char* GetData() const noexcept(!IS_DEBUG)
-		{
-			return buffer.data();
-		}
+		const char* GetData() const noxnd;
 		// 用于获取layout
-		const VertexLayout& GetLayout() const noexcept
-		{
-			return layout;
-		}
+		const VertexLayout& GetLayout() const noexcept;
 		// 用于获取顶点缓存大小除以输入布局的大小,以layout为单位而非以字节为单位
-		size_t Size() const noexcept(!IS_DEBUG)
-		{
-			return buffer.size() / layout.Size();
-		}
+		size_t Size() const noxnd;
 		// 获取字节缓存数组的大小
-		size_t SizeBytes() const noexcept(!IS_DEBUG)
-		{
-			return buffer.size();
-		}
+		size_t SizeBytes() const noxnd;
 		// 此方法允许在缓存的末端构建1个新的顶点;
 		// 模板元编程,参数类型和数量是不确定的,EmplaceBack方法会根据它们构造1个新对象;具体查询通用引用\递归\模板元;参数包\模板递归
 		// 此方法和前面的SetAttributeByIndex()联系在一起
 		template<typename ...Params>
-		void EmplaceBack(Params&&... params) noexcept(!IS_DEBUG)
+		void EmplaceBack(Params&&... params) noxnd
 		{
 			// 检查 确保传进来的参数包size必须匹配 输入布局里元素的数量
 			assert(sizeof...(params) == layout.GetElementCount() && "Param count doesn't match number of vertex elements");
@@ -433,36 +323,15 @@ namespace hw3dexp
 			Back().SetAttributeByIndex(0u, std::forward<Params>(params)...);
 		}
 		// 此方法返回Vertex型的数据,Vertex在这里只是代理或者视图而非真正的数据
-		Vertex Back() noexcept(!IS_DEBUG)
-		{
-			assert(buffer.size() != 0u);
-			return Vertex{ buffer.data() + buffer.size() - layout.Size(),layout };
-		}
+		Vertex Back() noxnd;
 		// 此方法返回Vertex型的数据,Vertex在这里只是代理或者视图而非真正的数据
-		Vertex Front() noexcept(!IS_DEBUG)
-		{
-			assert(buffer.size() != 0u);
-			return Vertex{ buffer.data(),layout };
-		}
+		Vertex Front() noxnd;
 		// 重载操作符[]来通过给定的索引i来获取顶点
-		Vertex operator[](size_t i) noexcept(!IS_DEBUG)
-		{
-			assert(i < Size());
-			return Vertex{ buffer.data() + layout.Size() * i,layout };
-		}
+		Vertex operator[](size_t i) noxnd;
 	
-		ConstVertex Back() const noexcept(!IS_DEBUG)
-		{
-			return const_cast<VertexBuffer*>(this)->Back();
-		}
-		ConstVertex Front() const noexcept(!IS_DEBUG)
-		{
-			return const_cast<VertexBuffer*>(this)->Front();
-		}
-		ConstVertex operator[](size_t i) const noexcept(!IS_DEBUG)
-		{
-			return const_cast<VertexBuffer&>(*this)[i];
-		}
+		ConstVertex Back() const noxnd;
+		ConstVertex Front() const noxnd;
+		ConstVertex operator[](size_t i) const noxnd;
 	
 	private:
 		std::vector<char> buffer; // 缓存字节数组

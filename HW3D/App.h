@@ -4,9 +4,8 @@
 #include "ImguiManager.h"
 #include "Camera.h"
 #include "PointLight.h"
-#include "Box.h"
 #include <set>
-#include "Model.h"
+#include "Mesh.h"
 
 class App
 {

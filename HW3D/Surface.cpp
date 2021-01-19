@@ -1,24 +1,4 @@
-/******************************************************************************************
-*	Chili DirectX Framework Version 16.10.01											  *
-*	Surface.cpp																			  *
-*	Copyright 2016 PlanetChili <http://www.planetchili.net>								  *
-*																						  *
-*	This file is part of The Chili DirectX Framework.									  *
-*																						  *
-*	The Chili DirectX Framework is free software: you can redistribute it and/or modify	  *
-*	it under the terms of the GNU General Public License as published by				  *
-*	the Free Software Foundation, either version 3 of the License, or					  *
-*	(at your option) any later version.													  *
-*																						  *
-*	The Chili DirectX Framework is distributed in the hope that it will be useful,		  *
-*	but WITHOUT ANY WARRANTY; without even the implied warranty of						  *
-*	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the						  *
-*	GNU General Public License for more details.										  *
-*																						  *
-*	You should have received a copy of the GNU General Public License					  *
-*	along with The Chili DirectX Framework.  If not, see <http://www.gnu.org/licenses/>.  *
-******************************************************************************************/
-#define FULL_WINTARD
+﻿#define FULL_WINTARD
 #include "Surface.h"
 #include <algorithm>
 namespace Gdiplus
@@ -62,7 +42,7 @@ void Surface::Clear( Color fillValue ) noexcept
 	memset( pBuffer.get(),fillValue.dword,width * height * sizeof( Color ) );
 }
 
-void Surface::PutPixel( unsigned int x,unsigned int y,Color c ) noexcept(!IS_DEBUG)
+void Surface::PutPixel( unsigned int x,unsigned int y,Color c ) noxnd
 {
 	assert( x >= 0 );
 	assert( y >= 0 );
@@ -71,7 +51,7 @@ void Surface::PutPixel( unsigned int x,unsigned int y,Color c ) noexcept(!IS_DEB
 	pBuffer[y * width + x] = c;
 }
 
-Surface::Color Surface::GetPixel( unsigned int x,unsigned int y ) const noexcept(!IS_DEBUG)
+Surface::Color Surface::GetPixel( unsigned int x,unsigned int y ) const noxnd
 {
 	assert( x >= 0 );
 	assert( y >= 0 );
@@ -203,7 +183,7 @@ void Surface::Save( const std::string& filename ) const
 	}
 }
 
-void Surface::Copy( const Surface& src ) noexcept(!IS_DEBUG)
+void Surface::Copy( const Surface& src ) noxnd
 {
 	assert( width == src.width );
 	assert( height == src.height );

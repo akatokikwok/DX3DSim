@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 #include <vector>
 #include <DirectXMath.h>
 
@@ -27,8 +27,8 @@ public:
 		}
 	}
 	
-	// ÎªÃ¿¸öÈý½ÇÃæ¶¥µãµ¥¶À¹¹Ôì·¨Ïß
-	void SetNormalsIndependentFlat() noexcept(!IS_DEBUG)
+	// ä¸ºæ¯ä¸ªä¸‰è§’é¢é¡¶ç‚¹å•ç‹¬æž„é€ æ³•çº¿
+	void SetNormalsIndependentFlat() noxnd
 	{
 		using namespace DirectX;
 		assert( indices.size() % 3 == 0 && indices.size() > 0 );

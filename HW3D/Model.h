@@ -11,7 +11,7 @@ class Mesh : public DrawableBase<Mesh>
 {
 public:
 	// 构造函数,需要图形对象＼管线绑定物集合
-	Mesh(Graphics& gfx, std::vector<std::unique_ptr<Bindable>> bindPtrs)
+	Mesh(Graphics& gfx, std::vector<std::unique_ptr<Bind::Bindable>> bindPtrs)
 	{
 		if (!IsStaticInitialized())
 		{

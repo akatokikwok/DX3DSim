@@ -4,28 +4,30 @@
 #include <cassert>
 //#include <typeinfo>
 
-void Drawable::Draw( Graphics& gfx ) const noexcept(!IS_DEBUG)
+using namespace Bind;
+
+void Drawable::Draw(Graphics& gfx) const noxnd
 {
-	for( auto& b : binds )
+	for (auto& b : binds)
 	{
-		b->Bind( gfx );
+		b->Bind(gfx);
 	}
-	for( auto& b : GetStaticBinds() )
+	for (auto& b : GetStaticBinds())
 	{
-		b->Bind( gfx );
+		b->Bind(gfx);
 	}
-	gfx.DrawIndexed( pIndexBuffer->GetCount() );
+	gfx.DrawIndexed(pIndexBuffer->GetCount());
 }
 
-void Drawable::AddBind( std::unique_ptr<Bindable> bind ) noexcept(!IS_DEBUG)
+void Drawable::AddBind(std::unique_ptr<Bindable> bind) noxnd
 {
-	assert( "*Must* use AddIndexBuffer to bind index buffer" && typeid(*bind) != typeid(IndexBuffer) );
-	binds.push_back( std::move( bind ) );
+	assert("*Must* use AddIndexBuffer to bind index buffer" && typeid(*bind) != typeid(IndexBuffer));
+	binds.push_back(std::move(bind));
 }
 
-void Drawable::AddIndexBuffer( std::unique_ptr<IndexBuffer> ibuf ) noexcept(!IS_DEBUG)
+void Drawable::AddIndexBuffer(std::unique_ptr<IndexBuffer> ibuf) noxnd
 {
-	assert( "Attempting to add index buffer a second time" && pIndexBuffer == nullptr );
+	assert("Attempting to add index buffer a second time" && pIndexBuffer == nullptr);
 	pIndexBuffer = ibuf.get();
-	binds.push_back( std::move( ibuf ) );
+	binds.push_back(std::move(ibuf));
 }

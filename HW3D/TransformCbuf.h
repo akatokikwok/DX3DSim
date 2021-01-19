@@ -3,20 +3,23 @@
 #include "Drawable.h"
 #include <DirectXMath.h>
 
-// 模型变换常量缓存类
-class TransformCbuf : public Bindable
+namespace Bind
 {
-private:
-	// 顶点常数缓存结构体
-	struct Transforms
+	// 模型变换常量缓存类
+	class TransformCbuf : public Bindable
 	{
-		DirectX::XMMATRIX modelViewProj;
-		DirectX::XMMATRIX model;
+	private:
+		// 顶点常数缓存结构体
+		struct Transforms
+		{
+			DirectX::XMMATRIX modelViewProj;
+			DirectX::XMMATRIX model;
+		};
+	public:
+		TransformCbuf(Graphics& gfx, const Drawable& parent, UINT slot = 0u);// 新增插槽的构造
+		void Bind(Graphics& gfx) noexcept override;
+	private:
+		static std::unique_ptr<VertexConstantBuffer<Transforms>> pVcbuf;// 顶点常数缓存
+		const Drawable& parent;// 绘制物引用
 	};
-public:
-	TransformCbuf(Graphics& gfx, const Drawable& parent, UINT slot = 0u);// 新增插槽的构造
-	void Bind( Graphics& gfx ) noexcept override;
-private:
-	static std::unique_ptr<VertexConstantBuffer<Transforms>> pVcbuf;// 顶点常数缓存
-	const Drawable& parent;// 绘制物引用
-};
+}

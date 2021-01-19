@@ -1,5 +1,4 @@
 ﻿#include "App.h"
-#include "Box.h"
 #include <memory>
 #include <algorithm>
 #include "ChiliMath.h"
@@ -7,9 +6,6 @@
 #include "GDIPlusManager.h"
 #include "imgui/imgui.h"
 #include <iterator>
-#include "Cylinder.h"
-#include "Pyramid.h"
-#include "SkinnedBox.h"
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
@@ -159,9 +155,7 @@ void App::DoFrame()
 	const auto transform = dx::XMMatrixRotationRollPitchYaw(pos.roll, pos.pitch, pos.yaw) *
 		dx::XMMatrixTranslation(pos.x, pos.y, pos.z);
 	// 为模型根节点绘制所有Mesh
-	nano.Draw(wnd.Gfx(), transform);
-	// 显示模型控制窗口
-	ShowModelWindow();
+	nano.Draw(wnd.Gfx(), transform);	
 
 	// 按索引绘制光源
 	light.Draw( wnd.Gfx() );
@@ -172,6 +166,9 @@ void App::DoFrame()
 	light.SpawnControlWindow();
 	//SpawnBoxWindowManagerWindow();	// 生成窗口集中管理窗口
 	//SpawnBoxWindows();				// 为每个单独生成1个窗口
+	
+	// 显示模型控制窗口
+	ShowModelWindow();
 
 	//// 
 	//if (ImGui::Begin("Boxes"))

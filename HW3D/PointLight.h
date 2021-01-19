@@ -2,6 +2,7 @@
 #include "Graphics.h"
 #include "SolidSphere.h"
 #include "ConstantBuffers.h"
+#include "ConditionalNoexcept.h"
 
 // 点光源类
 class PointLight
@@ -14,7 +15,7 @@ public:
 	// 重置灯泡网格位置
 	void Reset() noexcept;
 	// 设置灯泡网格位置并按索引绘制该网格
-	void Draw( Graphics& gfx ) const noexcept(!IS_DEBUG);
+	void Draw( Graphics& gfx ) const noxnd;
 	// 更新像素常量缓存(此处为灯泡位置)并同时绑定到管线;
 	// 注意要此方法内实现的时候也要供调用者每帧绑定到管线
 	void Bind(Graphics& gfx, DirectX::FXMMATRIX view) const noexcept;
@@ -38,5 +39,5 @@ private:
 	PointLightCBuf cbData;							 // 常量结构体实例
 
 	mutable SolidSphere mesh;						 // 灯泡网格体
-	mutable PixelConstantBuffer<PointLightCBuf> cbuf;// 像素常数缓存
+	mutable Bind::PixelConstantBuffer<PointLightCBuf> cbuf;// 像素常数缓存
 };
