@@ -14,7 +14,7 @@ public:
 	// 构造函数,需要图形对象＼管线绑定物集合
 	Mesh(Graphics& gfx, std::vector<std::unique_ptr<Bind::Bindable>> bindPtrs);
 	/* 存累计变化矩阵并绘制被绘制物*/
-	void Draw(Graphics& gfx, DirectX::FXMMATRIX accumulatedTransform/*累计的矩阵变换*/) const noxnd;
+	void Draw(Graphics& gfx, DirectX::FXMMATRIX accumulatedTransform) const noxnd;
 	/* 获得累计变化矩阵*/
 	DirectX::XMMATRIX GetTransformXM() const noexcept override;
 private:
