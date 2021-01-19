@@ -17,7 +17,8 @@ public:
 	// 让绘制物 绑定到流水线同时按索引绘制
 	void Draw( Graphics& gfx ) const noexcept(!IS_DEBUG);
 	// 让绘制物 按时长更新各自的yaw\pith\roll\theta 
-	virtual void Update( float dt ) noexcept = 0;
+	virtual void Update(float dt) noexcept
+	{}
 	
 protected:
 
