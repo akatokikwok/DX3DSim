@@ -1,6 +1,8 @@
 ﻿#include "Mesh.h"
 #include <memory>
+#include "imgui/imgui.h"
 
+// 绑定图元、若符合索引缓存则添加并最后构造顶点shader常量缓存
 Mesh::Mesh(Graphics& gfx, std::vector<std::unique_ptr<Bind::Bindable>> bindPtrs)
 {
 	if (!IsStaticInitialized())
@@ -39,8 +41,10 @@ DirectX::XMMATRIX Mesh::GetTransformXM() const noexcept
 	return DirectX::XMLoadFloat4x4(&transform);
 }
 
-Node::Node(std::vector<Mesh*> meshPtrs, const DirectX::XMMATRIX& transform) :
-	meshPtrs(std::move(meshPtrs))
+Node::Node(const std::string& name, std::vector<Mesh*> meshPtrs, const DirectX::XMMATRIX& transform) noxnd
+	:
+	meshPtrs(std::move(meshPtrs)),
+	name(name)
 {
 	DirectX::XMStoreFloat4x4(&this->transform, transform);
 }
@@ -68,6 +72,19 @@ void Node::AddChild(std::unique_ptr<Node> pChild) noxnd
 	childPtrs.push_back(std::move(pChild));
 }
 
+void Node::RenderTree() const noexcept
+{
+	// if tree node expanded, recursively render all children
+	if (ImGui::TreeNode(name.c_str()))
+	{
+		for (const auto& pChild : childPtrs)
+		{
+			pChild->RenderTree();
+		}
+		ImGui::TreePop();
+	}
+}
+
 Model::Model(Graphics& gfx, const std::string fileName)
 {
 	// 指定模型名导入
@@ -85,9 +102,33 @@ Model::Model(Graphics& gfx, const std::string fileName)
 	pRoot = ParseNode(*pScene->mRootNode);
 }
 
-void Model::Draw(Graphics& gfx, DirectX::FXMMATRIX transform) const
+void Model::Draw(Graphics& gfx) const noxnd
 {
+	const auto transform = DirectX::XMMatrixRotationRollPitchYaw(pos.roll, pos.pitch, pos.yaw) *
+		DirectX::XMMatrixTranslation(pos.x, pos.y, pos.z);
+
 	pRoot->Draw(gfx, transform);
+}
+
+void Model::ShowWindow(const char* windowName) noexcept
+{
+	windowName = windowName ? windowName : "Model";//若提供参数名就用参数名,不提供参数窗口名字则默认使用"Model"
+	if (ImGui::Begin(windowName))
+	{
+		ImGui::Columns(2, nullptr, true);//有2列
+		pRoot->RenderTree();
+
+		ImGui::NextColumn();
+		ImGui::Text("Orientation");
+		ImGui::SliderAngle("Roll", &pos.roll, -180.0f, 180.0f);
+		ImGui::SliderAngle("Pitch", &pos.pitch, -180.0f, 180.0f);
+		ImGui::SliderAngle("Yaw", &pos.yaw, -180.0f, 180.0f);
+		ImGui::Text("Position");
+		ImGui::SliderFloat("X", &pos.x, -20.0f, 20.0f);
+		ImGui::SliderFloat("Y", &pos.y, -20.0f, 20.0f);
+		ImGui::SliderFloat("Z", &pos.z, -20.0f, 20.0f);
+	}
+	ImGui::End();
 }
 
 std::unique_ptr<Mesh> Model::ParseMesh(Graphics& gfx, const aiMesh& mesh)
@@ -150,7 +191,7 @@ std::unique_ptr<Mesh> Model::ParseMesh(Graphics& gfx, const aiMesh& mesh)
 	return std::make_unique<Mesh>(gfx, std::move(bindablePtrs));
 }
 
-std::unique_ptr<Node> Model::ParseNode(const aiNode& node)
+std::unique_ptr<Node> Model::ParseNode(const aiNode& node) noexcept
 {
 	namespace dx = DirectX;
 	// 拿到参数单节点的转置矩阵
@@ -168,7 +209,7 @@ std::unique_ptr<Node> Model::ParseNode(const aiNode& node)
 	}
 
 	// 使用参数单节点的转置矩阵和所有Mesh的指针构造一个单节点
-	auto pNode = std::make_unique<Node>(std::move(curMeshPtrs), transform);
+	auto pNode = std::make_unique<Node>( node.mName.C_Str(), std::move(curMeshPtrs), transform);
 	// 套娃,为单节点也添加子节点
 	for (size_t i = 0; i < node.mNumChildren; i++)
 	{

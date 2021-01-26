@@ -17,7 +17,7 @@ public:
 private:
 	void DoFrame();
 	// 模型控制窗口
-	void ShowModelWindow();
+	void ShowImguiDemoWindow();
 private:
 	ImguiManager imgui;
 	Window wnd;
@@ -28,7 +28,7 @@ private:
 	Model nano{ wnd.Gfx(),"Models\\nanosuit.obj" };// 指定一个 纳米服 模型
 
 	// 一些有关于导入模型的控制IMGUI配置
-	struct
+	/*struct
 	{
 		float roll = 0.0f;
 		float pitch = 0.0f;
@@ -36,5 +36,5 @@ private:
 		float x = 0.0f;
 		float y = 0.0f;
 		float z = 0.0f;
-	} pos;
+	} pos;*/
 };

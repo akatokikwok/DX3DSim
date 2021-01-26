@@ -32,47 +32,29 @@ void App::DoFrame()
 		d->Draw( wnd.Gfx() );
 	}*/
 
+	//const auto transform = dx::XMMatrixRotationRollPitchYaw(pos.roll, pos.pitch, pos.yaw) *
+	//	dx::XMMatrixTranslation(pos.x, pos.y, pos.z);// 自定义变换==旋转矩阵*移动矩阵
+	//nano.Draw(wnd.Gfx(), transform);// 绘制指定的模型
 
-	const auto transform = dx::XMMatrixRotationRollPitchYaw(pos.roll, pos.pitch, pos.yaw) *
-		dx::XMMatrixTranslation(pos.x, pos.y, pos.z);// 自定义变换==旋转矩阵*移动矩阵
-	nano.Draw(wnd.Gfx(), transform);// 绘制指定的模型
+	nano.Draw(wnd.Gfx());
 	light.Draw(wnd.Gfx());
 
-	// imgui windows
 	cam.SpawnControlWindow();
 	light.SpawnControlWindow();
-	ShowModelWindow();// 显示模型控制窗口
 
+	ShowImguiDemoWindow();
+	nano.ShowWindow();
 	// present
 	wnd.Gfx().EndFrame();
 }
 
-void App::ShowModelWindow()
+void App::ShowImguiDemoWindow()
 {
-	if (ImGui::Begin("Model"))
+	static bool show_demo_window = true;
+	if (show_demo_window)
 	{
-		using namespace std::string_literals;
-
-		ImGui::Text("Orientation");
-		ImGui::SliderAngle("Roll", &pos.roll, -180.0f, 180.0f);
-		ImGui::SliderAngle("Pitch", &pos.pitch, -180.0f, 180.0f);
-		ImGui::SliderAngle("Yaw", &pos.yaw, -180.0f, 180.0f);
-
-		ImGui::Text("Position");
-		ImGui::SliderFloat("X", &pos.x, -20.0f, 20.0f);
-		ImGui::SliderFloat("Y", &pos.y, -20.0f, 20.0f);
-		ImGui::SliderFloat("Z", &pos.z, -20.0f, 20.0f);
-		if (ImGui::Button("Reset"))
-		{
-			pos.roll = 0;
-			pos.pitch = 0;
-			pos.yaw = 0;
-			pos.x = 0;
-			pos.y = 0;
-			pos.z = 0;
-		}
+		ImGui::ShowDemoWindow(&show_demo_window);
 	}
-	ImGui::End();
 }
 
 App::~App()
