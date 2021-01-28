@@ -32,7 +32,8 @@ public:
 	/* 用于递归绘制单节点的Meshes*/
 	void Draw(Graphics& gfx, DirectX::FXMMATRIX accumulatedTransform) const noxnd;
 	/* 用于渲染树上的节点*/
-	void RenderTree() const noexcept;
+	void ShowTree() const noexcept;
+
 private:
 	// 添加子节点,仅供Model类实例使用,因为Model类是Node类的友元
 	void AddChild(std::unique_ptr<Node> pChild) noxnd;
@@ -55,6 +56,8 @@ public:
 	void Draw(Graphics& gfx) const noxnd;
 	/* 用于展示Model的IMGUI窗口*/
 	void ShowWindow(const char* windowName = nullptr) noexcept;
+
+	~Model() noexcept;
 private:
 	/* 用于解析加载单个Mesh;静态方法ParseMesh();*/
 	static std::unique_ptr<Mesh> ParseMesh(Graphics& gfx, const aiMesh& mesh);
@@ -70,13 +73,6 @@ private:
 	std::unique_ptr<Node> pRoot;// 根节点
 	std::vector<std::unique_ptr<Mesh>> meshPtrs;// 总体网格集合
 
-	struct
-	{
-		float roll = 0.0f;
-		float pitch = 0.0f;
-		float yaw = 0.0f;
-		float x = 0.0f;
-		float y = 0.0f;
-		float z = 0.0f;
-	} pos;
+	// ModelWindow定义在源文件里,是模型的控制窗口
+	std::unique_ptr<class ModelWindow> pWindow;
 };

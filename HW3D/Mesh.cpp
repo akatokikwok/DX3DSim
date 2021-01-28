@@ -2,6 +2,8 @@
 #include <memory>
 #include "imgui/imgui.h"
 
+namespace dx = DirectX;
+
 // 绑定图元、若符合索引缓存则添加并最后构造顶点shader常量缓存
 Mesh::Mesh(Graphics& gfx, std::vector<std::unique_ptr<Bind::Bindable>> bindPtrs)
 {
@@ -33,7 +35,7 @@ Mesh::Mesh(Graphics& gfx, std::vector<std::unique_ptr<Bind::Bindable>> bindPtrs)
 void Mesh::Draw(Graphics& gfx, DirectX::FXMMATRIX accumulatedTransform/*累计的矩阵变换*/) const noxnd
 {
 	DirectX::XMStoreFloat4x4(&transform, accumulatedTransform);// 把参数矩阵存起来
-	Drawable::Draw(gfx);// 绑定到管线并按索引绘制
+	Drawable::Draw(gfx);// 绑定到管线并按索引绘制 
 }
 
 DirectX::XMMATRIX Mesh::GetTransformXM() const noexcept
@@ -72,20 +74,69 @@ void Node::AddChild(std::unique_ptr<Node> pChild) noxnd
 	childPtrs.push_back(std::move(pChild));
 }
 
-void Node::RenderTree() const noexcept
+void Node::ShowTree() const noexcept
 {
 	// if tree node expanded, recursively render all children
 	if (ImGui::TreeNode(name.c_str()))
 	{
 		for (const auto& pChild : childPtrs)
 		{
-			pChild->RenderTree();
+			pChild->ShowTree();
 		}
 		ImGui::TreePop();
 	}
 }
 
+//////////////////////////////////////////////////////////////////////////
+// Model
+class ModelWindow // pImpl idiom
+{
+public:
+	// 封装的方法，用于分两列展示各个模型的细节控制
+	void Show(const char* windowName, const Node& root) noexcept
+	{
+		// window name defaults to "Model"
+		windowName = windowName ? windowName : "Model";
+		if (ImGui::Begin(windowName))
+		{
+			ImGui::Columns(2, nullptr, true);
+			root.ShowTree();
+
+			ImGui::NextColumn();
+			ImGui::Text("Orientation");
+			ImGui::SliderAngle("Roll", &pos.roll, -180.0f, 180.0f);
+			ImGui::SliderAngle("Pitch", &pos.pitch, -180.0f, 180.0f);
+			ImGui::SliderAngle("Yaw", &pos.yaw, -180.0f, 180.0f);
+			ImGui::Text("Position");
+			ImGui::SliderFloat("X", &pos.x, -20.0f, 20.0f);
+			ImGui::SliderFloat("Y", &pos.y, -20.0f, 20.0f);
+			ImGui::SliderFloat("Z", &pos.z, -20.0f, 20.0f);
+		}
+		ImGui::End();
+	}
+	// 封装的方法，用于获取模型的变换
+	dx::XMMATRIX GetTransform() const noexcept
+	{
+		return dx::XMMatrixRotationRollPitchYaw(pos.roll, pos.pitch, pos.yaw) *
+			dx::XMMatrixTranslation(pos.x, pos.y, pos.z);
+	}
+
+private:
+	struct
+	{
+		float roll = 0.0f;
+		float pitch = 0.0f;
+		float yaw = 0.0f;
+		float x = 0.0f;
+		float y = 0.0f;
+		float z = 0.0f;
+	} pos;
+};
+//////////////////////////////////////////////////////////////////////////
+
 Model::Model(Graphics& gfx, const std::string fileName)
+	:
+	pWindow(std::make_unique<ModelWindow>())
 {
 	// 指定模型名导入
 	Assimp::Importer imp;
@@ -104,31 +155,38 @@ Model::Model(Graphics& gfx, const std::string fileName)
 
 void Model::Draw(Graphics& gfx) const noxnd
 {
-	const auto transform = DirectX::XMMatrixRotationRollPitchYaw(pos.roll, pos.pitch, pos.yaw) *
-		DirectX::XMMatrixTranslation(pos.x, pos.y, pos.z);
+	//const auto transform = DirectX::XMMatrixRotationRollPitchYaw(pos.roll, pos.pitch, pos.yaw) *
+	//	DirectX::XMMatrixTranslation(pos.x, pos.y, pos.z);
 
-	pRoot->Draw(gfx, transform);
+	pRoot->Node::Draw(gfx, pWindow->GetTransform());
 }
 
 void Model::ShowWindow(const char* windowName) noexcept
 {
-	windowName = windowName ? windowName : "Model";//若提供参数名就用参数名,不提供参数窗口名字则默认使用"Model"
-	if (ImGui::Begin(windowName))
-	{
-		ImGui::Columns(2, nullptr, true);//有2列
-		pRoot->RenderTree();
+	//windowName = windowName ? windowName : "Model";//若提供参数名就用参数名,不提供参数窗口名字则默认使用"Model"
+	//if (ImGui::Begin(windowName))
+	//{
+	//	ImGui::Columns(2, nullptr, true);//有2列
+	//	pRoot->RenderTree();
+	//	ImGui::NextColumn();
+	//	ImGui::Text("Orientation");
+	//	ImGui::SliderAngle("Roll", &pos.roll, -180.0f, 180.0f);
+	//	ImGui::SliderAngle("Pitch", &pos.pitch, -180.0f, 180.0f);
+	//	ImGui::SliderAngle("Yaw", &pos.yaw, -180.0f, 180.0f);
+	//	ImGui::Text("Position");
+	//	ImGui::SliderFloat("X", &pos.x, -20.0f, 20.0f);
+	//	ImGui::SliderFloat("Y", &pos.y, -20.0f, 20.0f);
+	//	ImGui::SliderFloat("Z", &pos.z, -20.0f, 20.0f);
+	//}
+	//ImGui::End();
 
-		ImGui::NextColumn();
-		ImGui::Text("Orientation");
-		ImGui::SliderAngle("Roll", &pos.roll, -180.0f, 180.0f);
-		ImGui::SliderAngle("Pitch", &pos.pitch, -180.0f, 180.0f);
-		ImGui::SliderAngle("Yaw", &pos.yaw, -180.0f, 180.0f);
-		ImGui::Text("Position");
-		ImGui::SliderFloat("X", &pos.x, -20.0f, 20.0f);
-		ImGui::SliderFloat("Y", &pos.y, -20.0f, 20.0f);
-		ImGui::SliderFloat("Z", &pos.z, -20.0f, 20.0f);
-	}
-	ImGui::End();
+	// 展示模型控制窗口
+	pWindow->Show(windowName, *pRoot);
+}
+
+Model::~Model() noexcept
+{
+
 }
 
 std::unique_ptr<Mesh> Model::ParseMesh(Graphics& gfx, const aiMesh& mesh)
