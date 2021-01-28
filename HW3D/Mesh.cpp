@@ -74,14 +74,25 @@ void Node::AddChild(std::unique_ptr<Node> pChild) noxnd
 	childPtrs.push_back(std::move(pChild));
 }
 
-void Node::ShowTree() const noexcept
+void Node::ShowTree(int& nodeIndexTracked, std::optional<int>& selectedIndex) const noexcept
 {
-	// if tree node expanded, recursively render all children
-	if (ImGui::TreeNode(name.c_str()))
+	// 首先把传进来的索引 视作当前节点的索引
+	const int currentNodeIndex = nodeIndexTracked;
+	// 增加传进的索引,为下一个节点做准备
+	nodeIndexTracked++;
+	// 为当前节点定义一些标签,这些标签供TreeNodeEx()使用;TreeNodeEx()方法主要负责叶子节点，而TreeNode()负责树枝节点
+	const auto node_flags = ImGuiTreeNodeFlags_OpenOnArrow
+		| ((currentNodeIndex == selectedIndex.value_or(-1)) ? ImGuiTreeNodeFlags_Selected : 0)//如果传入节点等于被选中节点,那么该节点就是处于被选中状态
+		| ((childPtrs.size() == 0) ? ImGuiTreeNodeFlags_Leaf : 0);	//如果子节点集合数量为空则证明该节点是叶子节点
+
+	// 如果是树枝节点,就可以展开循环绘制
+	if (ImGui::TreeNodeEx((void*)(intptr_t)currentNodeIndex, node_flags, name.c_str()))
 	{
+		selectedIndex = ImGui::IsItemClicked() ? currentNodeIndex : selectedIndex;// 获取被点中的节点索引
+
 		for (const auto& pChild : childPtrs)
 		{
-			pChild->ShowTree();
+			pChild->ShowTree(nodeIndexTracked, selectedIndex);
 		}
 		ImGui::TreePop();
 	}
@@ -97,10 +108,12 @@ public:
 	{
 		// window name defaults to "Model"
 		windowName = windowName ? windowName : "Model";
+		// need an ints to track node indices and selected node
+		int nodeIndexTracker = 0;
 		if (ImGui::Begin(windowName))
 		{
 			ImGui::Columns(2, nullptr, true);
-			root.ShowTree();
+			root.ShowTree(nodeIndexTracker, selectedIndex);
 
 			ImGui::NextColumn();
 			ImGui::Text("Orientation");
@@ -122,6 +135,8 @@ public:
 	}
 
 private:
+	std::optional<int> selectedIndex;//准备操作去选中的某个节点索引
+
 	struct
 	{
 		float roll = 0.0f;

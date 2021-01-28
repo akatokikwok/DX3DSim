@@ -6,6 +6,7 @@
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 #include "ConditionalNoexcept.h"
+#include <optional>
 
 /* Mesh类继承自DrawableBasel,其构造函数,需要图形对象＼管线绑定物集合;//绑定图元、若符合索引缓存则添加并最后构造顶点shader常量缓存*/
 class Mesh : public DrawableBase<Mesh>
@@ -31,8 +32,8 @@ public:
 	Node(const std::string& name, std::vector<Mesh*> meshPtrs, const DirectX::XMMATRIX& transform) noxnd;
 	/* 用于递归绘制单节点的Meshes*/
 	void Draw(Graphics& gfx, DirectX::FXMMATRIX accumulatedTransform) const noxnd;
-	/* 用于渲染树上的节点*/
-	void ShowTree() const noexcept;
+	/* 用于渲染树上的节点, 同一时间仅允许1个子节点被选中*/
+	void ShowTree(int& nodeIndex, std::optional<int>& selectedIndex) const noexcept;
 
 private:
 	// 添加子节点,仅供Model类实例使用,因为Model类是Node类的友元
@@ -73,6 +74,6 @@ private:
 	std::unique_ptr<Node> pRoot;// 根节点
 	std::vector<std::unique_ptr<Mesh>> meshPtrs;// 总体网格集合
 
-	// ModelWindow定义在源文件里,是模型的控制窗口
+	// ModelWindow定义在源文件里,是模型的控制窗口;放在cpp里为了保护它的实现不被访问
 	std::unique_ptr<class ModelWindow> pWindow;
 };
