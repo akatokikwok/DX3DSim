@@ -26,23 +26,34 @@ private:
 class Node
 {
 	friend class Model;
+	friend class ModelWindow;// 定义在源文件里
 public:
 	// 构造函数,用参数Mesh集合初始化自己的Mesh集合,并保存参数变换
 	//Node(std::vector<Mesh*> meshPtrs, const DirectX::XMMATRIX& transform) noxnd;
 	Node(const std::string& name, std::vector<Mesh*> meshPtrs, const DirectX::XMMATRIX& transform) noxnd;
 	/* 用于递归绘制单节点的Meshes*/
 	void Draw(Graphics& gfx, DirectX::FXMMATRIX accumulatedTransform) const noxnd;
-	/* 用于渲染树上的节点, 同一时间仅允许1个子节点被选中*/
-	void ShowTree(int& nodeIndex, std::optional<int>& selectedIndex) const noexcept;
+	/* 用来设置最终被应用的变换*/
+	void SetAppliedTransform(DirectX::FXMMATRIX transform) noexcept;
 
 private:
 	// 添加子节点,仅供Model类实例使用,因为Model类是Node类的友元
 	void AddChild(std::unique_ptr<Node> pChild) noxnd;
+
+	/* 用于渲染树上的节点, 同一时间仅允许1个子节点被选中;
+	   要求提供 传进节点的索引、传进节点的引用
+	*/
+	void ShowTree(int& nodeIndex, std::optional<int>& selectedIndex, Node*& pSelectedNode) const noexcept;
+
 private:
 	std::string name;							// 每个节点的名字
 	std::vector<std::unique_ptr<Node>> childPtrs;//子节点集合
 	std::vector<Mesh*> meshPtrs;				//节点上挂载的Mesh集合
-	DirectX::XMFLOAT4X4 transform;				// 相对于父节点的变换
+	//DirectX::XMFLOAT4X4 transform;				// 相对于父节点的变换
+
+	DirectX::XMFLOAT4X4 baseTransform;		// 从文件里加载出来的变换
+	DirectX::XMFLOAT4X4 appliedTransform;	// 最终被应用的变换
+
 };
 
 /// //////////////////////////////////////////////////////////////////////////

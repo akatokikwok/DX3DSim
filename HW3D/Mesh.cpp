@@ -1,6 +1,7 @@
 ﻿#include "Mesh.h"
 #include <memory>
 #include "imgui/imgui.h"
+#include <unordered_map>
 
 namespace dx = DirectX;
 
@@ -40,7 +41,7 @@ void Mesh::Draw(Graphics& gfx, DirectX::FXMMATRIX accumulatedTransform/*累计�
 
 DirectX::XMMATRIX Mesh::GetTransformXM() const noexcept
 {
-	return DirectX::XMLoadFloat4x4(&transform);
+	return DirectX::XMLoadFloat4x4(&transform);	
 }
 
 Node::Node(const std::string& name, std::vector<Mesh*> meshPtrs, const DirectX::XMMATRIX& transform) noxnd
@@ -48,13 +49,20 @@ Node::Node(const std::string& name, std::vector<Mesh*> meshPtrs, const DirectX::
 	meshPtrs(std::move(meshPtrs)),
 	name(name)
 {
-	DirectX::XMStoreFloat4x4(&this->transform, transform);
+	//DirectX::XMStoreFloat4x4(&this->transform, transform);
+
+	dx::XMStoreFloat4x4(&baseTransform, transform);
+	dx::XMStoreFloat4x4(&appliedTransform, dx::XMMatrixIdentity());
 }
 
 void Node::Draw(Graphics& gfx, DirectX::FXMMATRIX accumulatedTransform) const noxnd
 {
-	// 本节点的相对变换乘以父节点的累计变换
-	const auto built = DirectX::XMLoadFloat4x4(&transform) * accumulatedTransform;
+	
+	// 取得 从imgui配置文件里的变换*最终应用的变换*从父节点传过来的变换
+	const auto built =
+		dx::XMLoadFloat4x4(&baseTransform) *
+		dx::XMLoadFloat4x4(&appliedTransform) *
+		accumulatedTransform;
 
 	// 将上述应用到自己的Meshes上,然后对自己的子节点也是如此
 	for (const auto pm : meshPtrs)
@@ -74,7 +82,7 @@ void Node::AddChild(std::unique_ptr<Node> pChild) noxnd
 	childPtrs.push_back(std::move(pChild));
 }
 
-void Node::ShowTree(int& nodeIndexTracked, std::optional<int>& selectedIndex) const noexcept
+void Node::ShowTree(int& nodeIndexTracked, std::optional<int>& selectedIndex, Node*& pSelectedNode) const noexcept
 {
 	// 首先把传进来的索引 视作当前节点的索引
 	const int currentNodeIndex = nodeIndexTracked;
@@ -88,18 +96,30 @@ void Node::ShowTree(int& nodeIndexTracked, std::optional<int>& selectedIndex) co
 	// 如果是树枝节点,就可以展开循环绘制
 	if (ImGui::TreeNodeEx((void*)(intptr_t)currentNodeIndex, node_flags, name.c_str()))
 	{
-		selectedIndex = ImGui::IsItemClicked() ? currentNodeIndex : selectedIndex;// 获取被点中的节点索引
-
+		// 设置被选中的节点
+		if (ImGui::IsItemClicked())
+		{
+			selectedIndex = currentNodeIndex;
+			pSelectedNode = const_cast<Node*>(this);
+		}
+		// 对于所有树枝节点循环渲染子节点
 		for (const auto& pChild : childPtrs)
 		{
-			pChild->ShowTree(nodeIndexTracked, selectedIndex);
+			pChild->ShowTree(nodeIndexTracked, selectedIndex, pSelectedNode);
 		}
 		ImGui::TreePop();
 	}
 }
 
+void Node::SetAppliedTransform(DirectX::FXMMATRIX transform) noexcept
+{
+	dx::XMStoreFloat4x4(&appliedTransform, transform);
+}
+
+
+
 //////////////////////////////////////////////////////////////////////////
-// Model
+// ModelWindow IMGUI控制窗口
 class ModelWindow // pImpl idiom
 {
 public:
@@ -113,31 +133,46 @@ public:
 		if (ImGui::Begin(windowName))
 		{
 			ImGui::Columns(2, nullptr, true);
-			root.ShowTree(nodeIndexTracker, selectedIndex);
+			root.ShowTree(nodeIndexTracker, selectedIndex, pSelectedNode);
 
 			ImGui::NextColumn();
-			ImGui::Text("Orientation");
-			ImGui::SliderAngle("Roll", &pos.roll, -180.0f, 180.0f);
-			ImGui::SliderAngle("Pitch", &pos.pitch, -180.0f, 180.0f);
-			ImGui::SliderAngle("Yaw", &pos.yaw, -180.0f, 180.0f);
-			ImGui::Text("Position");
-			ImGui::SliderFloat("X", &pos.x, -20.0f, 20.0f);
-			ImGui::SliderFloat("Y", &pos.y, -20.0f, 20.0f);
-			ImGui::SliderFloat("Z", &pos.z, -20.0f, 20.0f);
+			
+			// 如果存在有被选中状态的节点,就可以使用IMGUI去控制
+			if (pSelectedNode != nullptr)
+			{
+				auto& transform = transforms[*selectedIndex];//根据被选中的索引从无序map里取出对应的数据组
+				ImGui::Text("Orientation");
+				ImGui::SliderAngle("Roll", &transform.roll, -180.0f, 180.0f);
+				ImGui::SliderAngle("Pitch", &transform.pitch, -180.0f, 180.0f);
+				ImGui::SliderAngle("Yaw", &transform.yaw, -180.0f, 180.0f);
+				ImGui::Text("Position");
+				ImGui::SliderFloat("X", &transform.x, -20.0f, 20.0f);
+				ImGui::SliderFloat("Y", &transform.y, -20.0f, 20.0f);
+				ImGui::SliderFloat("Z", &transform.z, -20.0f, 20.0f);
+			}
 		}
 		ImGui::End();
 	}
 	// 封装的方法，用于获取模型的变换
 	dx::XMMATRIX GetTransform() const noexcept
 	{
-		return dx::XMMatrixRotationRollPitchYaw(pos.roll, pos.pitch, pos.yaw) *
-			dx::XMMatrixTranslation(pos.x, pos.y, pos.z);
+		const auto& transform = transforms.at(*selectedIndex);
+		return
+			dx::XMMatrixRotationRollPitchYaw(transform.roll, transform.pitch, transform.yaw) *
+			dx::XMMatrixTranslation(transform.x, transform.y, transform.z);
+	}
+
+	Node* GetSelectedNode() const noexcept
+	{
+		return pSelectedNode;
 	}
 
 private:
 	std::optional<int> selectedIndex;//准备操作去选中的某个节点索引
 
-	struct
+	Node* pSelectedNode; // 当前被选中的节点及索引
+
+	struct TransformParameters
 	{
 		float roll = 0.0f;
 		float pitch = 0.0f;
@@ -145,7 +180,10 @@ private:
 		float x = 0.0f;
 		float y = 0.0f;
 		float z = 0.0f;
-	} pos;
+	} ;
+	
+	// 无序map负责把索引映射到数据参数结构体TransformParameters上;目的是追踪每个骨骼节点的变换
+	std::unordered_map<int, TransformParameters> transforms;
 };
 //////////////////////////////////////////////////////////////////////////
 
@@ -173,7 +211,13 @@ void Model::Draw(Graphics& gfx) const noxnd
 	//const auto transform = DirectX::XMMatrixRotationRollPitchYaw(pos.roll, pos.pitch, pos.yaw) *
 	//	DirectX::XMMatrixTranslation(pos.x, pos.y, pos.z);
 
-	pRoot->Node::Draw(gfx, pWindow->GetTransform());
+	//pRoot->Node::Draw(gfx, pWindow->GetTransform());
+
+	if (auto node = pWindow->GetSelectedNode())
+	{
+		node->SetAppliedTransform(pWindow->GetTransform());
+	}
+	pRoot->Node::Draw(gfx, dx::XMMatrixIdentity());
 }
 
 void Model::ShowWindow(const char* windowName) noexcept
