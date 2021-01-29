@@ -8,6 +8,18 @@
 #include "ConditionalNoexcept.h"
 #include <optional>
 
+/* 用于捕获异常的模型异常类*/
+class ModelException : public ChiliException
+{
+public:
+	ModelException(int line, const char* file, std::string note) noexcept;
+	const char* what() const noexcept override;
+	const char* GetType() const noexcept override;
+	const std::string& GetNote() const noexcept;
+private:
+	std::string note;
+};
+
 /* Mesh类继承自DrawableBasel,其构造函数,需要图形对象＼管线绑定物集合;//绑定图元、若符合索引缓存则添加并最后构造顶点shader常量缓存*/
 class Mesh : public DrawableBase<Mesh>
 {

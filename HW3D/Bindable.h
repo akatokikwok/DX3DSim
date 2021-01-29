@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 #include "Graphics.h"
 #include "ConditionalNoexcept.h"
 
@@ -7,12 +7,12 @@ namespace Bind
 	class Bindable
 	{
 	public:
-		// ÈÃ°ó¶¨Îï×ÓÀà¸÷×Ô°ó¶¨µ½¸÷×ÔµÄÁ÷Ë®Ïß
+		// è®©ç»‘å®šç‰©å­ç±»å„è‡ªç»‘å®šåˆ°å„è‡ªçš„æµæ°´çº¿
 		virtual void Bind(Graphics& gfx) noexcept = 0;
 		virtual ~Bindable() = default;
 	protected:
 		static ID3D11DeviceContext* GetContext(Graphics& gfx) noexcept;
 		static ID3D11Device* GetDevice(Graphics& gfx) noexcept;
-		static DxgiInfoManager& GetInfoManager(Graphics& gfx) noxnd;
+		static DxgiInfoManager& GetInfoManager(Graphics& gfx) ;
 	};
 }

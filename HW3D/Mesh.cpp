@@ -2,8 +2,36 @@
 #include <memory>
 #include "imgui/imgui.h"
 #include <unordered_map>
+#include <sstream>
 
 namespace dx = DirectX;
+
+ModelException::ModelException(int line, const char* file, std::string note) noexcept
+	:
+	ChiliException(line, file),
+	note(std::move(note))
+{}
+
+const char* ModelException::what() const noexcept
+{
+	std::ostringstream oss;
+	oss << ChiliException::what() << std::endl
+		<< "[Note] " << GetNote();
+	whatBuffer = oss.str();
+	return whatBuffer.c_str();
+}
+
+const char* ModelException::GetType() const noexcept
+{
+	return "Grb Model Exception";
+}
+
+const std::string& ModelException::GetNote() const noexcept
+{
+	return note;
+}
+
+/// //////////////////////////////////////////////////////////////////////////
 
 // 绑定图元、若符合索引缓存则添加并最后构造顶点shader常量缓存
 Mesh::Mesh(Graphics& gfx, std::vector<std::unique_ptr<Bind::Bindable>> bindPtrs)
@@ -195,8 +223,16 @@ Model::Model(Graphics& gfx, const std::string fileName)
 	Assimp::Importer imp;
 	const auto pScene = imp.ReadFile(fileName.c_str(),
 		aiProcess_Triangulate |
-		aiProcess_JoinIdenticalVertices
+		aiProcess_JoinIdenticalVertices |
+		aiProcess_ConvertToLeftHanded |
+		aiProcess_GenNormals
 	);
+	// 若模型加载不正确,就抛出提示信息
+	if (pScene == nullptr)
+	{
+		throw ModelException(__LINE__, __FILE__, imp.GetErrorString());
+	}
+
 	// 加载整个模型
 	for (size_t i = 0; i < pScene->mNumMeshes; i++)
 	{
