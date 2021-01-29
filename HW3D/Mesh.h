@@ -63,9 +63,8 @@ private:
 	std::vector<Mesh*> meshPtrs;				//节点上挂载的Mesh集合
 	//DirectX::XMFLOAT4X4 transform;				// 相对于父节点的变换
 
-	DirectX::XMFLOAT4X4 baseTransform;		// 从文件里加载出来的变换
+	DirectX::XMFLOAT4X4 transform;		// 从文件里加载出来的变换
 	DirectX::XMFLOAT4X4 appliedTransform;	// 最终被应用的变换
-
 };
 
 /// //////////////////////////////////////////////////////////////////////////

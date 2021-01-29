@@ -72,14 +72,14 @@ DirectX::XMMATRIX Mesh::GetTransformXM() const noexcept
 	return DirectX::XMLoadFloat4x4(&transform);	
 }
 
-Node::Node(const std::string& name, std::vector<Mesh*> meshPtrs, const DirectX::XMMATRIX& transform) noxnd
+Node::Node(const std::string& name, std::vector<Mesh*> meshPtrs, const DirectX::XMMATRIX& transform_in) noxnd
 	:
 	meshPtrs(std::move(meshPtrs)),
 	name(name)
 {
 	//DirectX::XMStoreFloat4x4(&this->transform, transform);
 
-	dx::XMStoreFloat4x4(&baseTransform, transform);
+	dx::XMStoreFloat4x4(&transform, transform_in);
 	dx::XMStoreFloat4x4(&appliedTransform, dx::XMMatrixIdentity());
 }
 
@@ -88,8 +88,8 @@ void Node::Draw(Graphics& gfx, DirectX::FXMMATRIX accumulatedTransform) const no
 	
 	// 取得 从imgui配置文件里的变换*最终应用的变换*从父节点传过来的变换
 	const auto built =
-		dx::XMLoadFloat4x4(&baseTransform) *
-		dx::XMLoadFloat4x4(&appliedTransform) *
+		dx::XMLoadFloat4x4( &appliedTransform ) *
+		dx::XMLoadFloat4x4( &transform ) *
 		accumulatedTransform;
 
 	// 将上述应用到自己的Meshes上,然后对自己的子节点也是如此
@@ -121,15 +121,19 @@ void Node::ShowTree(int& nodeIndexTracked, std::optional<int>& selectedIndex, No
 		| ((currentNodeIndex == selectedIndex.value_or(-1)) ? ImGuiTreeNodeFlags_Selected : 0)//如果传入节点等于被选中节点,那么该节点就是处于被选中状态
 		| ((childPtrs.size() == 0) ? ImGuiTreeNodeFlags_Leaf : 0);	//如果子节点集合数量为空则证明该节点是叶子节点
 
-	// 如果是树枝节点,就可以展开循环绘制
-	if (ImGui::TreeNodeEx((void*)(intptr_t)currentNodeIndex, node_flags, name.c_str()))
+	// render this node;TreeNode functions return true when the node is open, in which case you need to also call TreePop() when you are finished displaying the tree node contents.
+	const auto expanded = ImGui::TreeNodeEx(
+		(void*)(intptr_t)currentNodeIndex, node_flags, name.c_str()
+	);
+	// processing for selecting node// 设置被选中的节点;放到下面的if外面是为了确保即使非树枝节点仍然也可以被选中
+	if (ImGui::IsItemClicked())
 	{
-		// 设置被选中的节点
-		if (ImGui::IsItemClicked())
-		{
-			selectedIndex = currentNodeIndex;
-			pSelectedNode = const_cast<Node*>(this);
-		}
+		selectedIndex = currentNodeIndex;
+		pSelectedNode = const_cast<Node*>(this);
+	}
+	//// 如果是树枝节点,就可以展开循环绘制 
+	if (expanded)
+	{
 		// 对于所有树枝节点循环渲染子节点
 		for (const auto& pChild : childPtrs)
 		{
