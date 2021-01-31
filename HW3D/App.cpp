@@ -1,5 +1,4 @@
 ﻿#include "App.h"
-#include "AssTest.h"
 #include <memory>
 #include <algorithm>
 #include "ChiliMath.h"
@@ -17,6 +16,8 @@ App::App()
 	light(wnd.Gfx())
 {
 	wnd.Gfx().SetProjection(dx::XMMatrixPerspectiveLH(1.0f, 9.0f / 16.0f, 0.5f, 40.0f));
+
+	wnd.DisableCursor();
 }
 
 void App::DoFrame()
