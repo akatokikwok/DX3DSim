@@ -56,16 +56,24 @@ public:
 	Window( const Window& ) = delete;
 	Window& operator=( const Window& ) = delete;
 	void SetTitle( const std::string& title );
-	void EnableCursor();
-	void DisableCursor();
+	// 以WINAPI形式开启/关闭鼠标
+	void EnableCursor() noexcept;
+	void DisableCursor() noexcept;
+
 	static std::optional<int> ProcessMessages() noexcept;
 	Graphics& Gfx();
 private:
-	void HideCursor();
-	void ShowCursor();
+	// 限制光标
+	void ConfineCursor() noexcept;
+	// 释放光标
+	void FreeCursor() noexcept;
+
+	void HideCursor() noexcept;
+	void ShowCursor() noexcept;
 	// 开启/关闭 悬浮在IMGUI窗口上的光标
-	void EnableImGuiMouse();
-	void DisableImGuiMouse();
+	void EnableImGuiMouse() noexcept;
+	void DisableImGuiMouse() noexcept;
+
 	static LRESULT CALLBACK HandleMsgSetup( HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam ) noexcept;
 	static LRESULT CALLBACK HandleMsgThunk( HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam ) noexcept;
 	LRESULT HandleMsg( HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam ) noexcept;

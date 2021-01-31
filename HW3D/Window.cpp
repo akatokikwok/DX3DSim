@@ -100,18 +100,20 @@ void Window::SetTitle( const std::string& title )
 	}
 }
 
-void Window::EnableCursor()
+void Window::EnableCursor() noexcept
 {
 	cursorEnabled = true;
 	ShowCursor();
 	EnableImGuiMouse();
+	FreeCursor();
 }
 
-void Window::DisableCursor()
+void Window::DisableCursor() noexcept
 {
 	cursorEnabled = false;
 	HideCursor();
 	DisableImGuiMouse();
+	ConfineCursor();
 }
 
 std::optional<int> Window::ProcessMessages() noexcept
@@ -145,22 +147,38 @@ Graphics& Window::Gfx()
 	return *pGfx;
 }
 
-void Window::HideCursor()
+void Window::ConfineCursor() noexcept
 {
-	while (::ShowCursor(FALSE) >= 0);//这里使用的室WINAPI函数ShowCursor
+	// 首先获得本客户端窗口存在一个矩形里
+	RECT rect;
+	GetClientRect(hWnd, &rect);
+	// 从窗口空间映射到控件空间
+	MapWindowPoints(hWnd, nullptr, reinterpret_cast<POINT*>(&rect), 2);
+	// 之后利用WINAPI方法就可以把光标限制在一个矩形里
+	ClipCursor(&rect);
 }
 
-void Window::ShowCursor()
+void Window::FreeCursor() noexcept
+{
+	ClipCursor(nullptr);
+}
+
+void Window::HideCursor() noexcept
+{
+	while (::ShowCursor(FALSE) >= 0);//这里使用的是WINAPI函数ShowCursor
+}
+
+void Window::ShowCursor() noexcept
 {
 	while (::ShowCursor(TRUE) < 0);
 }
 
-void Window::EnableImGuiMouse()
+void Window::EnableImGuiMouse() noexcept
 {
 	ImGui::GetIO().ConfigFlags &= ~ImGuiConfigFlags_NoMouse;
 }
 
-void Window::DisableImGuiMouse()
+void Window::DisableImGuiMouse() noexcept
 {
 	ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_NoMouse;
 }
@@ -248,6 +266,7 @@ LRESULT Window::HandleMsg( HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam ) noex
 	/************* MOUSE MESSAGES ****************/
 	case WM_MOUSEMOVE:
 	{
+		const POINTS pt = MAKEPOINTS(lParam);
 		// cursorless exclusive gets first dibs
 		if (!cursorEnabled)
 		{
@@ -265,7 +284,7 @@ LRESULT Window::HandleMsg( HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam ) noex
 		{
 			break;
 		}
-		const POINTS pt = MAKEPOINTS( lParam );
+		//const POINTS pt = MAKEPOINTS( lParam );
 		// in client region -> log move, and log enter + capture mouse (if not previously in window)
 		if( pt.x >= 0 && pt.x < width && pt.y >= 0 && pt.y < height )
 		{
