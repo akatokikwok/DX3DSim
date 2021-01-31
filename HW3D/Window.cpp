@@ -230,6 +230,28 @@ LRESULT Window::HandleMsg( HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam ) noex
 		kbd.ClearState();
 		break;
 
+	case WM_ACTIVATE:
+		OutputDebugString("activeate\n");
+		// confine/free cursor on window to foreground/background if cursor disabled
+		// 无论何种操作都应该使光标被限制在窗口里
+
+		// 此处当鼠标被禁用时候,同时也要求光标被限制在窗口里
+		if (!cursorEnabled)
+		{
+			if (wParam & WA_ACTIVE/*此宏表示以非点击方式激活窗口*/ || wParam & WA_CLICKACTIVE /*此宏表示以点击方式激活窗口*/)
+			{
+				OutputDebugString("activeate => confine\n");
+				ConfineCursor();
+				HideCursor();
+			}
+			else
+			{
+				OutputDebugString("activeate => free\n");
+				FreeCursor();
+			}
+		}
+		break;
+
 	/*********** KEYBOARD MESSAGES ***********/
 	case WM_KEYDOWN:
 	// syskey commands need to be handled to track ALT key (VK_MENU) and F10
@@ -314,6 +336,14 @@ LRESULT Window::HandleMsg( HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam ) noex
 	case WM_LBUTTONDOWN:
 	{
 		SetForegroundWindow( hWnd );
+
+		// 若接收到鼠标左键点击且光标被禁用,则执行隐藏并限制光标在窗口内;假设用户点击窗口标题栏是想拖动窗口;
+		if (!cursorEnabled)
+		{
+			OutputDebugString("lclick => recapture\n");
+			ConfineCursor();
+			HideCursor();
+		}
 		// stifle this mouse message if imgui wants to capture
 		if( imio.WantCaptureMouse )
 		{

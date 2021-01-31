@@ -56,7 +56,7 @@ public:
 	Window( const Window& ) = delete;
 	Window& operator=( const Window& ) = delete;
 	void SetTitle( const std::string& title );
-	// 以WINAPI形式开启/关闭鼠标
+	// 以复合形式启用/关闭鼠标
 	void EnableCursor() noexcept;
 	void DisableCursor() noexcept;
 
@@ -67,7 +67,7 @@ private:
 	void ConfineCursor() noexcept;
 	// 释放光标
 	void FreeCursor() noexcept;
-
+	// 以WINAPI方式开启或关闭光标
 	void HideCursor() noexcept;
 	void ShowCursor() noexcept;
 	// 开启/关闭 悬浮在IMGUI窗口上的光标
