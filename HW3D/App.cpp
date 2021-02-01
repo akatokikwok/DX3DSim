@@ -17,7 +17,7 @@ App::App()
 {
 	wnd.Gfx().SetProjection(dx::XMMatrixPerspectiveLH(1.0f, 9.0f / 16.0f, 0.5f, 40.0f));
 
-	wnd.DisableCursor();//应用初始化的时候默认关闭光标
+	//wnd.DisableCursor();//应用初始化的时候默认关闭光标
 }
 
 void App::DoFrame()
@@ -39,6 +39,25 @@ void App::DoFrame()
 
 	nano.Draw(wnd.Gfx());
 	light.Draw(wnd.Gfx());
+
+
+	while (const auto e = wnd.kbd.ReadKey())
+	{
+		// 每帧检测是否按下了INSERT键位;若处于光标启用状态就关闭光标并更新状态为禁用;若处于光标禁用状态就启用光标并更新状态为启用
+		if (e->IsPress() && e->GetCode() == VK_INSERT)
+		{
+			if (cursorEnabled)
+			{
+				wnd.DisableCursor();
+				cursorEnabled = false;
+			}
+			else
+			{
+				wnd.EnableCursor();
+				cursorEnabled = true;
+			}
+		}
+	}
 
 	cam.SpawnControlWindow();
 	light.SpawnControlWindow();
@@ -71,6 +90,7 @@ void App::ShowRawInputWindow()
 	if (ImGui::Begin("Raw Input"))
 	{
 		ImGui::Text("Tally: (%d,%d)", x, y);
+		ImGui::Text("Cursor: %s", cursorEnabled ? "enabled" : "disabled");
 	}
 	ImGui::End();
 }

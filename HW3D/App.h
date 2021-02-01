@@ -22,7 +22,7 @@ private:
 	void ShowRawInputWindow();
 private:
 	int x = 0, y = 0;
-
+	bool cursorEnabled = true;
 	ImguiManager imgui;
 	Window wnd;
 	ChiliTimer timer;
