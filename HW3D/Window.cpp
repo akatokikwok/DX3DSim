@@ -84,6 +84,17 @@ Window::Window( int width,int height,const char* name )
 	ImGui_ImplWin32_Init( hWnd );
 	// create graphics object
 	pGfx = std::make_unique<Graphics>(hWnd, width, height);
+
+	// 注册鼠标原生输入的持有设备
+	RAWINPUTDEVICE rid;
+	rid.usUsagePage = 0x01; // mouse page
+	rid.usUsage = 0x02; // mouse usage
+	rid.dwFlags = 0;
+	rid.hwndTarget = nullptr;	
+	if (RegisterRawInputDevices(&rid, 1, sizeof(rid)) == FALSE)// 检查raw data数据来自哪个设备
+	{
+		throw CHWND_LAST_EXCEPT();
+	}
 }
 
 Window::~Window()
@@ -411,6 +422,49 @@ LRESULT Window::HandleMsg( HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam ) noex
 		break;
 	}
 	/************** END MOUSE MESSAGES **************/
+
+	/************** RAW MOUSE MESSAGES **************/
+	case WM_INPUT:
+	{
+		// 输入数据
+		UINT size;
+		// first get the size of the input data;
+		// 当有设备输入的时候就会发送这些消息,使用GetrawInputData()获得收到的数据
+		if (GetRawInputData(
+			reinterpret_cast<HRAWINPUT>(lParam),//lParam是那个raw Input的句柄
+			RID_INPUT,
+			nullptr,
+			&size,
+			sizeof(RAWINPUTHEADER)) == -1)
+		{
+			// 若数据出错就直接抛异常
+			break;
+		}
+		rawBuffer.resize(size);
+		
+		// 重新再执行一次GetRawInputData(),将数据写入
+		if (GetRawInputData(
+			reinterpret_cast<HRAWINPUT>(lParam),
+			RID_INPUT,
+			rawBuffer.data(),
+			&size,
+			sizeof(RAWINPUTHEADER)) != size)
+		{
+			// 如果这个第二次检测查出来的size和第一次的不一致,也将其视为出错,并break掉此次输入
+			break;
+		}
+		// process the raw input data
+		auto& ri = reinterpret_cast<const RAWINPUT&>(*rawBuffer.data());
+		if (ri.header.dwType == RIM_TYPEMOUSE /*首先只需要鼠标的数据,其他数据将被忽视掉*/&&
+			(ri.data.mouse.lLastX != 0 || ri.data.mouse.lLastY != 0)/*只处理光标移动的情况*/)
+		{
+			mouse.OnRawDelta(ri.data.mouse.lLastX, ri.data.mouse.lLastY);
+		}
+		break;
+	}
+	/************** END RAW MOUSE MESSAGES **************/
+
+
 	}
 
 	return DefWindowProc( hWnd,msg,wParam,lParam );

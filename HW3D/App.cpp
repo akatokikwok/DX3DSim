@@ -17,7 +17,7 @@ App::App()
 {
 	wnd.Gfx().SetProjection(dx::XMMatrixPerspectiveLH(1.0f, 9.0f / 16.0f, 0.5f, 40.0f));
 
-	wnd.DisableCursor();
+	wnd.DisableCursor();//应用初始化的时候默认关闭光标
 }
 
 void App::DoFrame()
@@ -45,6 +45,8 @@ void App::DoFrame()
 
 	ShowImguiDemoWindow();
 	nano.ShowWindow();
+	ShowRawInputWindow();
+
 	// present
 	wnd.Gfx().EndFrame();
 }
@@ -56,6 +58,21 @@ void App::ShowImguiDemoWindow()
 	{
 		ImGui::ShowDemoWindow(&show_demo_window);
 	}
+}
+
+void App::ShowRawInputWindow()
+{
+	// 累加光标的值
+	while (const auto d = wnd.mouse.ReadRawDelta())
+	{
+		x += d->x;
+		y += d->y;
+	}
+	if (ImGui::Begin("Raw Input"))
+	{
+		ImGui::Text("Tally: (%d,%d)", x, y);
+	}
+	ImGui::End();
 }
 
 App::~App()

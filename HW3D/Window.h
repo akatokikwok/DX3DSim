@@ -81,7 +81,8 @@ public:
 	Keyboard kbd;
 	Mouse mouse;
 private:
-	bool cursorEnabled = false;
+	bool cursorEnabled = true;
+	std::vector<BYTE> rawBuffer;
 
 	int width;
 	int height;

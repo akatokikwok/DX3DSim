@@ -1,29 +1,21 @@
-/****************************************************************************************** 
- *	Chili DirectX Framework Version 16.07.20											  *	
- *	Mouse.cpp																			  *
- *	Copyright 2016 PlanetChili <http://www.planetchili.net>								  *
- *																						  *
- *	This file is part of The Chili DirectX Framework.									  *
- *																						  *
- *	The Chili DirectX Framework is free software: you can redistribute it and/or modify	  *
- *	it under the terms of the GNU General Public License as published by				  *
- *	the Free Software Foundation, either version 3 of the License, or					  *
- *	(at your option) any later version.													  *
- *																						  *
- *	The Chili DirectX Framework is distributed in the hope that it will be useful,		  *
- *	but WITHOUT ANY WARRANTY; without even the implied warranty of						  *
- *	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the						  *
- *	GNU General Public License for more details.										  *
- *																						  *
- *	You should have received a copy of the GNU General Public License					  *
- *	along with The Chili DirectX Framework.  If not, see <http://www.gnu.org/licenses/>.  *
- ******************************************************************************************/
-#include "ChiliWin.h"
+﻿#include "ChiliWin.h"
 #include "Mouse.h"
 
 std::pair<int,int> Mouse::GetPos() const noexcept
 {
 	return { x,y };
+}
+
+std::optional<Mouse::RawDelta> Mouse::ReadRawDelta() noexcept
+{
+	if (rawDeltaBuffer.empty())
+	{
+		return std::nullopt;
+	}
+	// 将队列中最靠前位置的元素拿出来
+	const RawDelta d = rawDeltaBuffer.front();
+	rawDeltaBuffer.pop();
+	return d;
 }
 
 int Mouse::GetPosX() const noexcept
@@ -90,6 +82,12 @@ void Mouse::OnMouseEnter() noexcept
 	TrimBuffer();
 }
 
+void Mouse::OnRawDelta(int dx, int dy) noexcept
+{
+	rawDeltaBuffer.push({ dx,dy });
+	TrimBuffer();
+}
+
 void Mouse::OnLeftPressed( int x,int y ) noexcept
 {
 	leftIsPressed = true;
@@ -139,6 +137,14 @@ void Mouse::TrimBuffer() noexcept
 	while( buffer.size() > bufferSize )
 	{
 		buffer.pop();
+	}
+}
+
+void Mouse::TrimRawInputBuffer() noexcept
+{
+	while (rawDeltaBuffer.size() > bufferSize)
+	{
+		rawDeltaBuffer.pop();
 	}
 }
 
