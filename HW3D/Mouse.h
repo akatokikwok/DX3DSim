@@ -86,6 +86,10 @@ public:
 		return buffer.empty();
 	}
 	void Flush() noexcept;
+
+	void EnableRaw() noexcept;// 启用原生输入
+	void DisableRaw() noexcept;// 禁用原生输入
+	bool RawEnabled() const noexcept;// 获取原生光标的点状态
 private:
 	void OnMouseMove( int x,int y ) noexcept;
 	void OnMouseLeave() noexcept;
@@ -108,6 +112,8 @@ private:
 	bool rightIsPressed = false;
 	bool isInWindow = false;
 	int wheelDeltaCarry = 0;
+	//原生光标输入的点状态
+	bool rawEnabled = false;
 	std::queue<Event> buffer;
 	// RawDelta结构体的的队列
 	std::queue<RawDelta> rawDeltaBuffer;

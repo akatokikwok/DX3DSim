@@ -59,7 +59,8 @@ public:
 	// 以复合形式启用/关闭鼠标
 	void EnableCursor() noexcept;
 	void DisableCursor() noexcept;
-
+	// 获取窗口内光标的点状态
+	bool CursorEnabled() const noexcept;
 	static std::optional<int> ProcessMessages() noexcept;
 	Graphics& Gfx();
 private:
@@ -81,7 +82,7 @@ public:
 	Keyboard kbd;
 	Mouse mouse;
 private:
-	bool cursorEnabled = true;
+	bool cursorEnabled = true;//光标点状态，默认为启用
 	std::vector<BYTE> rawBuffer;
 
 	int width;

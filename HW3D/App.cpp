@@ -46,15 +46,15 @@ void App::DoFrame()
 		// 每帧检测是否按下了INSERT键位;若处于光标启用状态就关闭光标并更新状态为禁用;若处于光标禁用状态就启用光标并更新状态为启用
 		if (e->IsPress() && e->GetCode() == VK_INSERT)
 		{
-			if (cursorEnabled)
+			if (wnd.CursorEnabled())
 			{
 				wnd.DisableCursor();
-				cursorEnabled = false;
+				wnd.mouse.EnableRaw();//启用鼠标的原生输入
 			}
 			else
 			{
 				wnd.EnableCursor();
-				cursorEnabled = true;
+				wnd.mouse.DisableRaw();//禁用鼠标的原生输入
 			}
 		}
 	}
@@ -90,7 +90,7 @@ void App::ShowRawInputWindow()
 	if (ImGui::Begin("Raw Input"))
 	{
 		ImGui::Text("Tally: (%d,%d)", x, y);
-		ImGui::Text("Cursor: %s", cursorEnabled ? "enabled" : "disabled");
+		ImGui::Text("Cursor: %s", wnd.CursorEnabled() ? "enabled" : "disabled");
 	}
 	ImGui::End();
 }
