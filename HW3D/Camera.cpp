@@ -22,8 +22,22 @@ DirectX::XMMATRIX Camera::GetMatrix() const noexcept
 	) * dx::XMMatrixRotationRollPitchYaw(
 		pitch, -yaw, roll
 	);*/
-	// 拿到位移矩阵 * 旋转矩阵
-	return dx::XMMatrixTranslation(-pos.x, -pos.y, -pos.z) * dx::XMMatrixRotationRollPitchYaw(-pitch, -yaw, 0.0f);
+//	// 拿到位移矩阵 * 旋转矩阵
+//	return dx::XMMatrixTranslation(-pos.x, -pos.y, -pos.z) * dx::XMMatrixRotationRollPitchYaw(-pitch, -yaw, 0.0f);
+
+	using namespace dx;
+
+	const dx::XMVECTOR forwardBaseVector = XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
+	// 把相机的旋转矩阵存进已有的(0,0,1)向量里得到一个新向量：摄像机的观察方向
+	const auto lookVector = XMVector3Transform(forwardBaseVector, XMMatrixRotationRollPitchYaw(pitch, yaw, 0.0f)
+	);
+	// generate camera transform (applied to all objects to arrange them relative
+	// to camera position/orientation in world) from cam position and direction
+	// camera "top" always faces towards +Y (cannot do a barrel roll)
+	const auto camPosition = XMLoadFloat3(&pos);	//相机位置
+	const auto camTarget = camPosition + lookVector;//观察目标位置==相机位置+观察normal向量
+
+	return XMMatrixLookAtLH(camPosition, camTarget, XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f));// 拿取左手系相机观察矩阵
 }
 
 void Camera::SpawnControlWindow() noexcept

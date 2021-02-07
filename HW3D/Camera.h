@@ -13,7 +13,7 @@ public:
 	void Reset() noexcept;
 	// 设置摄像机的旋转朝向
 	void Rotate(float dx, float dy) noexcept;
-	// 
+	// 设置摄像机的位移
 	void Translate(DirectX::XMFLOAT3 translation) noexcept;
 
 private:
