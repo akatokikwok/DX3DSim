@@ -18,11 +18,12 @@ private:
 	void DoFrame();
 	// 模型控制窗口
 	void ShowImguiDemoWindow();
-	// IMGUI窗口:显示光标的累加值
-	void ShowRawInputWindow();
+	//// IMGUI窗口:显示光标的累加值
+	//void ShowRawInputWindow();
 private:
-	int x = 0, y = 0;
-	//bool cursorEnabled = true;
+
+	bool showDemoWindow = false;//Imgui窗口开关,默认关闭
+
 	ImguiManager imgui;
 	Window wnd;
 	ChiliTimer timer;

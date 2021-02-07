@@ -12,7 +12,7 @@ GDIPlusManager gdipm;
 
 App::App()
 	:
-	wnd(1280, 900, "The GRB'S Rending Box"),
+	wnd(1280, 720, "The GRB'S Rending Box"),
 	light(wnd.Gfx())
 {
 	wnd.Gfx().SetProjection(dx::XMMatrixPerspectiveLH(1.0f, 9.0f / 16.0f, 0.5f, 40.0f));
@@ -44,8 +44,16 @@ void App::DoFrame()
 	while (const auto e = wnd.kbd.ReadKey())
 	{
 		// 每帧检测是否按下了INSERT键位;若处于光标启用状态就关闭光标并更新状态为禁用;若处于光标禁用状态就启用光标并更新状态为启用
-		if (e->IsPress() && e->GetCode() == VK_INSERT)
+		/*if (e->IsPress() && e->GetCode() == VK_INSERT)*/
+		if (!e->IsPress())
 		{
+			continue;
+		}
+		// e->GetCode()根据按下的键位来判定所作处理
+		switch( e->GetCode()) 
+		{
+		// 使用Escape来控制光标显隐
+		case VK_ESCAPE:
 			if (wnd.CursorEnabled())
 			{
 				wnd.DisableCursor();
@@ -56,15 +64,59 @@ void App::DoFrame()
 				wnd.EnableCursor();
 				wnd.mouse.DisableRaw();//禁用鼠标的原生输入
 			}
+			break;
+		// 使用F1键来控制是否显示Imgui窗口
+		case VK_F1:
+			showDemoWindow = true;
+			break;
 		}
 	}
 
+	/* 鼠标光标禁用(按了F1)情况下的一些键位操作:可以控制摄像机移动*/
+	if (!wnd.CursorEnabled())
+	{
+		if (wnd.kbd.KeyIsPressed('W'))
+		{
+			cam.Translate({ 0.0f,0.0f,dt });
+		}
+		if (wnd.kbd.KeyIsPressed('A'))
+		{
+			cam.Translate({ -dt,0.0f,0.0f });
+		}
+		if (wnd.kbd.KeyIsPressed('S'))
+		{
+			cam.Translate({ 0.0f,0.0f,-dt });
+		}
+		if (wnd.kbd.KeyIsPressed('D'))
+		{
+			cam.Translate({ dt,0.0f,0.0f });
+		}
+		if (wnd.kbd.KeyIsPressed('R'))
+		{
+			cam.Translate({ 0.0f,dt,0.0f });
+		}
+		if (wnd.kbd.KeyIsPressed('F'))
+		{
+			cam.Translate({ 0.0f,-dt,0.0f });
+		}
+	}
+
+	// 只要读到了鼠标数据
+	while (const auto delta = wnd.mouse.ReadRawDelta())
+	{	// 且光标禁用(F1状态)
+		if (!wnd.CursorEnabled())
+		{	
+			cam.Rotate(delta->x, delta->y);// 对摄像机执行按鼠标输入分量的旋转
+		}
+	}
+
+	// imgui窗口
 	cam.SpawnControlWindow();
 	light.SpawnControlWindow();
-
+	// 显示Demo窗口
 	ShowImguiDemoWindow();
 	nano.ShowWindow();
-	ShowRawInputWindow();
+	//ShowRawInputWindow();
 
 	// present
 	wnd.Gfx().EndFrame();
@@ -72,27 +124,10 @@ void App::DoFrame()
 
 void App::ShowImguiDemoWindow()
 {
-	static bool show_demo_window = true;
-	if (show_demo_window)
+	if (showDemoWindow)
 	{
-		ImGui::ShowDemoWindow(&show_demo_window);
+		ImGui::ShowDemoWindow(&showDemoWindow);
 	}
-}
-
-void App::ShowRawInputWindow()
-{
-	// 累加光标的值
-	while (const auto d = wnd.mouse.ReadRawDelta())
-	{
-		x += d->x;
-		y += d->y;
-	}
-	if (ImGui::Begin("Raw Input"))
-	{
-		ImGui::Text("Tally: (%d,%d)", x, y);
-		ImGui::Text("Cursor: %s", wnd.CursorEnabled() ? "enabled" : "disabled");
-	}
-	ImGui::End();
 }
 
 App::~App()
