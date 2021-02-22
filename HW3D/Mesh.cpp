@@ -306,7 +306,6 @@ Model::~Model() noexcept
 
 std::unique_ptr<Mesh> Model::ParseMesh(Graphics& gfx, const aiMesh& mesh)
 {
-	namespace dx = DirectX;
 	using Dvtx::VertexLayout;
 
 	// 首先动态创建顶点布局 、指定带位置、法线的顶点缓存
