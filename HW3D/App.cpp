@@ -106,7 +106,7 @@ void App::DoFrame()
 	{	// 且光标禁用(F1状态)
 		if (!wnd.CursorEnabled())
 		{	
-			cam.Rotate(delta->x, delta->y);// 对摄像机执行按鼠标输入分量的旋转
+			cam.Rotate( (float)delta->x, (float)delta->y);// 对摄像机执行按鼠标输入分量的旋转
 		}
 	}
 

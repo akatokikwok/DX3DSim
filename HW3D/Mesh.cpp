@@ -72,8 +72,9 @@ DirectX::XMMATRIX Mesh::GetTransformXM() const noexcept
 	return DirectX::XMLoadFloat4x4(&transform);	
 }
 
-Node::Node(const std::string& name, std::vector<Mesh*> meshPtrs, const DirectX::XMMATRIX& transform_in) noxnd
+Node::Node(int id, const std::string& name, std::vector<Mesh*> meshPtrs, const DirectX::XMMATRIX& transform_in) noxnd
 	:
+	id(id),
 	meshPtrs(std::move(meshPtrs)),
 	name(name)
 {
@@ -110,25 +111,31 @@ void Node::AddChild(std::unique_ptr<Node> pChild) noxnd
 	childPtrs.push_back(std::move(pChild));
 }
 
-void Node::ShowTree(int& nodeIndexTracked, std::optional<int>& selectedIndex, Node*& pSelectedNode) const noexcept
+int Node::GetId() const noexcept
 {
-	// 首先把传进来的索引 视作当前节点的索引
-	const int currentNodeIndex = nodeIndexTracked;
-	// 增加传进的索引,为下一个节点做准备
-	nodeIndexTracked++;
+	return id;
+}
+
+void Node::ShowTree(std::optional<int>& selectedIndex, Node*& pSelectedNode) const noexcept
+{
+	//// 首先把传进来的索引 视作当前节点的索引
+	//const int currentNodeIndex = nodeIndexTracked;
+	//// 增加传进的索引,为下一个节点做准备
+	//nodeIndexTracked++;
+
 	// 为当前节点定义一些标签,这些标签供TreeNodeEx()使用;TreeNodeEx()方法主要负责叶子节点，而TreeNode()负责树枝节点
 	const auto node_flags = ImGuiTreeNodeFlags_OpenOnArrow
-		| ((currentNodeIndex == selectedIndex.value_or(-1)) ? ImGuiTreeNodeFlags_Selected : 0)//如果传入节点等于被选中节点,那么该节点就是处于被选中状态
+		| ((GetId() == selectedIndex.value_or(-1)) ? ImGuiTreeNodeFlags_Selected : 0)//如果传入节点等于被选中节点,那么该节点就是处于被选中状态
 		| ((childPtrs.size() == 0) ? ImGuiTreeNodeFlags_Leaf : 0);	//如果子节点集合数量为空则证明该节点是叶子节点
 
 	// render this node;TreeNode functions return true when the node is open, in which case you need to also call TreePop() when you are finished displaying the tree node contents.
 	const auto expanded = ImGui::TreeNodeEx(
-		(void*)(intptr_t)currentNodeIndex, node_flags, name.c_str()
+		(void*)(intptr_t)GetId(), node_flags, name.c_str()
 	);
 	// processing for selecting node// 设置被选中的节点;放到下面的if外面是为了确保即使非树枝节点仍然也可以被选中
 	if (ImGui::IsItemClicked())
 	{
-		selectedIndex = currentNodeIndex;
+		selectedIndex = GetId();
 		pSelectedNode = const_cast<Node*>(this);
 	}
 	//// 如果是树枝节点,就可以展开循环绘制 
@@ -137,7 +144,7 @@ void Node::ShowTree(int& nodeIndexTracked, std::optional<int>& selectedIndex, No
 		// 对于所有树枝节点循环渲染子节点
 		for (const auto& pChild : childPtrs)
 		{
-			pChild->ShowTree(nodeIndexTracked, selectedIndex, pSelectedNode);
+			pChild->ShowTree( selectedIndex, pSelectedNode);
 		}
 		ImGui::TreePop();
 	}
@@ -165,7 +172,7 @@ public:
 		if (ImGui::Begin(windowName))
 		{
 			ImGui::Columns(2, nullptr, true);
-			root.ShowTree(nodeIndexTracker, selectedIndex, pSelectedNode);
+			root.ShowTree(selectedIndex, pSelectedNode);
 
 			ImGui::NextColumn();
 			
@@ -243,7 +250,8 @@ Model::Model(Graphics& gfx, const std::string fileName)
 		meshPtrs.push_back(ParseMesh(gfx, *pScene->mMeshes[i]));
 	}
 	// 使用ParseNode方法存储模型根节点
-	pRoot = ParseNode(*pScene->mRootNode);
+	int nextId = 0;
+	pRoot = ParseNode(nextId, *pScene->mRootNode);
 }
 
 void Model::Draw(Graphics& gfx) const noxnd
@@ -348,7 +356,7 @@ std::unique_ptr<Mesh> Model::ParseMesh(Graphics& gfx, const aiMesh& mesh)
 	return std::make_unique<Mesh>(gfx, std::move(bindablePtrs));
 }
 
-std::unique_ptr<Node> Model::ParseNode(const aiNode& node) noexcept
+std::unique_ptr<Node> Model::ParseNode(int& nextId, const aiNode& node) noexcept
 {
 	namespace dx = DirectX;
 	// 拿到参数单节点的转置矩阵
@@ -366,11 +374,11 @@ std::unique_ptr<Node> Model::ParseNode(const aiNode& node) noexcept
 	}
 
 	// 使用参数单节点的转置矩阵和所有Mesh的指针构造一个单节点
-	auto pNode = std::make_unique<Node>( node.mName.C_Str(), std::move(curMeshPtrs), transform);
+	auto pNode = std::make_unique<Node>( nextId++, node.mName.C_Str(), std::move(curMeshPtrs), transform);
 	// 套娃,为单节点也添加子节点
 	for (size_t i = 0; i < node.mNumChildren; i++)
 	{
-		pNode->AddChild(ParseNode(*node.mChildren[i]));
+		pNode->AddChild(ParseNode(nextId, *node.mChildren[i]));
 	}
 
 	return pNode;
