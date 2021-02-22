@@ -47,7 +47,7 @@ public:
 	void Draw(Graphics& gfx, DirectX::FXMMATRIX accumulatedTransform) const noxnd;
 	/* 用来设置最终被应用的变换*/
 	void SetAppliedTransform(DirectX::FXMMATRIX transform) noexcept;
-	//
+	// 接口，拿取每个节点的独有ID	
 	int GetId() const noexcept;
 
 private:
@@ -55,13 +55,13 @@ private:
 	void AddChild(std::unique_ptr<Node> pChild) noxnd;
 
 	/* 用于渲染树上的节点, 同一时间仅允许1个子节点被选中;
-	   要求提供 传进节点的索引、传进节点的引用
+	   要求提供 传进节点的引用
 	*/
-	void ShowTree(std::optional<int>& selectedIndex, Node*& pSelectedNode) const noexcept;
+	void ShowTree(/*std::optional<int>& selectedIndex, */Node*& pSelectedNode) const noexcept;
 
 private:
 	std::string name;							// 每个节点的名字
-	int id;										// 
+	int id;										// 每个节点对应的独一无二ID
 	std::vector<std::unique_ptr<Node>> childPtrs;//子节点集合
 	std::vector<Mesh*> meshPtrs;				//节点上挂载的Mesh集合
 	//DirectX::XMFLOAT4X4 transform;				// 相对于父节点的变换
@@ -88,7 +88,7 @@ private:
 	/* 用于解析加载单个Mesh;静态方法ParseMesh();*/
 	static std::unique_ptr<Mesh> ParseMesh(Graphics& gfx, const aiMesh& mesh);
 
-	/* 解析加载单个节点，指定1个参数节点*/
+	/* 解析加载单个节点，指定1个参数节点,PS:其实每次加载树时候，树的结构并没有变化*/
 	std::unique_ptr<Node> ParseNode(int& nextId, const aiNode& node) noexcept;
 
 	/*void Draw(Graphics& gfx) const
@@ -99,6 +99,6 @@ private:
 	std::unique_ptr<Node> pRoot;// 根节点
 	std::vector<std::unique_ptr<Mesh>> meshPtrs;// 总体网格集合
 
-	// ModelWindow定义在源文件里,是模型的控制窗口;放在cpp里为了保护它的实现不被访问
+	// ModelWindow定义在源文件里,是模型的IMGUI控制窗口;放在cpp里为了保护它的实现不被访问
 	std::unique_ptr<class ModelWindow> pWindow;
 };

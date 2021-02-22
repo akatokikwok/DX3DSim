@@ -116,17 +116,24 @@ int Node::GetId() const noexcept
 	return id;
 }
 
-void Node::ShowTree(std::optional<int>& selectedIndex, Node*& pSelectedNode) const noexcept
+void Node::ShowTree(/*std::optional<int>& selectedIndex, */Node*& pSelectedNode) const noexcept
 {
 	//// 首先把传进来的索引 视作当前节点的索引
 	//const int currentNodeIndex = nodeIndexTracked;
 	//// 增加传进的索引,为下一个节点做准备
 	//nodeIndexTracked++;
 
+	// if there is no selected node, set selectedId to an impossible value;
+	// 这一步首先查询是否点击了，如果不存在有节点被点中则 被选中ID设置为-1，若存在有节点被选中则拿它的序号
+	// selectedId 是被选中的节点序号,若没有被选中则默认设置为-1
+	const int selectedId = (pSelectedNode == nullptr) ? -1 : pSelectedNode->GetId();
+
 	// 为当前节点定义一些标签,这些标签供TreeNodeEx()使用;TreeNodeEx()方法主要负责叶子节点，而TreeNode()负责树枝节点
 	const auto node_flags = ImGuiTreeNodeFlags_OpenOnArrow
-		| ((GetId() == selectedIndex.value_or(-1)) ? ImGuiTreeNodeFlags_Selected : 0)//如果传入节点等于被选中节点,那么该节点就是处于被选中状态
-		| ((childPtrs.size() == 0) ? ImGuiTreeNodeFlags_Leaf : 0);	//如果子节点集合数量为空则证明该节点是叶子节点
+		//| ((GetId() == selectedIndex.value_or(-1)) ? ImGuiTreeNodeFlags_Selected : 0)
+		| ((GetId() == selectedId) ? ImGuiTreeNodeFlags_Selected : 0)				 //如果传入节点等于被选中节点,那么该节点就是处于被选中状态
+		| ((childPtrs.size() == 0) ? ImGuiTreeNodeFlags_Leaf : 0					 //如果子节点集合数量为空则证明该节点是叶子节点
+	);	
 
 	// render this node;TreeNode functions return true when the node is open, in which case you need to also call TreePop() when you are finished displaying the tree node contents.
 	const auto expanded = ImGui::TreeNodeEx(
@@ -135,7 +142,6 @@ void Node::ShowTree(std::optional<int>& selectedIndex, Node*& pSelectedNode) con
 	// processing for selecting node// 设置被选中的节点;放到下面的if外面是为了确保即使非树枝节点仍然也可以被选中
 	if (ImGui::IsItemClicked())
 	{
-		selectedIndex = GetId();
 		pSelectedNode = const_cast<Node*>(this);
 	}
 	//// 如果是树枝节点,就可以展开循环绘制 
@@ -144,7 +150,7 @@ void Node::ShowTree(std::optional<int>& selectedIndex, Node*& pSelectedNode) con
 		// 对于所有树枝节点循环渲染子节点
 		for (const auto& pChild : childPtrs)
 		{
-			pChild->ShowTree( selectedIndex, pSelectedNode);
+			pChild->ShowTree( pSelectedNode);
 		}
 		ImGui::TreePop();
 	}
@@ -172,14 +178,14 @@ public:
 		if (ImGui::Begin(windowName))
 		{
 			ImGui::Columns(2, nullptr, true);
-			root.ShowTree(selectedIndex, pSelectedNode);
+			root.ShowTree( pSelectedNode);
 
 			ImGui::NextColumn();
 			
 			// 如果存在有被选中状态的节点,就可以使用IMGUI去控制
 			if (pSelectedNode != nullptr)
 			{
-				auto& transform = transforms[*selectedIndex];//根据被选中的索引从无序map里取出对应的数据组
+				auto& transform = transforms[ pSelectedNode->GetId() ];//根据被选中的索引从无序map里取出对应的数据组
 				ImGui::Text("Orientation");
 				ImGui::SliderAngle("Roll", &transform.roll, -180.0f, 180.0f);
 				ImGui::SliderAngle("Pitch", &transform.pitch, -180.0f, 180.0f);
@@ -195,10 +201,12 @@ public:
 	// 封装的方法，用于获取模型的变换
 	dx::XMMATRIX GetTransform() const noexcept
 	{
-		const auto& transform = transforms.at(*selectedIndex);
-		return
-			dx::XMMatrixRotationRollPitchYaw(transform.roll, transform.pitch, transform.yaw) *
-			dx::XMMatrixTranslation(transform.x, transform.y, transform.z);
+		//const auto& transform = transforms.at(*selectedIndex);
+
+		assert(pSelectedNode != nullptr);
+		const auto& transform = transforms.at(pSelectedNode->GetId());// 取对应序号节点的变换
+
+		return	dx::XMMatrixRotationRollPitchYaw(transform.roll, transform.pitch, transform.yaw) * dx::XMMatrixTranslation(transform.x, transform.y, transform.z);//取单节点旋转和位移矩阵乘积
 	}
 
 	Node* GetSelectedNode() const noexcept
@@ -207,7 +215,7 @@ public:
 	}
 
 private:
-	std::optional<int> selectedIndex;//准备操作去选中的某个节点索引
+	//std::optional<int> selectedIndex;//准备操作去选中的某个节点索引
 
 	Node* pSelectedNode; // 当前被选中的节点及索引
 
@@ -373,7 +381,7 @@ std::unique_ptr<Node> Model::ParseNode(int& nextId, const aiNode& node) noexcept
 		curMeshPtrs.push_back(meshPtrs.at(meshIdx).get());//因为网格集合此前已在构造里处理过,故用at()取值
 	}
 
-	// 使用参数单节点的转置矩阵和所有Mesh的指针构造一个单节点
+	// 使用参数单节点的转置矩阵和所有Mesh的指针构造一个单节点;每次建立节点时候，把id传进去，然后增加id序数，以此建立下一个节点
 	auto pNode = std::make_unique<Node>( nextId++, node.mName.C_Str(), std::move(curMeshPtrs), transform);
 	// 套娃,为单节点也添加子节点
 	for (size_t i = 0; i < node.mNumChildren; i++)
