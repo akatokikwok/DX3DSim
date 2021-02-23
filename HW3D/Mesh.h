@@ -85,8 +85,8 @@ public:
 
 	~Model() noexcept;
 private:
-	/* 用于解析加载单个Mesh;静态方法ParseMesh();*/
-	static std::unique_ptr<Mesh> ParseMesh(Graphics& gfx, const aiMesh& mesh);
+	/* 用于解析加载单个Mesh;静态方法ParseMesh(); 需要材质数组参数*/
+	static std::unique_ptr<Mesh> ParseMesh(Graphics& gfx, const aiMesh& mesh, const aiMaterial* const* pMaterials);
 
 	/* 解析加载单个节点，指定1个参数节点,PS:其实每次加载树时候，树的结构并没有变化*/
 	std::unique_ptr<Node> ParseNode(int& nextId, const aiNode& node) noexcept;

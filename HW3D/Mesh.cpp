@@ -240,6 +240,7 @@ Model::Model(Graphics& gfx, const std::string fileName)
 {
 	// 指定模型名导入
 	Assimp::Importer imp;
+	// pScene是被读取到的模型的aiScene型网格
 	const auto pScene = imp.ReadFile(fileName.c_str(),
 		aiProcess_Triangulate |
 		aiProcess_JoinIdenticalVertices |
@@ -252,10 +253,10 @@ Model::Model(Graphics& gfx, const std::string fileName)
 		throw ModelException(__LINE__, __FILE__, imp.GetErrorString());
 	}
 
-	// 加载整个模型
+	// 加载整个模型网格
 	for (size_t i = 0; i < pScene->mNumMeshes; i++)
 	{
-		meshPtrs.push_back(ParseMesh(gfx, *pScene->mMeshes[i]));
+		meshPtrs.push_back(ParseMesh(gfx, *pScene->mMeshes[i], pScene->mMaterials));
 	}
 	// 使用ParseNode方法存储模型根节点
 	int nextId = 0;
@@ -304,7 +305,8 @@ Model::~Model() noexcept
 
 }
 
-std::unique_ptr<Mesh> Model::ParseMesh(Graphics& gfx, const aiMesh& mesh)
+// 解析加载单片mesh
+std::unique_ptr<Mesh> Model::ParseMesh(Graphics& gfx, const aiMesh& mesh, const aiMaterial* const* pMaterials)
 {
 	using Dvtx::VertexLayout;
 
@@ -314,6 +316,8 @@ std::unique_ptr<Mesh> Model::ParseMesh(Graphics& gfx, const aiMesh& mesh)
 		.Append(VertexLayout::Position3D)
 		.Append(VertexLayout::Normal)
 	));
+	// material变量是单片mesh的材质; 一个模型有多个mesh和仅1个材质数组，单片mesh有自己的材质索引，材质索引负责从材质数组里取材质
+	auto& material = *pMaterials[mesh.mMaterialIndex];
 
 	// 遍历参数网格的所有顶点,存储顶点位置和法线
 	for (unsigned int i = 0; i < mesh.mNumVertices; i++)

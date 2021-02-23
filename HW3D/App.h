@@ -31,7 +31,7 @@ private:
 	Camera cam;// 摄像机
 	PointLight light;//点光源
 	//Model nano{ wnd.Gfx(),"Models\\nanosuit.obj" };// 指定一个 纳米服 模型
-	Model nano{ wnd.Gfx(),"Models\\nano_hierarchy.gltf" };// 换成带层级表示的gltf模型
+	Model nano{ wnd.Gfx(),"Models\\nano_textured\\nanosuit.obj" };// 换成带层级表示的gltf模型
 
 	// 一些有关于导入模型的控制IMGUI配置
 	/*struct
