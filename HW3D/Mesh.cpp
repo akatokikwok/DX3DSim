@@ -3,6 +3,7 @@
 #include "imgui/imgui.h"
 #include <unordered_map>
 #include <sstream>
+#include "Surface.h"
 
 namespace dx = DirectX;
 
@@ -316,8 +317,15 @@ std::unique_ptr<Mesh> Model::ParseMesh(Graphics& gfx, const aiMesh& mesh, const 
 		.Append(VertexLayout::Position3D)
 		.Append(VertexLayout::Normal)
 	));
-	// material变量是单片mesh的材质; 一个模型有多个mesh和仅1个材质数组，单片mesh有自己的材质索引，材质索引负责从材质数组里取材质
-	auto& material = *pMaterials[mesh.mMaterialIndex];
+
+	//// material变量是单片mesh的材质; 一个模型有多个mesh和仅1个材质数组，单片mesh有自己的材质索引，材质索引负责从材质数组里取材质
+	//auto& material = *pMaterials[mesh.mMaterialIndex];
+	//// 遍历单片mesh的材质里的所有属性，并拿取这个属性的引用
+	//for (int i=0; i<material.mNumProperties; i++)
+	//{
+	//	auto& prop = *material.mProperties[i];
+	//	int qqq = 90;
+	//}
 
 	// 遍历参数网格的所有顶点,存储顶点位置和法线
 	for (unsigned int i = 0; i < mesh.mNumVertices; i++)
@@ -342,6 +350,17 @@ std::unique_ptr<Mesh> Model::ParseMesh(Graphics& gfx, const aiMesh& mesh, const 
 
 	// 把所有的顶点缓存、索引缓存、着色器、输入布局填进绑定物集合
 	std::vector<std::unique_ptr<Bind::Bindable>> bindablePtrs;
+	// 检查单片mesh是否持有材质纹理
+	if (mesh.mMaterialIndex >= 0)
+	{
+		using namespace std::string_literals;
+		auto& material = *pMaterials[mesh.mMaterialIndex]; // 拿到当前mesh的材质
+		
+		aiString texFileName; // 创建一个aiString变量用于存储纹理文件的路径
+		material.GetTexture(aiTextureType_DIFFUSE, 0, &texFileName); // 拿到第一张漫反射纹理存到上面那个字符串里
+		bindablePtrs.push_back(std::make_unique<Bind::Texture>(gfx, Surface::FromFile("Models\\nano_textured\\"s + texFileName.C_Str()))); // 创建纹理
+		bindablePtrs.push_back(std::make_unique<Bind::Sampler>(gfx)); // 创建采样器
+	}
 
 	bindablePtrs.push_back(std::make_unique<Bind::VertexBuffer>(gfx, vbuf));
 

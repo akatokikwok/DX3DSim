@@ -113,8 +113,9 @@ void App::DoFrame()
 	// imgui窗口
 	cam.SpawnControlWindow();
 	light.SpawnControlWindow();
-	// 显示Demo窗口
+	// 根据助手开关来动态显隐Imgui助手DEMO窗口
 	ShowImguiDemoWindow();
+	// 展示模型IMGUI窗口
 	nano.ShowWindow();
 	//ShowRawInputWindow();
 

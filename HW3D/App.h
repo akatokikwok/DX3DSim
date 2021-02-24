@@ -16,13 +16,13 @@ public:
 	~App();
 private:
 	void DoFrame();
-	// 模型控制窗口
+	// 根据助手开关来动态显隐Imgui助手窗口
 	void ShowImguiDemoWindow();
 	//// IMGUI窗口:显示光标的累加值
 	//void ShowRawInputWindow();
 private:
 
-	bool showDemoWindow = false;//Imgui窗口开关,默认关闭
+	bool showDemoWindow = false;//Imgui助手窗口开关,默认关闭
 
 	ImguiManager imgui;
 	Window wnd;
