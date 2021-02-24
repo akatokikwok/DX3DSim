@@ -1,4 +1,4 @@
-// ¹âÕÕ³£ÊıÓ¦¸ÃÔÚ²å²Û0
+ï»¿// å…‰ç…§å¸¸æ•°åº”è¯¥åœ¨æ’æ§½0
 cbuffer LightCBuf
 {
 	float3 lightPos;
@@ -10,22 +10,28 @@ cbuffer LightCBuf
     float attLin;
     float attQuad;
 };
-// »æÖÆÎï³£ÊıÓ¦¸ÃÔÚ²å²Û1
+// ç»˜åˆ¶ç‰©å¸¸æ•°åº”è¯¥åœ¨æ’æ§½1
 cbuffer ObjectCBuf
 {
-	// ²ÄÖÊÓ¦¸Ã¶ÀÁ¢³ö¹âÕÕ,²ÄÖÊÑÕÉ«ÊÇÓÉÎïÌå±¾Éí¾ö¶¨µÄ
-    float3 materialColor;
+	// æè´¨åº”è¯¥ç‹¬ç«‹å‡ºå…‰ç…§,æè´¨é¢œè‰²æ˜¯ç”±ç‰©ä½“æœ¬èº«å†³å®šçš„
+    //float3 materialColor;
 	
-    float specularIntensity;// ¾µÃæ¹â
-    float specularPower;// ¾µÃæ¼¶Êı
+    float specularIntensity;// é•œé¢å…‰
+    float specularPower;// é•œé¢çº§æ•°
+	
+	float padding[2];
 };
+
+Texture2D tex;
+SamplerState splr;
+
 
 //static const float3 materialColor = { 0.7f,0.7f,0.9f };
 //static const float3 ambient = { 0.05f,0.05f,0.05f };
 //static const float3 diffuseColor = { 1.0f,1.0f,1.0f };
 //static const float diffuseIntensity = 1.0f;
 
-//// ¹âÕÕË¥¼õ·¶Î§ÓÉÏÂÃæÕâĞ©¾ö¶¨
+//// å…‰ç…§è¡°å‡èŒƒå›´ç”±ä¸‹é¢è¿™äº›å†³å®š
 //static const float attConst = 1.0f;
 //static const float attLin = 0.045f;
 ////static const float attLin = 0.001f;
@@ -33,28 +39,28 @@ cbuffer ObjectCBuf
 //static const float attQuad = 0.0075f;
 ////static const float attQuad = 0.0002f;
 
-// ´ø·¨ÏßµÄ×ÅÉ«Æ÷,ÓÃÓÚ½ÓÊÜ¹âÔ´µÄÕÕÉä;¹©¸ø¸øÄÇĞ©³ĞÊÜ¹âÕÕµÄ»æÖÆÎïÊ¹ÓÃ
-float4 main( float3 worldPos : Position,float3 n : Normal ) : SV_Target
+// å¸¦æ³•çº¿çš„ç€è‰²å™¨,ç”¨äºæ¥å—å…‰æºçš„ç…§å°„;ä¾›ç»™ç»™é‚£äº›æ‰¿å—å…‰ç…§çš„ç»˜åˆ¶ç‰©ä½¿ç”¨
+float4 main(float3 worldPos : Position, float3 n : Normal, float2 tc : Texcoord) : SV_Target
 {
 	// fragment to light vector data
 	const float3 vToL = lightPos - worldPos;
 	const float distToL = length( vToL );
 	const float3 dirToL = vToL / distToL;
-	// Ë¥¼õ
+	// è¡°å‡
 	const float att = 1.0f / (attConst + attLin * distToL + attQuad * (distToL * distToL));
-	// Âş·´Éä×îÖÕ³ÊÏÖĞ§¹û
+	// æ¼«åå°„æœ€ç»ˆå‘ˆç°æ•ˆæœ
 	const float3 diffuse = att * diffuseColor * diffuseIntensity *  max( 0.0f,dot( dirToL,n ) );
 	
 	// reflected light vector
     const float3 w = n * dot(vToL, n);
-	 // ¹â·´ÉäºóµÄµ¥Î»·½ÏòÏòÁ¿
+	 // å…‰åå°„åçš„å•ä½æ–¹å‘å‘é‡
     const float3 r = w * 2.0f - vToL;
 	// calculate specular intensity based on angle between viewing vector and reflection vector, narrow with power function
-	// ¾µÃæ¹â== (Âş·´ÉäÑÕÉ«*Âş·´ÉäÇ¿¶È)* ¾µÃæ¹âÇ¿¶È * ()µÄ¾µÃæ¼¶Êı
-	// ´ËÊ±¾Í¿ÉÒÔÊµÏÖÈÃ¾àÀë²»Í¬µÄ»æÖÆ¶ÔÏóÏÔÊ¾³öµÄ¸ß¹âÇ¿ÈõÓĞ²îÒì
+	// é•œé¢å…‰== (æ¼«åå°„é¢œè‰²*æ¼«åå°„å¼ºåº¦)* é•œé¢å…‰å¼ºåº¦ * ()çš„é•œé¢çº§æ•°
+	// æ­¤æ—¶å°±å¯ä»¥å®ç°è®©è·ç¦»ä¸åŒçš„ç»˜åˆ¶å¯¹è±¡æ˜¾ç¤ºå‡ºçš„é«˜å…‰å¼ºå¼±æœ‰å·®å¼‚
     const float3 specular = att * (diffuseColor * diffuseIntensity) * specularIntensity * pow(max(0.0f, dot(normalize(-r), normalize(worldPos))), specularPower);
 	
 	// final color
     //return float4(saturate((diffuse + ambient) * materialColor), 1.0f);
-    return float4(saturate((diffuse + ambient + specular) * materialColor), 1.0f); // (»·¾³¹â+Âş·´Éä+·´Éä¾µÃæ¹â)*²ÄÖÊÑÕÉ«
+	return float4(saturate(diffuse + ambient + specular), 1.0f) * tex.Sample(splr, tc); // (ç¯å¢ƒå…‰+æ¼«åå°„+åå°„é•œé¢å…‰)*æè´¨é¢œè‰²
 }
