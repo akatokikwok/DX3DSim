@@ -311,11 +311,12 @@ std::unique_ptr<Mesh> Model::ParseMesh(Graphics& gfx, const aiMesh& mesh, const 
 {
 	using Dvtx::VertexLayout;
 
-	// 首先动态创建顶点布局 、指定带位置、法线的顶点缓存
+	// 为了加载动态布局系统; 要动态创建(即Append)顶点布局 、指定带位置、法线的顶点缓存、纹理
 	Dvtx::VertexBuffer vbuf(std::move(
 		VertexLayout{}
 		.Append(VertexLayout::Position3D)
 		.Append(VertexLayout::Normal)
+		.Append(VertexLayout::Texture2D)
 	));
 
 	//// material变量是单片mesh的材质; 一个模型有多个mesh和仅1个材质数组，单片mesh有自己的材质索引，材质索引负责从材质数组里取材质
@@ -332,7 +333,8 @@ std::unique_ptr<Mesh> Model::ParseMesh(Graphics& gfx, const aiMesh& mesh, const 
 	{
 		vbuf.EmplaceBack(
 			*reinterpret_cast<dx::XMFLOAT3*>(&mesh.mVertices[i]),
-			*reinterpret_cast<dx::XMFLOAT3*>(&mesh.mNormals[i])
+			*reinterpret_cast<dx::XMFLOAT3*>(&mesh.mNormals[i]),
+			*reinterpret_cast<dx::XMFLOAT2*>(&mesh.mTextureCoords[0][i]) //由于模型顶点对于不同的纹理可能显示出不同的纹理坐标;所以这里理解为顶点i的[0]号坐标
 		);
 	}
 
