@@ -355,12 +355,18 @@ std::unique_ptr<Mesh> Model::ParseMesh(Graphics& gfx, const aiMesh& mesh, const 
 	// 检查单片mesh是否持有材质纹理
 	if (mesh.mMaterialIndex >= 0)
 	{
-		using namespace std::string_literals;
 		auto& material = *pMaterials[mesh.mMaterialIndex]; // 拿到当前mesh的材质
-		
+
+		using namespace std::string_literals;
+		const auto base = "Models\\nano_textured\\"s;
 		aiString texFileName; // 创建一个aiString变量用于存储纹理文件的路径
+
 		material.GetTexture(aiTextureType_DIFFUSE, 0, &texFileName); // 拿到第一张漫反射纹理存到上面那个字符串里
-		bindablePtrs.push_back(std::make_unique<Bind::Texture>(gfx, Surface::FromFile("Models\\nano_textured\\"s + texFileName.C_Str()))); // 创建纹理
+		bindablePtrs.push_back(std::make_unique<Bind::Texture>(gfx, Surface::FromFile(base + texFileName.C_Str()), 0)); // 创建1个漫反射纹理, 位于插槽0 ，表示第一个纹理
+		material.GetTexture(aiTextureType_SPECULAR, 0, &texFileName); //拿一张镜面光纹理存到字符串里
+		bindablePtrs.push_back(std::make_unique<Bind::Texture>(gfx, Surface::FromFile(base + texFileName.C_Str()), 1)); // 创建1个镜面光纹理，位于插槽1， 表示第二个纹理
+
+
 		bindablePtrs.push_back(std::make_unique<Bind::Sampler>(gfx)); // 创建采样器
 	}
 
