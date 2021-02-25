@@ -62,5 +62,6 @@ float4 main(float3 worldPos : Position, float3 n : Normal, float2 tc : Texcoord)
 	
 	// final color
     //return float4(saturate((diffuse + ambient) * materialColor), 1.0f);
-	return float4(saturate(diffuse + ambient + specular), 1.0f) * tex.Sample(splr, tc); // (环境光+漫反射+反射镜面光)*材质颜色
+	//return float4(saturate( diffuse + ambient + specular), 1.0f) * tex.Sample(splr, tc); // (环境光+漫反射+反射镜面光)*材质颜色
+    return float4(saturate((diffuse + ambient) * tex.Sample(splr, tc).rgb + specular), 1.0f); // 漫反射+环境光 乘以 普通纹理的rgb通道 在加上镜面光
 }

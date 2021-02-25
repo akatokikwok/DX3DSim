@@ -352,6 +352,8 @@ std::unique_ptr<Mesh> Model::ParseMesh(Graphics& gfx, const aiMesh& mesh, const 
 
 	// 把所有的顶点缓存、索引缓存、着色器、输入布局填进绑定物集合
 	std::vector<std::unique_ptr<Bind::Bindable>> bindablePtrs;
+	// 默认不带有高光贴图
+	bool hasSpecularMap = false;
 	// 检查单片mesh是否持有材质纹理
 	if (mesh.mMaterialIndex >= 0)
 	{
@@ -366,6 +368,7 @@ std::unique_ptr<Mesh> Model::ParseMesh(Graphics& gfx, const aiMesh& mesh, const 
 		if (material.GetTexture(aiTextureType_SPECULAR, 0, &texFileName) == aiReturn_SUCCESS) //若该mesh确实在硬盘里持有高光贴图资源,拿一张镜面光纹理存到字符串里
 		{
 			bindablePtrs.push_back(std::make_unique<Bind::Texture>(gfx, Surface::FromFile(base + texFileName.C_Str()), 1)); // 创建1个镜面光纹理，位于插槽1， 表示第二个纹理
+			hasSpecularMap = true; // 若能在硬盘里读到高光贴图，就开启高光开关
 		}
 
 		bindablePtrs.push_back(std::make_unique<Bind::Sampler>(gfx)); // 创建采样器
@@ -379,19 +382,27 @@ std::unique_ptr<Mesh> Model::ParseMesh(Graphics& gfx, const aiMesh& mesh, const 
 	auto pvsbc = pvs->GetBytecode();
 	bindablePtrs.push_back(std::move(pvs));
 
-	bindablePtrs.push_back(std::make_unique<Bind::PixelShader>(gfx, L"PhongPS.cso"));
-
 	bindablePtrs.push_back(std::make_unique<Bind::InputLayout>(gfx, vbuf.GetLayout().GetD3DLayout(), pvsbc));
 
-	// 自定义材质常量缓存结构体并添加进绑定物集合
-	struct PSMaterialConstant
+	// 检查高光纹理，并加载它 高光的纹理像素着色器
+	if (hasSpecularMap)
 	{
-		//DirectX::XMFLOAT3 color = { 0.6f,0.6f,0.8f }; // 由于模型已经有漫反射纹理了，所以这里不再使用自定义的颜色
-		float specularIntensity = 0.6f;
-		float specularPower = 30.0f;
-		float padding[2];
-	} pmc;
-	bindablePtrs.push_back(std::make_unique<Bind::PixelConstantBuffer<PSMaterialConstant>>(gfx, pmc, 1u));
+		bindablePtrs.push_back(std::make_unique<Bind::PixelShader>(gfx, L"PhongPSSpecMap.cso"));
+	}
+	else // 不存在高光纹理就加载默认的漫反射纹理像素着色器
+	{
+		bindablePtrs.push_back(std::make_unique<Bind::PixelShader>(gfx, L"PhongPS.cso"));
+		// 自定义 材质常量struct 并添加进绑定物集合
+		struct PSMaterialConstant
+		{
+			//DirectX::XMFLOAT3 color = { 0.6f,0.6f,0.8f }; // 由于模型已经有漫反射纹理了，所以这里不再使用自定义的颜色
+			float specularIntensity = 0.8f;
+			float specularPower = 40.0f;
+			float padding[2];
+		} pmc;
+		bindablePtrs.push_back(std::make_unique<Bind::PixelConstantBuffer<PSMaterialConstant>>(gfx, pmc, 1u));
+	}
+	
 
 	return std::make_unique<Mesh>(gfx, std::move(bindablePtrs));
 }
