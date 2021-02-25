@@ -363,9 +363,10 @@ std::unique_ptr<Mesh> Model::ParseMesh(Graphics& gfx, const aiMesh& mesh, const 
 
 		material.GetTexture(aiTextureType_DIFFUSE, 0, &texFileName); // 拿到第一张漫反射纹理存到上面那个字符串里
 		bindablePtrs.push_back(std::make_unique<Bind::Texture>(gfx, Surface::FromFile(base + texFileName.C_Str()), 0)); // 创建1个漫反射纹理, 位于插槽0 ，表示第一个纹理
-		material.GetTexture(aiTextureType_SPECULAR, 0, &texFileName); //拿一张镜面光纹理存到字符串里
-		bindablePtrs.push_back(std::make_unique<Bind::Texture>(gfx, Surface::FromFile(base + texFileName.C_Str()), 1)); // 创建1个镜面光纹理，位于插槽1， 表示第二个纹理
-
+		if (material.GetTexture(aiTextureType_SPECULAR, 0, &texFileName) == aiReturn_SUCCESS) //若该mesh确实在硬盘里持有高光贴图资源,拿一张镜面光纹理存到字符串里
+		{
+			bindablePtrs.push_back(std::make_unique<Bind::Texture>(gfx, Surface::FromFile(base + texFileName.C_Str()), 1)); // 创建1个镜面光纹理，位于插槽1， 表示第二个纹理
+		}
 
 		bindablePtrs.push_back(std::make_unique<Bind::Sampler>(gfx)); // 创建采样器
 	}
