@@ -352,8 +352,10 @@ std::unique_ptr<Mesh> Model::ParseMesh(Graphics& gfx, const aiMesh& mesh, const 
 
 	// 把所有的顶点缓存、索引缓存、着色器、输入布局填进绑定物集合
 	std::vector<std::unique_ptr<Bind::Bindable>> bindablePtrs;
-	// 默认不带有高光贴图
-	bool hasSpecularMap = false;
+	
+	bool hasSpecularMap = false;// 默认不带有高光贴图
+	float shininess = 35.0f; //定义一个高光参数
+
 	// 检查单片mesh是否持有材质纹理
 	if (mesh.mMaterialIndex >= 0)
 	{
@@ -370,7 +372,10 @@ std::unique_ptr<Mesh> Model::ParseMesh(Graphics& gfx, const aiMesh& mesh, const 
 			bindablePtrs.push_back(std::make_unique<Bind::Texture>(gfx, Surface::FromFile(base + texFileName.C_Str()), 1)); // 创建1个镜面光纹理，位于插槽1， 表示第二个纹理
 			hasSpecularMap = true; // 若能在硬盘里读到高光贴图，就开启高光开关
 		}
-
+		else //若硬盘里没读到高光贴图资源
+		{
+			material.Get(AI_MATKEY_SHININESS, shininess); //若没查找到高光贴图，就让当面材质读取上面自定义的高光参数
+		}
 		bindablePtrs.push_back(std::make_unique<Bind::Sampler>(gfx)); // 创建采样器
 	}
 
@@ -396,10 +401,11 @@ std::unique_ptr<Mesh> Model::ParseMesh(Graphics& gfx, const aiMesh& mesh, const 
 		struct PSMaterialConstant
 		{
 			//DirectX::XMFLOAT3 color = { 0.6f,0.6f,0.8f }; // 由于模型已经有漫反射纹理了，所以这里不再使用自定义的颜色
-			float specularIntensity = 0.8f;
-			float specularPower = 40.0f;
+			float specularIntensity = 0.8f; //高光强度
+			float specularPower;			//高光功率
 			float padding[2];
 		} pmc;
+		pmc.specularPower = shininess; // 注意这里结构体的成员高光功率由之前定义好的高光参数决定
 		bindablePtrs.push_back(std::make_unique<Bind::PixelConstantBuffer<PSMaterialConstant>>(gfx, pmc, 1u));
 	}
 	
