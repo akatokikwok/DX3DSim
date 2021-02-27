@@ -1,4 +1,4 @@
-﻿// 光照常数应该在插槽0
+// 光照常数应该在插槽0
 cbuffer LightCBuf
 {
 	float3 lightPos;

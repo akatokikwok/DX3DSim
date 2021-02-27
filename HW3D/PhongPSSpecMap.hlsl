@@ -1,4 +1,4 @@
-﻿// 模型高光贴图像素着色器
+// 模型高光贴图像素着色器
 
 // 常数--光照
 cbuffer LightCBuf   
@@ -18,7 +18,7 @@ Texture2D spec; // 镜面光纹理
 
 SamplerState splr; // 采样器
 
-static const float specularPowerFactor = 100.0f;//自定义个系数，用于控制镜面光功率
+//static const float specularPowerFactor = 100.0f;//自定义个系数，用于控制镜面光功率
 
 
 float4 main(float3 worldPos : Position, float3 n : Normal, float2 tc : Texcoord) : SV_Target
@@ -40,7 +40,8 @@ float4 main(float3 worldPos : Position, float3 n : Normal, float2 tc : Texcoord)
     const float4 specularSample = spec.Sample(splr, tc);         //采样后的镜面光
     const float3 specularReflectionColor = specularSample.rgb;   //剔除透明通道后的高光颜色 
     
-    const float specularPower = specularSample.a * specularPowerFactor; //specularPower代表高光贴图的功率; ==保留透明通道的镜面光*系数
+    //const float specularPower = specularSample.a * specularPowerFactor; 
+    const float specularPower = pow(2.0f, specularSample.a * 13.0f); //specularPower代表高光贴图的功率; ==保留透明通道的镜面光*系数或者指数
     const float3 specular = att * (diffuseColor * diffuseIntensity) * pow(max(0.0f, dot(normalize(-r), normalize(worldPos))), specularPower);// 镜面光 == 衰减 *(漫反射*其功率) * (反射光-r 和worldpos的点积 pow镜面光功率 )
 	// final color
     return float4(
