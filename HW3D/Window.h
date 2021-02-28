@@ -1,23 +1,4 @@
-/******************************************************************************************
-*	Chili Direct3D Engine																  *
-*	Copyright 2018 PlanetChili <http://www.planetchili.net>								  *
-*																						  *
-*	This file is part of Chili Direct3D Engine.											  *
-*																						  *
-*	Chili Direct3D Engine is free software: you can redistribute it and/or modify		  *
-*	it under the terms of the GNU General Public License as published by				  *
-*	the Free Software Foundation, either version 3 of the License, or					  *
-*	(at your option) any later version.													  *
-*																						  *
-*	The Chili Direct3D Engine is distributed in the hope that it will be useful,		  *
-*	but WITHOUT ANY WARRANTY; without even the implied warranty of						  *
-*	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the						  *
-*	GNU General Public License for more details.										  *
-*																						  *
-*	You should have received a copy of the GNU General Public License					  *
-*	along with The Chili Direct3D Engine.  If not, see <http://www.gnu.org/licenses/>.    *
-******************************************************************************************/
-#pragma once
+﻿#pragma once
 #include "ChiliWin.h"
 #include "ChiliException.h"
 #include "Keyboard.h"
@@ -75,9 +56,25 @@ public:
 	Window( const Window& ) = delete;
 	Window& operator=( const Window& ) = delete;
 	void SetTitle( const std::string& title );
+	// 以复合形式启用/关闭鼠标
+	void EnableCursor() noexcept;
+	void DisableCursor() noexcept;
+	// 获取窗口内光标的点状态
+	bool CursorEnabled() const noexcept;
 	static std::optional<int> ProcessMessages() noexcept;
 	Graphics& Gfx();
 private:
+	// 限制光标
+	void ConfineCursor() noexcept;
+	// 释放光标
+	void FreeCursor() noexcept;
+	// 以WINAPI方式开启或关闭光标
+	void HideCursor() noexcept;
+	void ShowCursor() noexcept;
+	// 开启/关闭 悬浮在IMGUI窗口上的光标
+	void EnableImGuiMouse() noexcept;
+	void DisableImGuiMouse() noexcept;
+
 	static LRESULT CALLBACK HandleMsgSetup( HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam ) noexcept;
 	static LRESULT CALLBACK HandleMsgThunk( HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam ) noexcept;
 	LRESULT HandleMsg( HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam ) noexcept;
@@ -85,6 +82,9 @@ public:
 	Keyboard kbd;
 	Mouse mouse;
 private:
+	bool cursorEnabled = true;//光标点状态，默认为启用
+	std::vector<BYTE> rawBuffer;
+
 	int width;
 	int height;
 	HWND hWnd;

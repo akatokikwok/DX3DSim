@@ -1,23 +1,4 @@
-/******************************************************************************************
-*	Chili Direct3D Engine																  *
-*	Copyright 2018 PlanetChili <http://www.planetchili.net>								  *
-*																						  *
-*	This file is part of Chili Direct3D Engine.											  *
-*																						  *
-*	Chili Direct3D Engine is free software: you can redistribute it and/or modify		  *
-*	it under the terms of the GNU General Public License as published by				  *
-*	the Free Software Foundation, either version 3 of the License, or					  *
-*	(at your option) any later version.													  *
-*																						  *
-*	The Chili Direct3D Engine is distributed in the hope that it will be useful,		  *
-*	but WITHOUT ANY WARRANTY; without even the implied warranty of						  *
-*	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the						  *
-*	GNU General Public License for more details.										  *
-*																						  *
-*	You should have received a copy of the GNU General Public License					  *
-*	along with The Chili Direct3D Engine.  If not, see <http://www.gnu.org/licenses/>.    *
-******************************************************************************************/
-#include "Window.h"
+﻿#include "Window.h"
 #include <sstream>
 #include "resource.h"
 #include "WindowsThrowMacros.h"
@@ -102,7 +83,18 @@ Window::Window( int width,int height,const char* name )
 	// Init ImGui Win32 Impl
 	ImGui_ImplWin32_Init( hWnd );
 	// create graphics object
-	pGfx = std::make_unique<Graphics>( hWnd );
+	pGfx = std::make_unique<Graphics>(hWnd, width, height);
+
+	// 注册鼠标原生输入的持有设备
+	RAWINPUTDEVICE rid;
+	rid.usUsagePage = 0x01; // mouse page
+	rid.usUsage = 0x02; // mouse usage
+	rid.dwFlags = 0;
+	rid.hwndTarget = nullptr;	
+	if (RegisterRawInputDevices(&rid, 1, sizeof(rid)) == FALSE)// 检查raw data数据来自哪个设备
+	{
+		throw CHWND_LAST_EXCEPT();
+	}
 }
 
 Window::~Window()
@@ -117,6 +109,27 @@ void Window::SetTitle( const std::string& title )
 	{
 		throw CHWND_LAST_EXCEPT();
 	}
+}
+
+void Window::EnableCursor() noexcept
+{
+	cursorEnabled = true;
+	ShowCursor();
+	EnableImGuiMouse();
+	FreeCursor();
+}
+
+void Window::DisableCursor() noexcept
+{
+	cursorEnabled = false;
+	HideCursor();
+	DisableImGuiMouse();
+	ConfineCursor();
+}
+
+bool Window::CursorEnabled() const noexcept
+{
+	return cursorEnabled;
 }
 
 std::optional<int> Window::ProcessMessages() noexcept
@@ -148,6 +161,42 @@ Graphics& Window::Gfx()
 		throw CHWND_NOGFX_EXCEPT();
 	}
 	return *pGfx;
+}
+
+void Window::ConfineCursor() noexcept
+{
+	// 首先获得本客户端窗口存在一个矩形里
+	RECT rect;
+	GetClientRect(hWnd, &rect);
+	// 从窗口空间映射到控件空间
+	MapWindowPoints(hWnd, nullptr, reinterpret_cast<POINT*>(&rect), 2);
+	// 之后利用WINAPI方法就可以把光标限制在一个矩形里
+	ClipCursor(&rect);
+}
+
+void Window::FreeCursor() noexcept
+{
+	ClipCursor(nullptr);
+}
+
+void Window::HideCursor() noexcept
+{
+	while (::ShowCursor(FALSE) >= 0);//这里使用的是WINAPI函数ShowCursor
+}
+
+void Window::ShowCursor() noexcept
+{
+	while (::ShowCursor(TRUE) < 0);
+}
+
+void Window::EnableImGuiMouse() noexcept
+{
+	ImGui::GetIO().ConfigFlags &= ~ImGuiConfigFlags_NoMouse;
+}
+
+void Window::DisableImGuiMouse() noexcept
+{
+	ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_NoMouse;
 }
 
 LRESULT CALLBACK Window::HandleMsgSetup( HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam ) noexcept
@@ -197,6 +246,28 @@ LRESULT Window::HandleMsg( HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam ) noex
 		kbd.ClearState();
 		break;
 
+	case WM_ACTIVATE:
+		OutputDebugString("activeate\n");
+		// confine/free cursor on window to foreground/background if cursor disabled
+		// 无论何种操作都应该使光标被限制在窗口里
+
+		// 此处当鼠标被禁用时候,同时也要求光标被限制在窗口里
+		if (!cursorEnabled)
+		{
+			if (wParam & WA_ACTIVE/*此宏表示以非点击方式激活窗口*/ || wParam & WA_CLICKACTIVE /*此宏表示以点击方式激活窗口*/)
+			{
+				OutputDebugString("activeate => confine\n");
+				ConfineCursor();
+				HideCursor();
+			}
+			else
+			{
+				OutputDebugString("activeate => free\n");
+				FreeCursor();
+			}
+		}
+		break;
+
 	/*********** KEYBOARD MESSAGES ***********/
 	case WM_KEYDOWN:
 	// syskey commands need to be handled to track ALT key (VK_MENU) and F10
@@ -233,12 +304,25 @@ LRESULT Window::HandleMsg( HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam ) noex
 	/************* MOUSE MESSAGES ****************/
 	case WM_MOUSEMOVE:
 	{
+		const POINTS pt = MAKEPOINTS(lParam);
+		// cursorless exclusive gets first dibs
+		if (!cursorEnabled)
+		{
+			if (!mouse.IsInWindow())
+			{
+				SetCapture(hWnd);
+				mouse.OnMouseEnter();
+				HideCursor();
+			}
+			break;
+		}
+
 		// stifle this mouse message if imgui wants to capture
 		if( imio.WantCaptureMouse )
 		{
 			break;
 		}
-		const POINTS pt = MAKEPOINTS( lParam );
+		//const POINTS pt = MAKEPOINTS( lParam );
 		// in client region -> log move, and log enter + capture mouse (if not previously in window)
 		if( pt.x >= 0 && pt.x < width && pt.y >= 0 && pt.y < height )
 		{
@@ -268,6 +352,14 @@ LRESULT Window::HandleMsg( HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam ) noex
 	case WM_LBUTTONDOWN:
 	{
 		SetForegroundWindow( hWnd );
+
+		// 若接收到鼠标左键点击且光标被禁用,则执行隐藏并限制光标在窗口内;假设用户点击窗口标题栏是想拖动窗口;
+		if (!cursorEnabled)
+		{
+			OutputDebugString("lclick => recapture\n");
+			ConfineCursor();
+			HideCursor();
+		}
 		// stifle this mouse message if imgui wants to capture
 		if( imio.WantCaptureMouse )
 		{
@@ -335,6 +427,54 @@ LRESULT Window::HandleMsg( HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam ) noex
 		break;
 	}
 	/************** END MOUSE MESSAGES **************/
+
+	/************** RAW MOUSE MESSAGES **************/
+	case WM_INPUT:
+	{
+		if (!mouse.RawEnabled())
+		{
+			break;
+		}
+
+		// 输入数据
+		UINT size;
+		// first get the size of the input data;
+		// 当有设备输入的时候就会发送这些消息,使用GetrawInputData()获得收到的数据
+		if (GetRawInputData(
+			reinterpret_cast<HRAWINPUT>(lParam),//lParam是那个raw Input的句柄
+			RID_INPUT,
+			nullptr,
+			&size,
+			sizeof(RAWINPUTHEADER)) == -1)
+		{
+			// 若数据出错就直接抛异常
+			break;
+		}
+		rawBuffer.resize(size);
+		
+		// 重新再执行一次GetRawInputData(),将数据写入
+		if (GetRawInputData(
+			reinterpret_cast<HRAWINPUT>(lParam),
+			RID_INPUT,
+			rawBuffer.data(),
+			&size,
+			sizeof(RAWINPUTHEADER)) != size)
+		{
+			// 如果这个第二次检测查出来的size和第一次的不一致,也将其视为出错,并break掉此次输入
+			break;
+		}
+		// process the raw input data
+		auto& ri = reinterpret_cast<const RAWINPUT&>(*rawBuffer.data());
+		if (ri.header.dwType == RIM_TYPEMOUSE /*首先只需要鼠标的数据,其他数据将被忽视掉*/&&
+			(ri.data.mouse.lLastX != 0 || ri.data.mouse.lLastY != 0)/*只处理光标移动的情况*/)
+		{
+			mouse.OnRawDelta(ri.data.mouse.lLastX, ri.data.mouse.lLastY);
+		}
+		break;
+	}
+	/************** END RAW MOUSE MESSAGES **************/
+
+
 	}
 
 	return DefWindowProc( hWnd,msg,wParam,lParam );

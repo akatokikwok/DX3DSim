@@ -2,7 +2,7 @@ cbuffer CBuf
 {
 	//matrix model;
 	
-    matrix modelView; // ÏÖÔÚ¸üÕıÎªmodelview,ÒÔ±ãÖ®ºóµÄVSOut½á¹¹Ìåworldpos²»ÔÙÊÇÊÀ½ç×ø±ê¶øÊÇÏà¶ÔÓÚÉãÏñ»úµÄ×ø±ê
+    matrix modelView; // ç°åœ¨æ›´æ­£ä¸ºmodelview,ä»¥ä¾¿ä¹‹åçš„VSOutç»“æ„ä½“worldposä¸å†æ˜¯ä¸–ç•Œåæ ‡è€Œæ˜¯ç›¸å¯¹äºæ‘„åƒæœºçš„åæ ‡
 	matrix modelViewProj;
 };
 
@@ -10,14 +10,16 @@ struct VSOut
 {
 	float3 worldPos : Position;
 	float3 normal : Normal;
+	float2 tc : Texcoord;
 	float4 pos : SV_Position;
 };
 
-VSOut main( float3 pos : Position,float3 n : Normal )
+VSOut main(float3 pos : Position, float3 n : Normal, float2 tc : Texcoord)
 {
 	VSOut vso;
-    vso.worldPos = (float3) mul(float4(pos, 1.0f), modelView);	// (Ïà¶ÔÓÚÉãÏñ»úµÄ×ø±êÇé¿öÏÂ) ÊÀ½çÎ»ÖÃµÈÓÚ ²ÎÊıpos³ËÒÔmodelView
-    vso.normal = mul(n, (float3x3) modelView);					// (Ïà¶ÔÓÚÉãÏñ»úµÄ×ø±êÇé¿öÏÂ) ·¨ÏßÎ»ÖÃµÈÓÚ ²ÎÊınoraml³ËÒÔmodelView
-    vso.pos = mul(float4(pos, 1.0f), modelViewProj);			//  Î»ÖÃ    µÈÓÚ ²ÎÊıpos³ËÒÔMVP¾ØÕó	
+    vso.worldPos = (float3) mul(float4(pos, 1.0f), modelView);	// (ç›¸å¯¹äºæ‘„åƒæœºçš„åæ ‡æƒ…å†µä¸‹) ä¸–ç•Œä½ç½®ç­‰äº å‚æ•°posä¹˜ä»¥modelView
+    vso.normal = mul(n, (float3x3) modelView);					// (ç›¸å¯¹äºæ‘„åƒæœºçš„åæ ‡æƒ…å†µä¸‹) æ³•çº¿ä½ç½®ç­‰äº å‚æ•°noramlä¹˜ä»¥modelView
+    vso.pos = mul(float4(pos, 1.0f), modelViewProj);			//  ä½ç½®    ç­‰äº å‚æ•°posä¹˜ä»¥MVPçŸ©é˜µ	
+	vso.tc = tc;
 	return vso;
 }

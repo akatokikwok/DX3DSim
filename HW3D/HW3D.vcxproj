@@ -193,7 +193,6 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="App.cpp" />
-    <ClCompile Include="AssTest.cpp" />
     <ClCompile Include="Bindable.cpp" />
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="ChiliException.cpp" />
@@ -232,7 +231,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="App.h" />
-    <ClInclude Include="AssTest.h" />
     <ClInclude Include="Bindable.h" />
     <ClInclude Include="BindableCommon.h" />
     <ClInclude Include="Camera.h" />
@@ -242,11 +240,8 @@
     <ClInclude Include="ChiliWin.h" />
     <ClInclude Include="Color.h" />
     <ClInclude Include="ConditionalNoexcept.h" />
-    <ClInclude Include="Cone.h" />
     <ClInclude Include="ConstantBuffers.h" />
-    <ClInclude Include="Cube.h" />
     <ClInclude Include="Drawable.h" />
-    <ClInclude Include="DrawableBase.h" />
     <ClInclude Include="dxerr.h" />
     <ClInclude Include="DxgiInfoManager.h" />
     <ClInclude Include="GDIPlusManager.h" />
@@ -270,14 +265,11 @@
     <ClInclude Include="SolidSphere.h" />
     <ClInclude Include="Mouse.h" />
     <ClInclude Include="PixelShader.h" />
-    <ClInclude Include="Plane.h" />
-    <ClInclude Include="Prism.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="Sampler.h" />
     <ClInclude Include="Sheet.h" />
     <ClInclude Include="Sphere.h" />
     <ClInclude Include="Surface.h" />
-    <ClInclude Include="TestObject.h" />
     <ClInclude Include="Texture.h" />
     <ClInclude Include="Topology.h" />
     <ClInclude Include="TransformCbuf.h" />
@@ -294,6 +286,9 @@
     <None Include="DXTrace.inl" />
   </ItemGroup>
   <ItemGroup>
+    <FxCompile Include="PhongPSSpecMap.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
+    </FxCompile>
     <FxCompile Include="SolidPS.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pixel</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">4.0</ShaderModel>

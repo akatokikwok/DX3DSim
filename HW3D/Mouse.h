@@ -1,24 +1,4 @@
-/****************************************************************************************** 
- *	Chili DirectX Framework Version 16.07.20											  *	
- *	Mouse.h																				  *
- *	Copyright 2016 PlanetChili <http://www.planetchili.net>								  *
- *																						  *
- *	This file is part of The Chili DirectX Framework.									  *
- *																						  *
- *	The Chili DirectX Framework is free software: you can redistribute it and/or modify	  *
- *	it under the terms of the GNU General Public License as published by				  *
- *	the Free Software Foundation, either version 3 of the License, or					  *
- *	(at your option) any later version.													  *
- *																						  *
- *	The Chili DirectX Framework is distributed in the hope that it will be useful,		  *
- *	but WITHOUT ANY WARRANTY; without even the implied warranty of						  *
- *	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the						  *
- *	GNU General Public License for more details.										  *
- *																						  *
- *	You should have received a copy of the GNU General Public License					  *
- *	along with The Chili DirectX Framework.  If not, see <http://www.gnu.org/licenses/>.  *
- ******************************************************************************************/
-#pragma once
+﻿#pragma once
 #include <queue>
 #include <optional>
 
@@ -26,6 +6,12 @@ class Mouse
 {
 	friend class Window;
 public:
+	// 仅含x y的结构体
+	struct RawDelta
+	{
+		int x, y;
+	};
+
 	class Event
 	{
 	public:
@@ -86,6 +72,9 @@ public:
 	Mouse( const Mouse& ) = delete;
 	Mouse& operator=( const Mouse& ) = delete;
 	std::pair<int,int> GetPos() const noexcept;
+	// 此方法返回多个可能值,此处返回一个结构体中可能的值
+	std::optional<RawDelta> ReadRawDelta() noexcept;
+
 	int GetPosX() const noexcept;
 	int GetPosY() const noexcept;
 	bool IsInWindow() const noexcept;
@@ -97,10 +86,15 @@ public:
 		return buffer.empty();
 	}
 	void Flush() noexcept;
+
+	void EnableRaw() noexcept;// 启用原生输入
+	void DisableRaw() noexcept;// 禁用原生输入
+	bool RawEnabled() const noexcept;// 获取原生光标的点状态
 private:
 	void OnMouseMove( int x,int y ) noexcept;
 	void OnMouseLeave() noexcept;
 	void OnMouseEnter() noexcept;
+	void OnRawDelta(int dx, int dy) noexcept;
 	void OnLeftPressed( int x,int y ) noexcept;
 	void OnLeftReleased( int x,int y ) noexcept;
 	void OnRightPressed( int x,int y ) noexcept;
@@ -108,6 +102,7 @@ private:
 	void OnWheelUp( int x,int y ) noexcept;
 	void OnWheelDown( int x,int y ) noexcept;
 	void TrimBuffer() noexcept;
+	void TrimRawInputBuffer() noexcept;
 	void OnWheelDelta( int x,int y,int delta ) noexcept;
 private:
 	static constexpr unsigned int bufferSize = 16u;
@@ -117,5 +112,9 @@ private:
 	bool rightIsPressed = false;
 	bool isInWindow = false;
 	int wheelDeltaCarry = 0;
+	//原生光标输入的点状态
+	bool rawEnabled = false;
 	std::queue<Event> buffer;
+	// RawDelta结构体的的队列
+	std::queue<RawDelta> rawDeltaBuffer;
 };

@@ -5,7 +5,7 @@
 
 namespace Bind
 {
-	// 模型变换常量缓存类
+	// 模型变换常量缓存类(即顶点常数缓存)
 	class TransformCbuf : public Bindable
 	{
 	private:
