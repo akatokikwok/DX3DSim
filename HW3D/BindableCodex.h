@@ -10,37 +10,52 @@ namespace Bind
 	class Codex
 	{
 	public:
-		/* 单例模式下按给定字符串查找解析相对应的资源*/
-		static std::shared_ptr<Bindable> Resolve(const std::string& key) noxnd
+		/* 
+		单例模式下按给定字符串查找解析相对应的资源;
+		由于绑定物可能是着色器、采样器、缓存之类的，参数数量不一定一致;所以采用多参数params		 			
+		*/
+		template<class T, typename...Params>
+		static std::shared_ptr<Bindable> Resolve(Graphics& gfx, Params&&...p) noxnd
 		{
-			return Get().Resolve_(key);
+			return Get().Resolve_<T>(gfx, std::forward<Params>(p)...);
 		}
-		/* 单例模式下以UID的形式存储指定绑定物资源*/
-		static void Store(std::shared_ptr<Bindable> bind)
-		{
-			Get().Store_(std::move(bind));
-		}
+		
+		//* 单例模式下以UID的形式存储指定绑定物资源*/
+		//static void Store(std::shared_ptr<Bindable> bind)
+		//{
+		//	Get().Store_(std::move(bind));
+		//}
+
 	private:
-		/* 按给定字符串查找解析相对应的资源*/
-		std::shared_ptr<Bindable> Resolve_(const std::string& key) const noxnd
+		/* 
+		按给定字符串查找解析相对应的资源
+		由于绑定物可能是着色器、采样器、缓存之类的，参数数量不一定一致;所以采用多参数params	
+		*/
+		template<class T, typename...Params>
+		std::shared_ptr<Bindable> Resolve_(Graphics& gfx, Params&&...p) noxnd
 		{
-			auto i = binds.find(key);//以关键字查到相对应的绑定物资源
+			const auto key = T::GenerateUID(std::forward<Params>(p)...);
+
+			const auto i = binds.find(key);//以关键字查到相对应的绑定物资源
 			if (i == binds.end())
 			{
-				return {};
+				auto bind = std::make_shared<T>(gfx, std::forward<Params>(p)...);// 为可能的绑定物起用构造方法，生成特定的绑定物
+				binds[key] = bind;//用生成的绑定物更新相对应的无序MAP
+				return bind;
 			}
 			else
 			{
-				return i->second;//持续查找下一个资源
+				return i->second;//持续查找下一个绑定物资源
 			}
 		}
 
-		// 以UID的形式存储指定绑定物资源
-		void Store_(std::shared_ptr<Bindable> bind)
-		{
-			binds[bind->GetUID()] = std::move(bind);
-		}
-		// 接口：拿取单例模式里Codex本类引用
+		//// 以UID的形式存储指定绑定物资源
+		//void Store_(std::shared_ptr<Bindable> bind)
+		//{
+		//	binds[bind->GetUID()] = std::move(bind);
+		//}
+
+		/* 接口：拿取单例模式里Codex本类引用*/
 		static Codex& Get()
 		{
 			static Codex codex;
