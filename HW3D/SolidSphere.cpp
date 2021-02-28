@@ -52,11 +52,11 @@ SolidSphere::SolidSphere( Graphics& gfx,float radius )
 	AddBind(std::make_shared<VertexBuffer>(gfx, model.vertices));
 	AddBind(std::make_shared<IndexBuffer>(gfx, model.indices));
 
-	auto pvs = std::make_shared<VertexShader>(gfx, L"SolidVS.cso");
+	auto pvs = std::make_shared<VertexShader>(gfx, "SolidVS.cso");
 	auto pvsbc = pvs->GetBytecode();
 	AddBind(std::move(pvs));
 
-	AddBind(std::make_shared<PixelShader>(gfx, L"SolidPS.cso"));
+	AddBind(std::make_shared<PixelShader>(gfx, "SolidPS.cso"));
 
 	struct PSColorConstant
 	{		
@@ -71,7 +71,7 @@ SolidSphere::SolidSphere( Graphics& gfx,float radius )
 	//};
 	//AddBind(std::make_shared<InputLayout>(gfx, ied, pvsbc));
 
-	AddBind(std::make_shared<InputLayout>(gfx, model.vertices.GetLayout().GetD3DLayout(), pvsbc));
+	AddBind(std::make_shared<InputLayout>(gfx, model.vertices.GetLayout()/*.GetD3DLayout()*/, pvsbc));
 
 	AddBind(std::make_shared<Topology>(gfx, D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST));
 

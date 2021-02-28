@@ -299,6 +299,9 @@
     <ClInclude Include="ConditionalNoexcept.h">
       <Filter>Header Files\Macros</Filter>
     </ClInclude>
+    <ClInclude Include="BindableCodex.h">
+      <Filter>Header Files\Bindable</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="DXGetErrorDescription.inl">
