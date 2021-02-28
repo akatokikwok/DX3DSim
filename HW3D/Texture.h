@@ -4,15 +4,23 @@
 class Surface;
 
 namespace Bind
-{	// 构造方法是Texture( Graphics& gfx,const class Surface& s , unsigned int slot = 0);
+{	// 构造方法是--Texture(Graphics& gfx, const std::string& path, UINT slot = 0);
 	class Texture : public Bindable
 	{
 	public:
-		Texture( Graphics& gfx,const class Surface& s , unsigned int slot = 0);
+		/*Texture( Graphics& gfx,const class Surface& s , unsigned int slot = 0);*/
+
+		Texture(Graphics& gfx, const std::string& path, UINT slot = 0);
 		void Bind( Graphics& gfx ) noexcept override;
+
+		//============================================
+		static std::shared_ptr<Bindable> Resolve(Graphics& gfx, const std::string& path, UINT slot);
+		static std::string GenerateUID(const std::string& path, UINT slot);
+		std::string GetUID() const noexcept override;
 	private:
 		unsigned int slot;// 插槽用于计算使用多少次纹理
 	protected:
+		std::string path;
 		Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> pTextureView;
 	};
 }

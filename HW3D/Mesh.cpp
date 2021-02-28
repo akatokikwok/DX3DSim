@@ -373,10 +373,10 @@ std::unique_ptr<Mesh> Model::ParseMesh(Graphics& gfx, const aiMesh& mesh, const 
 		aiString texFileName; // 创建一个aiString变量用于存储纹理文件的路径
 
 		material.GetTexture(aiTextureType_DIFFUSE, 0, &texFileName); // 拿到第一张漫反射纹理存到上面那个字符串里
-		bindablePtrs.push_back(std::make_shared<Bind::Texture>(gfx, Surface::FromFile(base + texFileName.C_Str()), 0)); // 创建1个漫反射纹理, 位于插槽0 ，表示第一个纹理
+		bindablePtrs.push_back(std::make_shared<Bind::Texture>(gfx,     /*Surface::FromFile*/(base + texFileName.C_Str()), 0 )); // 创建1个漫反射纹理, 位于插槽0 ，表示第一个纹理
 		if (material.GetTexture(aiTextureType_SPECULAR, 0, &texFileName) == aiReturn_SUCCESS) //若该mesh确实在硬盘里持有高光贴图资源,拿一张镜面光纹理存到字符串里
 		{
-			bindablePtrs.push_back(std::make_shared<Bind::Texture>(gfx, Surface::FromFile(base + texFileName.C_Str()), 1)); // 创建1个镜面光纹理，位于插槽1， 表示第二个纹理
+			bindablePtrs.push_back(std::make_shared<Bind::Texture>(gfx, /*Surface::FromFile*/(base + texFileName.C_Str()), 1 )); // 创建1个镜面光纹理，位于插槽1， 表示第二个纹理
 			hasSpecularMap = true; // 若能在硬盘里读到高光贴图，就开启高光开关
 		}
 		else //若硬盘里没读到高光贴图资源
@@ -392,17 +392,17 @@ std::unique_ptr<Mesh> Model::ParseMesh(Graphics& gfx, const aiMesh& mesh, const 
 
 	auto pvs = std::make_shared<Bind::VertexShader>(gfx, "PhongVS.cso");
 	auto pvsbc = pvs->GetBytecode();
-	bindablePtrs.push_back(std::move(pvs));																	  // 创建顶点shader
-	bindablePtrs.push_back(std::make_shared<Bind::InputLayout>(gfx, vbuf.GetLayout().GetD3DLayout(), pvsbc)); // 创建输入布局
+	bindablePtrs.push_back(std::move(pvs));																		  // 创建顶点shader
+	bindablePtrs.push_back(std::make_shared<Bind::InputLayout>(gfx, vbuf.GetLayout()/*.GetD3DLayout()*/, pvsbc)); // 创建输入布局
 
 	// 检查高光纹理，并加载它 高光的纹理像素着色器
 	if (hasSpecularMap)
 	{
-		bindablePtrs.push_back(std::make_shared<Bind::PixelShader>(gfx, L"PhongPSSpecMap.cso"));			  //创建像素shader，指定以PhongPSSpecMap
+		bindablePtrs.push_back(std::make_shared<Bind::PixelShader>(gfx, "PhongPSSpecMap.cso"));			  //创建像素shader，指定以PhongPSSpecMap
 	}
 	else // 不存在高光纹理就加载默认的漫反射纹理像素着色器
 	{
-		bindablePtrs.push_back(std::make_shared<Bind::PixelShader>(gfx, L"PhongPS.cso"));					  ////创建像素shader，指定以PhongPS
+		bindablePtrs.push_back(std::make_shared<Bind::PixelShader>(gfx, "PhongPS.cso"));					  ////创建像素shader，指定以PhongPS
 		
 		struct PSMaterialConstant// 自定义 材质常量struct 并添加进绑定物集合
 		{
