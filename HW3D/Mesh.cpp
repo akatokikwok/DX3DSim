@@ -35,31 +35,38 @@ const std::string& ModelException::GetNote() const noexcept
 /// //////////////////////////////////////////////////////////////////////////
 
 // 绑定图元、若符合索引缓存则添加并最后构造顶点shader常量缓存
-Mesh::Mesh(Graphics& gfx, std::vector<std::unique_ptr<Bind::Bindable>> bindPtrs)
+Mesh::Mesh(Graphics& gfx, std::vector<std::shared_ptr<Bind::Bindable>> bindPtrs)
 {
-	if (!IsStaticInitialized())
-	{
-		// 没初始化就绑定三角形列表图元
-		AddStaticBind(std::make_unique<Bind::Topology>(gfx, D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST));
-	}
+	//if (!IsStaticInitialized())
+	//{
+	//	// 没初始化就绑定三角形列表图元
+	//	AddStaticBind(std::make_unique<Bind::Topology>(gfx, D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST));
+	//}
+
+	// 绑定图元:三角形列表至资源集合
+	AddBind(std::make_shared<Bind::Topology>(gfx, D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST));
 
 	for (auto& pb : bindPtrs)
 	{
-		if (auto pi = dynamic_cast<Bind::IndexBuffer*>(pb.get()))
-		{
-			// 如果绑定物是索引缓存,就添加索引缓存并释放管线绑定物；
-			AddIndexBuffer(std::unique_ptr<Bind::IndexBuffer>{ pi });
-			// 这里对Pi指针又使用了一次unique_ptr，故现存2个指针指向了同一个对象，需要释放
-			pb.release();
-		}
-		else
-		{
-			AddBind(std::move(pb));
-		}
+		#pragma region ver1.0.39弃用
+       //if (auto pi = dynamic_cast<Bind::IndexBuffer*>(pb.get()))
+		//{
+		//	// 如果绑定物是索引缓存,就添加索引缓存并释放管线绑定物；
+		//	AddIndexBuffer(std::unique_ptr<Bind::IndexBuffer>{ pi });
+		//	// 这里对Pi指针又使用了一次unique_ptr，故现存2个指针指向了同一个对象，需要释放
+		//	pb.release();
+		//}
+		//else
+		//{
+		//	AddBind(std::move(pb));
+		//}
+        #pragma endregion ver1.0.39弃用
+
+		AddBind(std::move(pb));
 	}
 
 	// 每个Mesh构造的时候就需要添加1个顶点着色器常量缓存,因为每一个Mesh需要的顶点变换都不同
-	AddBind(std::make_unique<Bind::TransformCbuf>(gfx, *this));
+	AddBind(std::make_shared<Bind::TransformCbuf>(gfx, *this));	//创建出顶点常数缓存
 }
 
 void Mesh::Draw(Graphics& gfx, DirectX::FXMMATRIX accumulatedTransform/*累计的矩阵变换*/) const noxnd
@@ -351,7 +358,7 @@ std::unique_ptr<Mesh> Model::ParseMesh(Graphics& gfx, const aiMesh& mesh, const 
 	}
 
 	// 把所有的顶点缓存、索引缓存、着色器、输入布局填进绑定物集合
-	std::vector<std::unique_ptr<Bind::Bindable>> bindablePtrs;
+	std::vector<std::shared_ptr<Bind::Bindable>> bindablePtrs;
 	
 	bool hasSpecularMap = false;// 默认不带有高光贴图
 	float shininess = 35.0f; //定义一个高光参数
@@ -366,39 +373,38 @@ std::unique_ptr<Mesh> Model::ParseMesh(Graphics& gfx, const aiMesh& mesh, const 
 		aiString texFileName; // 创建一个aiString变量用于存储纹理文件的路径
 
 		material.GetTexture(aiTextureType_DIFFUSE, 0, &texFileName); // 拿到第一张漫反射纹理存到上面那个字符串里
-		bindablePtrs.push_back(std::make_unique<Bind::Texture>(gfx, Surface::FromFile(base + texFileName.C_Str()), 0)); // 创建1个漫反射纹理, 位于插槽0 ，表示第一个纹理
+		bindablePtrs.push_back(std::make_shared<Bind::Texture>(gfx, Surface::FromFile(base + texFileName.C_Str()), 0)); // 创建1个漫反射纹理, 位于插槽0 ，表示第一个纹理
 		if (material.GetTexture(aiTextureType_SPECULAR, 0, &texFileName) == aiReturn_SUCCESS) //若该mesh确实在硬盘里持有高光贴图资源,拿一张镜面光纹理存到字符串里
 		{
-			bindablePtrs.push_back(std::make_unique<Bind::Texture>(gfx, Surface::FromFile(base + texFileName.C_Str()), 1)); // 创建1个镜面光纹理，位于插槽1， 表示第二个纹理
+			bindablePtrs.push_back(std::make_shared<Bind::Texture>(gfx, Surface::FromFile(base + texFileName.C_Str()), 1)); // 创建1个镜面光纹理，位于插槽1， 表示第二个纹理
 			hasSpecularMap = true; // 若能在硬盘里读到高光贴图，就开启高光开关
 		}
 		else //若硬盘里没读到高光贴图资源
 		{
 			material.Get(AI_MATKEY_SHININESS, shininess); //若没查找到高光贴图，就让当面材质读取上面自定义的高光参数
 		}
-		bindablePtrs.push_back(std::make_unique<Bind::Sampler>(gfx)); // 创建采样器
+		bindablePtrs.push_back(std::make_shared<Bind::Sampler>(gfx)); // 创建采样器
 	}
 
-	bindablePtrs.push_back(std::make_unique<Bind::VertexBuffer>(gfx, vbuf));
+	bindablePtrs.push_back(std::make_shared<Bind::VertexBuffer>(gfx, vbuf));// 创建顶点缓存
 
-	bindablePtrs.push_back(std::make_unique<Bind::IndexBuffer>(gfx, indices));
+	bindablePtrs.push_back(std::make_shared<Bind::IndexBuffer>(gfx, indices));// 创建索引缓存
 
-	auto pvs = std::make_unique<Bind::VertexShader>(gfx, L"PhongVS.cso");
+	auto pvs = std::make_shared<Bind::VertexShader>(gfx, L"PhongVS.cso");
 	auto pvsbc = pvs->GetBytecode();
-	bindablePtrs.push_back(std::move(pvs));
-
-	bindablePtrs.push_back(std::make_unique<Bind::InputLayout>(gfx, vbuf.GetLayout().GetD3DLayout(), pvsbc));
+	bindablePtrs.push_back(std::move(pvs));																	  // 创建顶点shader
+	bindablePtrs.push_back(std::make_shared<Bind::InputLayout>(gfx, vbuf.GetLayout().GetD3DLayout(), pvsbc)); // 创建输入布局
 
 	// 检查高光纹理，并加载它 高光的纹理像素着色器
 	if (hasSpecularMap)
 	{
-		bindablePtrs.push_back(std::make_unique<Bind::PixelShader>(gfx, L"PhongPSSpecMap.cso"));
+		bindablePtrs.push_back(std::make_shared<Bind::PixelShader>(gfx, L"PhongPSSpecMap.cso"));			  //创建像素shader，指定以PhongPSSpecMap
 	}
 	else // 不存在高光纹理就加载默认的漫反射纹理像素着色器
 	{
-		bindablePtrs.push_back(std::make_unique<Bind::PixelShader>(gfx, L"PhongPS.cso"));
-		// 自定义 材质常量struct 并添加进绑定物集合
-		struct PSMaterialConstant
+		bindablePtrs.push_back(std::make_shared<Bind::PixelShader>(gfx, L"PhongPS.cso"));					  ////创建像素shader，指定以PhongPS
+		
+		struct PSMaterialConstant// 自定义 材质常量struct 并添加进绑定物集合
 		{
 			//DirectX::XMFLOAT3 color = { 0.6f,0.6f,0.8f }; // 由于模型已经有漫反射纹理了，所以这里不再使用自定义的颜色
 			float specularIntensity = 0.8f; //高光强度
@@ -406,7 +412,7 @@ std::unique_ptr<Mesh> Model::ParseMesh(Graphics& gfx, const aiMesh& mesh, const 
 			float padding[2];
 		} pmc;
 		pmc.specularPower = shininess; // 注意这里结构体的成员高光功率由之前定义好的高光参数决定
-		bindablePtrs.push_back(std::make_unique<Bind::PixelConstantBuffer<PSMaterialConstant>>(gfx, pmc, 1u));
+		bindablePtrs.push_back(std::make_shared<Bind::PixelConstantBuffer<PSMaterialConstant>>(gfx, pmc, 1u));//创建出像素常数缓存<材质>
 	}
 	
 

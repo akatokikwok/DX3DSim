@@ -1,5 +1,4 @@
 ﻿#pragma once
-#include "DrawableBase.h"
 #include "BindableCommon.h"
 #include "Vertex.h"
 #include <assimp/Importer.hpp>
@@ -7,6 +6,7 @@
 #include <assimp/postprocess.h>
 #include "ConditionalNoexcept.h"
 #include <optional>
+#include "Drawable.h"
 
 /* 用于捕获异常的模型异常类*/
 class ModelException : public ChiliException
@@ -20,12 +20,12 @@ private:
 	std::string note;
 };
 
-/* Mesh类继承自DrawableBasel,其构造函数,需要图形对象＼管线绑定物集合;//绑定图元、若符合索引缓存则添加并最后构造顶点shader常量缓存*/
-class Mesh : public DrawableBase<Mesh>
+/* Mesh类继承自Drawable,其构造函数,需要图形对象＼管线绑定物集合;//绑定图元、若符合索引缓存则添加并最后构造顶点shader常量缓存*/
+class Mesh : public Drawable
 {
 public:
 	// 构造函数,需要图形对象＼管线绑定物集合
-	Mesh(Graphics& gfx, std::vector<std::unique_ptr<Bind::Bindable>> bindPtrs);
+	Mesh(Graphics& gfx, std::vector<std::shared_ptr<Bind::Bindable>> bindPtrs);
 	/* 存累计变化矩阵并绘制被绘制物*/
 	void Draw(Graphics& gfx, DirectX::FXMMATRIX accumulatedTransform) const noxnd;
 	/* 获得累计变化矩阵*/
