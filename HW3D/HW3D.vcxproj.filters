@@ -144,9 +144,6 @@
     <ClCompile Include="PointLight.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="AssTest.cpp">
-      <Filter>Source Files\Drawable</Filter>
-    </ClCompile>
     <ClCompile Include="Mesh.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -286,9 +283,6 @@
     </ClInclude>
     <ClInclude Include="PointLight.h">
       <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="AssTest.h">
-      <Filter>Header Files\Drawable</Filter>
     </ClInclude>
     <ClInclude Include="Vertex.h">
       <Filter>Header Files</Filter>

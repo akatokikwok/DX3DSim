@@ -6,6 +6,7 @@
 #include "Color.h"
 #include "ConditionalNoexcept.h"
 
+/* 包含动态反射顶点的命名空间*/
 namespace Dvtx
 {
 	/*struct BGRAColor

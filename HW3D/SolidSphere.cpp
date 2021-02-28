@@ -2,6 +2,7 @@
 #include "BindableCommon.h"
 #include "GraphicsThrowMacros.h"
 #include "Sphere.h"
+#include "Vertex.h"
 
 
 SolidSphere::SolidSphere( Graphics& gfx,float radius )
@@ -11,8 +12,8 @@ SolidSphere::SolidSphere( Graphics& gfx,float radius )
 
 	//if( !IsStaticInitialized() )
 
-	struct Vertex
-	{
+	/*struct Vertex
+	{*/
 		#pragma region ver1.0.39弃用
 		//auto model = Sphere::Make<Vertex>();
 		//model.Transform(dx::XMMatrixScaling(radius, radius, radius));
@@ -39,12 +40,14 @@ SolidSphere::SolidSphere( Graphics& gfx,float radius )
 		//AddStaticBind(std::make_unique<InputLayout>(gfx, ied, pvsbc));
 
 		//AddStaticBind(std::make_unique<Topology>(gfx, D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST));
-#pragma endregion ver1.0.39弃用
+		#pragma endregion ver1.0.39弃用
 
-		dx::XMFLOAT3 pos;
-	};
+		/*dx::XMFLOAT3 pos;
+	};*/
 
-	auto model = Sphere::Make<Vertex>();
+
+	auto model = Sphere::Make(); //构造一个球形物
+
 	model.Transform(dx::XMMatrixScaling(radius, radius, radius));
 	AddBind(std::make_shared<VertexBuffer>(gfx, model.vertices));
 	AddBind(std::make_shared<IndexBuffer>(gfx, model.indices));
@@ -62,11 +65,13 @@ SolidSphere::SolidSphere( Graphics& gfx,float radius )
 	} colorConst;
 	AddBind(std::make_shared<PixelConstantBuffer<PSColorConstant>>(gfx, colorConst));
 
-	const std::vector<D3D11_INPUT_ELEMENT_DESC> ied =
-	{
-		{ "Position",0,DXGI_FORMAT_R32G32B32_FLOAT,0,0,D3D11_INPUT_PER_VERTEX_DATA,0 },
-	};
-	AddBind(std::make_shared<InputLayout>(gfx, ied, pvsbc));
+	//const std::vector<D3D11_INPUT_ELEMENT_DESC> ied =
+	//{
+	//	{ "Position",0,DXGI_FORMAT_R32G32B32_FLOAT,0,0,D3D11_INPUT_PER_VERTEX_DATA,0 },
+	//};
+	//AddBind(std::make_shared<InputLayout>(gfx, ied, pvsbc));
+
+	AddBind(std::make_shared<InputLayout>(gfx, model.vertices.GetLayout().GetD3DLayout(), pvsbc));
 
 	AddBind(std::make_shared<Topology>(gfx, D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST));
 
