@@ -84,11 +84,11 @@ namespace Bind
 			GetContext(gfx)->VSSetConstantBuffers(slot, 1u, pConstantBuffer.GetAddressOf());
 		}
 		/// =============================================三件套
-		static std::shared_ptr<Bindable> Resolve(Graphics& gfx, const C& consts, UINT slot = 0) 
+		static std::shared_ptr<VertexConstantBuffer> Resolve(Graphics& gfx, const C& consts, UINT slot = 0) 
 		{
 			return Codex::Resolve<VertexConstantBuffer>(gfx, consts, slot);
 		}
-		static std::shared_ptr<Bindable> Resolve(Graphics& gfx, UINT slot = 0)
+		static std::shared_ptr<VertexConstantBuffer> Resolve(Graphics& gfx, UINT slot = 0)
 		{
 			return Codex::Resolve<VertexConstantBuffer>(gfx, slot);
 		}
@@ -122,11 +122,11 @@ namespace Bind
 			GetContext(gfx)->PSSetConstantBuffers(slot, 1u, pConstantBuffer.GetAddressOf());
 		}
 
-		static std::shared_ptr<Bindable> Resolve(Graphics& gfx, const C& consts, UINT slot = 0)
+		static std::shared_ptr<PixelConstantBuffer> Resolve(Graphics& gfx, const C& consts, UINT slot = 0)
 		{
 			return Codex::Resolve<PixelConstantBuffer>(gfx, consts, slot);
 		}
-		static std::shared_ptr<Bindable> Resolve(Graphics& gfx, UINT slot = 0)
+		static std::shared_ptr<PixelConstantBuffer> Resolve(Graphics& gfx, UINT slot = 0)
 		{
 			return Codex::Resolve<PixelConstantBuffer>(gfx, slot);
 		}

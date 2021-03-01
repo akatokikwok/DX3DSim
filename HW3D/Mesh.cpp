@@ -395,7 +395,8 @@ std::unique_ptr<Mesh> Model::ParseMesh(Graphics& gfx, const aiMesh& mesh, const 
 	bindablePtrs.push_back(Bind::IndexBuffer::Resolve(gfx, meshTag, indices));// 创建索引缓存
 
 	auto pvs = Bind::VertexShader::Resolve(gfx, "PhongVS.cso");
-	auto pvsbc = static_cast<Bind::VertexShader&>(*pvs).GetBytecode();
+	//auto pvsbc = static_cast<VertexShader&>(*pvs).GetBytecode();
+	auto pvsbc = pvs->GetBytecode();
 	bindablePtrs.push_back(std::move(pvs));																		  // 创建顶点shader
 	bindablePtrs.push_back(Bind::InputLayout::Resolve(gfx, vbuf.GetLayout()/*.GetD3DLayout()*/, pvsbc)); // 创建输入布局
 

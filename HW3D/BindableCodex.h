@@ -16,7 +16,7 @@ namespace Bind
 		由于绑定物可能是着色器、采样器、缓存之类的，参数数量不一定一致;所以采用多参数params		 			
 		*/
 		template<class T, typename...Params>
-		static std::shared_ptr<Bindable> Resolve(Graphics& gfx, Params&&...p) noxnd
+		static std::shared_ptr<T> Resolve(Graphics& gfx, Params&&...p) noxnd
 		{
 			static_assert(std::is_base_of<Bindable, T>::value, "Can only resolve classes derived from Bindable");
 			return Get().Resolve_<T>(gfx, std::forward<Params>(p)...);
@@ -34,7 +34,7 @@ namespace Bind
 		由于绑定物可能是着色器、采样器、缓存之类的，参数数量不一定一致;所以采用多参数params	
 		*/
 		template<class T, typename...Params>
-		std::shared_ptr<Bindable> Resolve_(Graphics& gfx, Params&&...p) noxnd
+		std::shared_ptr<T> Resolve_(Graphics& gfx, Params&&...p) noxnd
 		{
 			const auto key = T::GenerateUID(std::forward<Params>(p)...);
 
@@ -47,7 +47,7 @@ namespace Bind
 			}
 			else
 			{
-				return i->second;//持续查找下一个绑定物资源
+				return std::static_pointer_cast<T>( i->second );//持续查找下一个绑定物资源
 			}
 		}
 

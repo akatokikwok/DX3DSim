@@ -32,7 +32,7 @@ namespace Bind
 		return pBytecodeBlob.Get();
 	}
 
-	std::shared_ptr<Bindable> VertexShader::Resolve(Graphics& gfx, const std::string& path)
+	std::shared_ptr<VertexShader> VertexShader::Resolve(Graphics& gfx, const std::string& path)
 	{
 		//auto bind = Codex::Resolve(GenerateUID(path));
 		//if (!bind)

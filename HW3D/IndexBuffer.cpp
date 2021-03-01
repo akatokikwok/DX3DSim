@@ -44,7 +44,7 @@ namespace Bind
 	}
 	//======================================================================================
 	/// Resolve GenerateUID_ GetUID三件套(这三个方法会高频率的在任意绑定物资源类里出现)
-	std::shared_ptr<Bindable> IndexBuffer::Resolve(Graphics& gfx, const std::string& tag, const std::vector<unsigned short>& indices)
+	std::shared_ptr<IndexBuffer> IndexBuffer::Resolve(Graphics& gfx, const std::string& tag, const std::vector<unsigned short>& indices)
 	{
 		return Codex::Resolve<IndexBuffer>(gfx, tag, indices);
 	}

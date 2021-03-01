@@ -14,7 +14,7 @@ namespace Bind
 	}
 
 	//==================================================
-	std::shared_ptr<Bindable> Topology::Resolve(Graphics& gfx, D3D11_PRIMITIVE_TOPOLOGY type)
+	std::shared_ptr<Topology> Topology::Resolve(Graphics& gfx, D3D11_PRIMITIVE_TOPOLOGY type)
 	{
 		return Codex::Resolve<Topology>(gfx, type);
 	}

@@ -55,7 +55,7 @@ namespace Bind
 	}
 
 	//========================================================
-	std::shared_ptr<Bindable> Texture::Resolve(Graphics& gfx, const std::string& path, UINT slot)
+	std::shared_ptr<Texture> Texture::Resolve(Graphics& gfx, const std::string& path, UINT slot)
 	{
 		return Codex::Resolve<Texture>(gfx, path, slot);
 	}
