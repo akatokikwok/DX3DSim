@@ -14,8 +14,8 @@ namespace Bind
 		void Bind( Graphics& gfx ) noexcept override;
 
 		//============================================
-		static std::shared_ptr<Bindable> Resolve(Graphics& gfx, const std::string& path, UINT slot);
-		static std::string GenerateUID(const std::string& path, UINT slot);
+		static std::shared_ptr<Texture> Resolve(Graphics& gfx, const std::string& path, UINT slot = 0);
+		static std::string GenerateUID(const std::string& path, UINT slot = 0);
 		std::string GetUID() const noexcept override;
 	private:
 		unsigned int slot;// 插槽用于计算使用多少次纹理

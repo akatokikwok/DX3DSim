@@ -9,7 +9,7 @@ namespace Bind
 		Sampler(Graphics& gfx);
 		void Bind(Graphics& gfx) noexcept override;
 
-		static std::shared_ptr<Bindable> Resolve(Graphics& gfx);//解析并拿到采样器
+		static std::shared_ptr<Sampler> Resolve(Graphics& gfx);//解析并拿到采样器
 		static std::string GenerateUID();
 		std::string GetUID() const noexcept override;
 	protected:
