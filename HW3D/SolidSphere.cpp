@@ -47,23 +47,25 @@ SolidSphere::SolidSphere( Graphics& gfx,float radius )
 
 
 	auto model = Sphere::Make(); //构造一个球形物
-
 	model.Transform(dx::XMMatrixScaling(radius, radius, radius));
-	AddBind(std::make_shared<VertexBuffer>(gfx, model.vertices));
-	AddBind(std::make_shared<IndexBuffer>(gfx, model.indices));
 
-	auto pvs = std::make_shared<VertexShader>(gfx, "SolidVS.cso");
-	auto pvsbc = pvs->GetBytecode();
+	const auto geometryTag = "$sphere." + std::to_string(radius);
+	AddBind(Bind::VertexBuffer::Resolve(gfx, geometryTag, model.vertices));
+	AddBind(Bind::IndexBuffer::Resolve(gfx, geometryTag, model.indices));
+
+
+	auto pvs = Bind::VertexShader::Resolve(gfx, "SolidVS.cso");
+	auto pvsbc = static_cast<Bind::VertexShader&>(*pvs).GetBytecode();
 	AddBind(std::move(pvs));
 
-	AddBind(std::make_shared<PixelShader>(gfx, "SolidPS.cso"));
+	AddBind(Bind::PixelShader::Resolve(gfx, "SolidPS.cso"));
 
 	struct PSColorConstant
 	{		
 		dx::XMFLOAT3 color = { 1.0f,1.0f,1.0f };
 		float padding;
 	} colorConst;
-	AddBind(std::make_shared<PixelConstantBuffer<PSColorConstant>>(gfx, colorConst));
+	AddBind(Bind::PixelConstantBuffer<PSColorConstant>::Resolve(gfx, colorConst));
 
 	//const std::vector<D3D11_INPUT_ELEMENT_DESC> ied =
 	//{
@@ -71,9 +73,9 @@ SolidSphere::SolidSphere( Graphics& gfx,float radius )
 	//};
 	//AddBind(std::make_shared<InputLayout>(gfx, ied, pvsbc));
 
-	AddBind(std::make_shared<InputLayout>(gfx, model.vertices.GetLayout()/*.GetD3DLayout()*/, pvsbc));
+	AddBind(Bind::InputLayout::Resolve(gfx, model.vertices.GetLayout(), pvsbc));
 
-	AddBind(std::make_shared<Topology>(gfx, D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST));
+	AddBind(Bind::Topology::Resolve(gfx, D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST));
 
 	AddBind(std::make_shared<TransformCbuf>(gfx, *this));
 }
