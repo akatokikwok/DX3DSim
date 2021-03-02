@@ -1,6 +1,7 @@
 ﻿#include "TestPlane.h"
 #include "Plane.h"
 #include "BindableCommon.h"
+#include "imgui/imgui.h"
 
 TestPlane::TestPlane(Graphics& gfx, float size)
 {
@@ -20,14 +21,14 @@ TestPlane::TestPlane(Graphics& gfx, float size)
 	auto pvsbc = pvs->GetBytecode();
 	AddBind(std::move(pvs));//创建顶点着色器
 
-	AddBind(PixelShader::Resolve(gfx, "PhongPS.cso"));//创建像素着色器
+	AddBind(PixelShader::Resolve(gfx, "PhongPSNormalMap.cso"));//创建像素着色器--法线贴图的
 
-	struct PSMaterialConstant
+	/*struct PSMaterialConstant
 	{
 		float specularIntensity = 0.1f;
 		float specularPower = 20.0f;
 		float padding[2];
-	} pmc;
+	} pmc;*///转移到头文件去
 	AddBind(PixelConstantBuffer<PSMaterialConstant>::Resolve(gfx, pmc, 1u));//利用自定义的材质常量创建像素常量缓存
 
 	AddBind(InputLayout::Resolve(gfx, model.vertices.GetLayout(), pvsbc));//创建输入布局
@@ -52,4 +53,32 @@ void TestPlane::SetRotation(float roll, float pitch, float yaw) noexcept
 DirectX::XMMATRIX TestPlane::GetTransformXM() const noexcept
 {
 	return DirectX::XMMatrixRotationRollPitchYaw(roll, pitch, yaw) * DirectX::XMMatrixTranslation(pos.x, pos.y, pos.z);
+}
+
+void TestPlane::SpawnControlWindow(Graphics& gfx) noexcept
+{
+	if (ImGui::Begin("Plane"))
+	{
+		ImGui::Text("Position");
+		ImGui::SliderFloat("X", &pos.x, -80.0f, 80.0f, "%.1f");
+		ImGui::SliderFloat("Y", &pos.y, -80.0f, 80.0f, "%.1f");
+		ImGui::SliderFloat("Z", &pos.z, -80.0f, 80.0f, "%.1f");
+
+		ImGui::Text("Orientation");
+		ImGui::SliderAngle("Roll", &roll, -180.0f, 180.0f);
+		ImGui::SliderAngle("Pitch", &pitch, -180.0f, 180.0f);
+		ImGui::SliderAngle("Yaw", &yaw, -180.0f, 180.0f);
+
+		ImGui::Text("Shading");
+		bool changed0 = ImGui::SliderFloat("Spec. Intensity.", &pmc.specularIntensity, 0.0f, 1.0f);
+		bool changed1 = ImGui::SliderFloat("Spec. Power", &pmc.specularPower, 0.0f, 100.0f);
+		bool checkState = pmc.normalMappingEnabled == TRUE;
+		bool changed2 = ImGui::Checkbox("Enable Normal Map", &checkState);
+		pmc.normalMappingEnabled = checkState ? TRUE : FALSE;
+		if (changed0 || changed1 || changed2)
+		{
+			Drawable::QueryBindable<Bind::PixelConstantBuffer<PSMaterialConstant>>()->Update(gfx, pmc);//只要满足任一条件 都应该及时应用材质常数的变更
+		}
+	}
+	ImGui::End();
 }

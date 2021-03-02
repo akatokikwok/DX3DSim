@@ -50,6 +50,7 @@ void App::DoFrame()
 	plane.Draw(wnd.Gfx());
 
 
+
 	while (const auto e = wnd.kbd.ReadKey())
 	{
 		// 每帧检测是否按下了INSERT键位;若处于光标启用状态就关闭光标并更新状态为禁用;若处于光标禁用状态就启用光标并更新状态为启用
@@ -127,6 +128,7 @@ void App::DoFrame()
 	// 展示模型IMGUI窗口
 	nano.ShowWindow("Model 1");
 	nano2.ShowWindow("Model 2");
+	plane.SpawnControlWindow(wnd.Gfx());
 	//ShowRawInputWindow();
 
 	// present

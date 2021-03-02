@@ -31,3 +31,9 @@ HW3D/PhongPS.cso
 HW3D/PhongVS.cso
 
 HW3D/PhongPSSpecMap.cso
+
+HW3D/SolidPS.cso
+
+HW3D/SolidVS.cso
+
+HW3D/PhongPSNormalMap.cso

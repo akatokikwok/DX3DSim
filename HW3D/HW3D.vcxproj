@@ -290,6 +290,9 @@
     <None Include="DXTrace.inl" />
   </ItemGroup>
   <ItemGroup>
+    <FxCompile Include="PhongPSNormalMap.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
+    </FxCompile>
     <FxCompile Include="PhongPSSpecMap.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
     </FxCompile>
