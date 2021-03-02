@@ -1,8 +1,8 @@
-cbuffer CBuf
+cbuffer CBuf : register(b1)
 {
 	float4 color;
 };
-// µÆÅİ×ÅÉ«Æ÷
+// ç¯æ³¡ç€è‰²å™¨
 float4 main() : SV_Target
 {
 	return color;

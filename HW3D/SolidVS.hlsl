@@ -6,5 +6,5 @@ cbuffer CBuf
 
 float4 main( float3 pos : Position ) : SV_Position
 {
-	return mul( float4(pos,1.0f),modelViewProj );// 参数pos乘以mvp位置
+	return mul( float4(pos,1.0f),modelViewProj );// 鍙傛暟pos涔樹互mvp浣嶇疆
 }
