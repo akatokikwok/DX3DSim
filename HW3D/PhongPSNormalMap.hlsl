@@ -28,7 +28,10 @@ float4 main(float3 worldPos : Position, float3 n : Normal, float2 tc : Texcoord)
     // sample normal from map if normal mapping enabled
     if (normalMapEnabled)
     {
-        n = -nmap.Sample(splr, tc).xyz;//这里取负，为了让法线贴图上的法线指向摄像机方向
+        const float3 normalSample = nmap.Sample(splr, tc).xyz;//先对法线贴图采样
+        n.x = normalSample.x * 2.0f - 1.0f; //映射采样品的x到HLSL并归一化
+        n.y = normalSample.y * 2.0f - 1.0f; //映射采样品的y到HLSL并归一化
+        n.z = -normalSample.z;              //取负并指向摄像机
     }
 	// fragment to light vector data
     const float3 vToL = lightPos - worldPos;
