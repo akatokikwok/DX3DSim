@@ -1,4 +1,4 @@
-cbuffer LightCBuf//光源常量
+cbuffer LightCBuf// 光源常量;位于[0]
 {
     float3 lightPos;
     float3 ambient;
@@ -9,12 +9,18 @@ cbuffer LightCBuf//光源常量
     float attQuad;
 };
 
-cbuffer ObjectCBuf//模型里一些参数常量
+cbuffer ObjectCBuf//模型里一些参数常量;位于[1]
 {
     float specularIntensity;
     float specularPower;
     bool normalMapEnabled;//法线贴图采样开关
     float padding[1];
+};
+
+cbuffer TransformCBuf // 新增一个T有关模型的常数缓存; 位于[2]
+{
+    matrix modelView;
+    matrix modelViewProj;
 };
 
 Texture2D tex;
@@ -33,6 +39,8 @@ float4 main(float3 worldPos : Position, float3 n : Normal, float2 tc : Texcoord)
         n.x = normalSample.x * 2.0f - 1.0f; //映射采样品的x到HLSL并归一化
         n.y = -normalSample.y * 2.0f + 1.0f; //映射采样品的y到HLSL并归一化
         n.z = -normalSample.z;              //取负并指向摄像机
+        
+        n = mul(n, (float3x3) modelView); //让n与MV矩阵相乘
     }
 	// fragment to light vector data
     const float3 vToL = lightPos - worldPos;

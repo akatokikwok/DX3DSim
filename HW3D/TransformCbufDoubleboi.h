@@ -4,10 +4,11 @@
 namespace Bind
 {
 	/* 继承自TransformCbuf,*/
+	// 构造器: TransformCbufDoubleboi(Graphics& gfx, const Drawable& parent, UINT slotV = 0u, UINT slotP = 0u);
 	class TransformCbufDoubleboi : public TransformCbuf
 	{
 	public:
-		/* 构造器:带两个插槽*/
+		/* 构造器:带两个插槽;在调用基类初始化的同时也创建出一个像素常量缓存*/
 		TransformCbufDoubleboi(Graphics& gfx, const Drawable& parent, UINT slotV = 0u, UINT slotP = 0u);
 		/* 重写Bind；执行一次基类的UpdateBindImpl和自己的UpdateBindImpl*/
 		void Bind(Graphics& gfx) noexcept override;
