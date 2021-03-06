@@ -15,16 +15,18 @@ App::App()
 	:
 	wnd(1280, 720, "The GRB'S Rending Box"),
 	light(wnd.Gfx()),
-	plane(wnd.Gfx(), 3.0f)
+	plane(wnd.Gfx(), 3.0f),
+	cube(wnd.Gfx(), 4.0f)
 {
-	plane.SetPos({ 1.0f,17.0f,-1.0f });//给plane模型指定一个位置
-	wnd.Gfx().SetProjection(dx::XMMatrixPerspectiveLH(1.0f, 9.0f / 16.0f, 0.5f, 40.0f));
+	plane.SetPos({ -5.0f,17.0f,-1.0f });//给plane模型指定一个位置
+	cube.SetPos({ 3.0f,14.0f,-2.0f });
 
 	//auto a = Bind::VertexShader::Resolve(wnd.Gfx(), "PhongVS.cso");// 解析并拿到名为PhongVS.cso的顶点着色器
 	//auto b = Bind::Sampler::Resolve(wnd.Gfx());	//解析并拿到采样器
 	//auto c = Bind::Sampler::Resolve(wnd.Gfx());
-
 	//wnd.DisableCursor();//应用初始化的时候默认关闭光标
+
+	wnd.Gfx().SetProjection(dx::XMMatrixPerspectiveLH(1.0f, 9.0f / 16.0f, 0.5f, 40.0f));
 }
 
 void App::DoFrame()
@@ -48,7 +50,7 @@ void App::DoFrame()
 	nano2.Draw(wnd.Gfx());
 	light.Draw(wnd.Gfx());//注意此处灯光被覆写，所以下一步绘制plane模型时候保留了插槽0，所以会渲染失败，故要在着色器里将灯光着色器绑定至下一个插槽1
 	plane.Draw(wnd.Gfx());
-
+	cube.Draw(wnd.Gfx());
 
 
 	while (const auto e = wnd.kbd.ReadKey())
@@ -129,6 +131,7 @@ void App::DoFrame()
 	nano.ShowWindow("Model 1");
 	nano2.ShowWindow("Model 2");
 	plane.SpawnControlWindow(wnd.Gfx());
+	cube.SpawnControlWindow(wnd.Gfx());
 	//ShowRawInputWindow();
 
 	// present
