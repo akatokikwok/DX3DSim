@@ -46,9 +46,17 @@ float4 main(float3 viewPos : Position, float3 n : Normal, float3 tan : Tangent, 
         );        
         
         const float3 normalSample = nmap.Sample(splr, tc).xyz;//先对法线贴图采样
-        n.x = normalSample.x * 2.0f - 1.0f; //映射采样品的x到HLSL并归一化
-        n.y = -normalSample.y * 2.0f + 1.0f; //映射采样品的y到HLSL并归一化
-        n.z = normalSample.z;              //反方向指向摄像机
+        //n.x = normalSample.x * 2.0f - 1.0f; //映射采样品的x到HLSL并归一化
+        //n.y = -normalSample.y * 2.0f + 1.0f; //映射采样品的y到HLSL并归一化
+        //n.z = normalSample.z;              //反方向指向摄像机
+        
+        /* |-- T --|                    |-- X --|
+           |-- B --|   <==对应关系==>    |-- Z --|             
+           |-- N --|                    |-- Y --|
+           由于XYZ坐标转换成 TBN坐标是 TNB的顺序，所以n是第二个分量
+        */
+        n = normalSample * 2.0f - 1.0f;
+        n.y = -n.y;//对第二个分量进行处理
         
         // 把法线从切线空间转移到视图空间;
         n = mul(n, tanToView);

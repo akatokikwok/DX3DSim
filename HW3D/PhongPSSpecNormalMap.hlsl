@@ -42,9 +42,12 @@ float4 main(float3 viewPos : Position, float3 n : Normal, float3 tan : Tangent, 
         );
         // 取法线贴图采样后的分量进行分析
         const float3 normalSample = nmap.Sample(splr, tc).xyz;
-        n.x = normalSample.x * 2.0f - 1.0f;
-        n.y = -normalSample.y * 2.0f + 1.0f;
-        n.z = normalSample.z;
+        //n.x = normalSample.x * 2.0f - 1.0f;
+        //n.y = -normalSample.y * 2.0f + 1.0f;
+        //n.z = normalSample.z;
+        
+        // 由于带切线空间所以按照这条准则
+        n = normalSample * 2.0f - 1.0f;
         // bring normal from tanspace into view space
         n = mul(n, tanToView);
     }  
