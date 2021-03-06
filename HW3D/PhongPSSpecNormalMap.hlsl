@@ -1,7 +1,7 @@
-// 模型高光贴图像素着色器
+/* 带法线且带镜面光的像素shader*/
 
 // 常数--光照
-cbuffer LightCBuf   
+cbuffer LightCBuf           //[0]
 {
     float3 lightPos;        //光源位置
     float3 ambient;         //环境光常数  
@@ -13,17 +13,44 @@ cbuffer LightCBuf
     float attQuad;
 };
 
+// 常数--模型上的
+cbuffer ObjectCBuf          //[1]
+{
+    bool normalMapEnabled;//法线贴图采样开关
+    float padding[3];
+};
+
 Texture2D tex;  // 纹理
 Texture2D spec; // 镜面光纹理
+Texture2D nmap; // 法线贴图
 
 SamplerState splr; // 采样器
 
 //static const float specularPowerFactor = 100.0f;//自定义个系数，用于控制镜面光功率
 
 
-float4 main(float3 worldPos : Position, float3 n : Normal, float2 tc : Texcoord) : SV_Target
+float4 main(float3 worldPos : Position, float3 n : Normal, float3 tan : Tangent, float3 bitan : Bitangent, float2 tc : Texcoord) : SV_Target
 {
-	// fragment to light vector data
+	// 若开启法线纹理采样
+    if (normalMapEnabled)
+    {
+        // build the tranform (rotation) into tangent space
+        const float3x3 tanToView = float3x3(
+            normalize(tan),
+            normalize(bitan),
+            normalize(n)
+        );
+        // 取法线贴图采样后的分量进行分析
+        const float3 normalSample = nmap.Sample(splr, tc).xyz;
+        n.x = normalSample.x * 2.0f - 1.0f;
+        n.y = -normalSample.y * 2.0f + 1.0f;
+        n.z = normalSample.z;
+        // bring normal from tanspace into view space
+        n = mul(n, tanToView);
+    }  
+    
+    // 主逻辑 ===============================================================================
+    // fragment to light vector data
     const float3 vToL = lightPos - worldPos;
     const float distToL = length(vToL);
     const float3 dirToL = vToL / distToL;

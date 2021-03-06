@@ -253,7 +253,8 @@ Model::Model(Graphics& gfx, const std::string fileName)
 		aiProcess_Triangulate |
 		aiProcess_JoinIdenticalVertices |
 		aiProcess_ConvertToLeftHanded |
-		aiProcess_GenNormals
+		aiProcess_GenNormals |
+		aiProcess_CalcTangentSpace //也计算切线空间
 	);
 	// 若模型加载不正确,就抛出提示信息
 	if (pScene == nullptr)
@@ -320,11 +321,13 @@ std::unique_ptr<Mesh> Model::ParseMesh(Graphics& gfx, const aiMesh& mesh, const 
 
 	using namespace Bind;
 
-	// 为了加载动态布局系统; 要动态创建(即Append)顶点布局 、指定带位置、法线的顶点缓存、纹理
+	// 为了加载动态布局系统; 要动态创建(即Append)顶点布局 、指定带位置、法线的顶点缓存、切线T、切线B、纹理
 	Dvtx::VertexBuffer vbuf(std::move(
 		VertexLayout{}
 		.Append(VertexLayout::Position3D)
 		.Append(VertexLayout::Normal)
+		.Append(VertexLayout::Tangent)
+		.Append(VertexLayout::Bitangent)
 		.Append(VertexLayout::Texture2D)
 	));
 
@@ -343,6 +346,8 @@ std::unique_ptr<Mesh> Model::ParseMesh(Graphics& gfx, const aiMesh& mesh, const 
 		vbuf.EmplaceBack(
 			*reinterpret_cast<dx::XMFLOAT3*>(&mesh.mVertices[i]),
 			*reinterpret_cast<dx::XMFLOAT3*>(&mesh.mNormals[i]),
+			*reinterpret_cast<dx::XMFLOAT3*>(&mesh.mTangents[i]),
+			*reinterpret_cast<dx::XMFLOAT3*>(&mesh.mBitangents[i]),
 			*reinterpret_cast<dx::XMFLOAT2*>(&mesh.mTextureCoords[0][i]) //由于模型顶点对于不同的纹理可能显示出不同的纹理坐标;所以这里理解为顶点i的[0]号坐标
 		);
 	}
@@ -363,7 +368,7 @@ std::unique_ptr<Mesh> Model::ParseMesh(Graphics& gfx, const aiMesh& mesh, const 
 	std::vector<std::shared_ptr<Bind::Bindable>> bindablePtrs;
 
 	using namespace std::string_literals;
-	const auto base = "Models\\nano_textured\\"s;	//自定义一个具体路径base==Models\\nano_textured\\"s;存储贴图的路径
+	const auto base = "Models\\brick_wall\\"s;	//自定义一个具体路径base = "Models\\brick_wall\\"s;存储贴图的路径
 	
 	bool hasSpecularMap = false;// 默认不带有高光贴图
 	float shininess = 35.0f; //定义一个高光参数
@@ -376,16 +381,20 @@ std::unique_ptr<Mesh> Model::ParseMesh(Graphics& gfx, const aiMesh& mesh, const 
 		aiString texFileName; // 创建一个aiString变量用于存储纹理文件的路径
 
 		material.GetTexture(aiTextureType_DIFFUSE, 0, &texFileName); // 拿到第一张漫反射纹理存到上面那个字符串里
-		bindablePtrs.push_back(Bind::Texture::Resolve(gfx,     /*Surface::FromFile*/(base + texFileName.C_Str()), 0 )); // 创建(实际上是Reslove泛型方法按给定参数查找并获得了)1个漫反射纹理, 位于插槽0 ，表示第一个纹理
+		bindablePtrs.push_back(Bind::Texture::Resolve(gfx,     /*Surface::FromFile*/(base + texFileName.C_Str()), 0 )); // 创建(实际上是Reslove泛型方法按给定参数查找并获得了)1个漫反射纹理, 位于插槽0 ，表示第[0]个纹理
 		if (material.GetTexture(aiTextureType_SPECULAR, 0, &texFileName) == aiReturn_SUCCESS) //若该mesh确实在硬盘里持有高光贴图资源,拿一张镜面光纹理存到字符串里
 		{
-			bindablePtrs.push_back(Bind::Texture::Resolve(gfx, /*Surface::FromFile*/(base + texFileName.C_Str()), 1 )); // 创建(实际上是Reslove泛型方法按给定参数查找并获得了)1个镜面光纹理，位于插槽1， 表示第二个纹理
+			bindablePtrs.push_back(Bind::Texture::Resolve(gfx, /*Surface::FromFile*/(base + texFileName.C_Str()), 1 )); // 创建(实际上是Reslove泛型方法按给定参数查找并获得了)1个镜面光纹理，位于插槽1， 表示第[1]个纹理
 			hasSpecularMap = true; // 若能在硬盘里读到高光贴图，就开启高光开关
 		}
 		else //若硬盘里没读到高光贴图资源
 		{
 			material.Get(AI_MATKEY_SHININESS, shininess); //若没查找到高光贴图，就让当面材质读取上面自定义的高光参数
 		}
+
+		material.GetTexture(aiTextureType_NORMALS, 0, &texFileName);  //读法线贴图
+		bindablePtrs.push_back(Texture::Resolve(gfx, (base + texFileName.C_Str()), 2)); // 创建(实际上是Reslove泛型方法按给定参数查找并获得了)1个镜面光纹理，位于插槽1， 表示第[2]个纹理
+
 		bindablePtrs.push_back(Bind::Sampler::Resolve(gfx)); // 创建采样器
 	}
 
@@ -394,27 +403,41 @@ std::unique_ptr<Mesh> Model::ParseMesh(Graphics& gfx, const aiMesh& mesh, const 
 
 	bindablePtrs.push_back(Bind::IndexBuffer::Resolve(gfx, meshTag, indices));// 创建索引缓存
 
-	auto pvs = Bind::VertexShader::Resolve(gfx, "PhongVS.cso");
+	auto pvs = VertexShader::Resolve(gfx, "PhongVSNormalMap.cso");
 	//auto pvsbc = static_cast<VertexShader&>(*pvs).GetBytecode();
 	auto pvsbc = pvs->GetBytecode();
 	bindablePtrs.push_back(std::move(pvs));																		  // 创建顶点shader
 	bindablePtrs.push_back(Bind::InputLayout::Resolve(gfx, vbuf.GetLayout()/*.GetD3DLayout()*/, pvsbc)); // 创建输入布局
 
-	// 检查高光纹理，并加载它 高光的纹理像素着色器
+	// 检查高光纹理，并加载它 高光的纹理像素着色器(带法线版本)
 	if (hasSpecularMap)
 	{
-		bindablePtrs.push_back(Bind::PixelShader::Resolve(gfx, "PhongPSSpecMap.cso"));			  //创建像素shader，指定以PhongPSSpecMap
+		//bindablePtrs.push_back(Bind::PixelShader::Resolve(gfx, "PhongPSSpecMap.cso"));			  
+	
+		bindablePtrs.push_back(PixelShader::Resolve(gfx, "PhongPSSpecNormalMap.cso"));	//创建像素shader，指定以PhongPSSpecNormalMap
+
+		struct PSMaterialConstant
+		{
+			BOOL  normalMapEnabled = TRUE;
+			float padding[3];
+		} pmc;
+		// this is CLEARLY an issue... all meshes will share same mat const, but may have different
+		// Ns (specular power) specified for each in the material properties... bad conflict
+		bindablePtrs.push_back(PixelConstantBuffer<PSMaterialConstant>::Resolve(gfx, pmc, 1u));			//创建像素常量缓存<材质>
+	
 	}
-	else // 不存在高光纹理就加载默认的漫反射纹理像素着色器
+	else // 不存在高光纹理就加载默认的漫反射纹理像素着色器(带法线版本)
 	{
-		bindablePtrs.push_back(Bind::PixelShader::Resolve(gfx, "PhongPS.cso"));					  ////创建像素shader，指定以PhongPS
+		bindablePtrs.push_back(PixelShader::Resolve(gfx, "PhongPSNormalMap.cso"));				  ////创建像素shader，指定以PhongPSNormalMap
 		
 		struct PSMaterialConstant// 自定义 材质常量struct 并添加进绑定物集合
 		{
 			//DirectX::XMFLOAT3 color = { 0.6f,0.6f,0.8f }; // 由于模型已经有漫反射纹理了，所以这里不再使用自定义的颜色
 			float specularIntensity = 0.8f; //高光强度
 			float specularPower;			//高光功率
-			float padding[2];
+
+			BOOL  normalMapEnabled = TRUE;
+			float padding[1];
 		} pmc;
 		pmc.specularPower = shininess; // 注意这里结构体的成员高光功率由之前定义好的高光参数决定
 		bindablePtrs.push_back(Bind::PixelConstantBuffer<PSMaterialConstant>::Resolve(gfx, pmc, 1u));//创建出像素常数缓存<材质>
