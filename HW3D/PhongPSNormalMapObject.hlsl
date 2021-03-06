@@ -34,7 +34,7 @@ SamplerState splr;
 float4 main(float3 viewPos : Position, float3 n : Normal, float2 tc : Texcoord) : SV_Target
 {
 	// sample normal from map if normal mapping enabled
-    if (normalMapEnabled)
+    if (normalMapEnabled)//注意！！若启用法线贴图,则会将法线一直在z方向映射，所以要在z分量上做一些处理
     {
         // unpack normal data
         const float3 normalSample = nmap.Sample(splr, tc).xyz;
@@ -42,6 +42,15 @@ float4 main(float3 viewPos : Position, float3 n : Normal, float2 tc : Texcoord) 
         n.y = -normalSample.y * 2.0f + 1.0f;
         n.z = -normalSample.z;
         
+        n = mul(n, (float3x3) modelView);
+    }
+    else// 若没开启法线贴图
+    {
+        // unpack normal data
+        const float3 normalSample = nmap.Sample(splr, tc).xyz;
+        n.x = normalSample.x * 2.0f - 1.0f;
+        n.y = -normalSample.y * 2.0f + 1.0f;
+        n.z = -normalSample.z * 2.0f + 1.0f;
         n = mul(n, (float3x3) modelView);
     }
 	// fragment to light vector data
