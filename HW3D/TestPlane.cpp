@@ -23,7 +23,7 @@ TestPlane::TestPlane(Graphics& gfx, float size)
 	auto pvsbc = pvs->GetBytecode();
 	AddBind(std::move(pvs));//创建顶点着色器
 
-	AddBind(PixelShader::Resolve(gfx, "PhongPSNormalMap.cso"));//创建像素着色器--法线贴图的
+	AddBind(PixelShader::Resolve(gfx, "PhongPSNormalMapObject.cso"));//创建像素shader--(带法线但不带切线)
 
 	/*struct PSMaterialConstant
 	{

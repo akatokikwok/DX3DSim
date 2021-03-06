@@ -35,11 +35,11 @@ private:
 	//Model nano{ wnd.Gfx(),"Models\\nanosuit.obj" };// 指定一个 纳米服 模型
 	//Model nano{ wnd.Gfx(),"Models\\nano_textured\\nanosuit.obj" };// 换成带层级表示的gltf模型
 	//Model nano2{ wnd.Gfx(),"Models\\nano_textured\\nanosuit.obj" };
-	//TestPlane plane;
+	
 	//TestCube cube;
 
 	Model wall{ wnd.Gfx(),"Models\\brick_wall\\brick_wall.obj" };
-
+	TestPlane tp{ wnd.Gfx(),1.0 };
 	// 一些有关于导入模型的控制IMGUI配置
 	/*struct
 	{

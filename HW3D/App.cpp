@@ -18,8 +18,8 @@ App::App()
 	//,plane(wnd.Gfx(), 3.0f)
 	//,cube(wnd.Gfx(), 4.0f)
 {
-	//plane.SetPos({ -5.0f,17.0f,-1.0f });//给plane模型指定一个位置
-	//cube.SetPos({ 3.0f,14.0f,-2.0f });
+	wall.SetRootTransform(dx::XMMatrixTranslation(-1.5f, 0.0f, 0.0f)); //设置墙模型的根节点Transform
+	tp.SetPos({ 1.5f,0.0f,0.0f });										//设置TestPlane绘制物的位置
 
 	//auto a = Bind::VertexShader::Resolve(wnd.Gfx(), "PhongVS.cso");// 解析并拿到名为PhongVS.cso的顶点着色器
 	//auto b = Bind::Sampler::Resolve(wnd.Gfx());	//解析并拿到采样器
@@ -47,6 +47,7 @@ void App::DoFrame()
 	//nano.Draw(wnd.Gfx(), transform);// 绘制指定的模型
 
 	wall.Draw(wnd.Gfx());
+	tp.Draw(wnd.Gfx());
 	//nano.Draw(wnd.Gfx());
 	
 	//nano2.Draw(wnd.Gfx());
@@ -135,6 +136,7 @@ void App::DoFrame()
 	//plane.SpawnControlWindow(wnd.Gfx());
 	
 	wall.ShowWindow("Wall");
+	tp.SpawnControlWindow(wnd.Gfx());
 
 	//cube.SpawnControlWindow(wnd.Gfx());
 	//ShowRawInputWindow();

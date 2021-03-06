@@ -309,6 +309,11 @@ void Model::ShowWindow(const char* windowName) noexcept
 	pWindow->Show(windowName, *pRoot);
 }
 
+void Model::SetRootTransform(DirectX::FXMMATRIX tf) noexcept
+{
+	pRoot->SetAppliedTransform(tf);
+}
+
 Model::~Model() noexcept
 {
 
@@ -433,7 +438,7 @@ std::unique_ptr<Mesh> Model::ParseMesh(Graphics& gfx, const aiMesh& mesh, const 
 		struct PSMaterialConstant// 自定义 材质常量struct 并添加进绑定物集合
 		{
 			//DirectX::XMFLOAT3 color = { 0.6f,0.6f,0.8f }; // 由于模型已经有漫反射纹理了，所以这里不再使用自定义的颜色
-			float specularIntensity = 0.8f; //高光强度
+			float specularIntensity = 0.18f; //高光强度
 			float specularPower;			//高光功率
 
 			BOOL  normalMapEnabled = TRUE;
