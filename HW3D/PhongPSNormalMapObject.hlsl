@@ -1,6 +1,6 @@
 /* 不带切线TB的 像素着色器(法线贴图版)*/
 
-cbuffer LightCBuf
+cbuffer LightCBuf       //---[0]
 {
     float3 lightPos;
     float3 ambient;
@@ -11,12 +11,18 @@ cbuffer LightCBuf
     float attQuad;
 };
 
-cbuffer ObjectCBuf
+cbuffer ObjectCBuf      //---[1]
 {
     float specularIntensity;
     float specularPower;
     bool normalMapEnabled;
     float padding[1];
+};
+
+cbuffer TransformCBuf   //---[2]
+{
+    matrix modelView;
+    matrix modelViewProj;
 };
 
 Texture2D tex;
@@ -35,6 +41,8 @@ float4 main(float3 viewPos : Position, float3 n : Normal, float2 tc : Texcoord) 
         n.x = normalSample.x * 2.0f - 1.0f;
         n.y = -normalSample.y * 2.0f + 1.0f;
         n.z = -normalSample.z;
+        
+        n = mul(n, (float3x3) modelView);
     }
 	// fragment to light vector data
     const float3 vToL = lightPos - viewPos;

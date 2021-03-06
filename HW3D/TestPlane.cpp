@@ -37,10 +37,10 @@ TestPlane::TestPlane(Graphics& gfx, float size)
 
 	AddBind(Topology::Resolve(gfx, D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST));//创建图元
 
-	AddBind(std::make_shared<TransformCbuf>(gfx, *this));//创建顶点常量缓存
+	//AddBind(std::make_shared<TransformCbuf>(gfx, *this));//创建顶点常量缓存
 	
-	// 创建常数缓存; 顶点shader绑到插槽0，像素shader绑到插槽2(因为PhongPSNormalMap.hlsl里像素常量缓存cbuffer TransformCBuf位于[2]位置)
-	//AddBind(std::make_shared<TransformCbufDoubleboi>(gfx, *this, 0u, 2u));
+	//创建双常数缓存; 顶点shader绑到插槽0，像素shader绑到插槽2(因为PhongPSNormalMapObject.hlsl里像素常量缓存cbuffer TransformCBuf位于[2]位置)
+	AddBind(std::make_shared<TransformCbufDoubleboi>(gfx, *this, 0u, 2u));
 }
 
 void TestPlane::SetPos(DirectX::XMFLOAT3 pos) noexcept
