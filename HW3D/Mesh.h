@@ -82,7 +82,8 @@ public:
 	void Draw(Graphics& gfx) const noxnd;
 	/* 用于展示Model的IMGUI窗口*/
 	void ShowWindow(const char* windowName = nullptr) noexcept;
-
+	/* 设置模型根节点的变换*/
+	void SetRootTransform(DirectX::FXMMATRIX tf) noexcept;
 	~Model() noexcept;
 private:
 	/* 用于解析加载单个Mesh;静态方法ParseMesh(); 需要材质数组参数*/

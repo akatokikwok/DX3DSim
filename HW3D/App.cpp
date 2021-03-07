@@ -13,16 +13,20 @@ GDIPlusManager gdipm;
 
 App::App()
 	:
-	wnd(1280, 720, "The GRB'S Rending Box"),
-	light(wnd.Gfx())
+	wnd(1280, 720, "The GRB'S Rending Box")
+	,light(wnd.Gfx())
+	//,plane(wnd.Gfx(), 3.0f)
+	//,cube(wnd.Gfx(), 4.0f)
 {
-	wnd.Gfx().SetProjection(dx::XMMatrixPerspectiveLH(1.0f, 9.0f / 16.0f, 0.5f, 40.0f));
+	//wall.SetRootTransform(dx::XMMatrixTranslation(-1.5f, 0.0f, 0.0f)); //设置墙模型的根节点Transform
+	//tp.SetPos({ 1.5f,0.0f,0.0f });										//设置TestPlane绘制物的位置
 
 	//auto a = Bind::VertexShader::Resolve(wnd.Gfx(), "PhongVS.cso");// 解析并拿到名为PhongVS.cso的顶点着色器
 	//auto b = Bind::Sampler::Resolve(wnd.Gfx());	//解析并拿到采样器
 	//auto c = Bind::Sampler::Resolve(wnd.Gfx());
-
 	//wnd.DisableCursor();//应用初始化的时候默认关闭光标
+
+	wnd.Gfx().SetProjection(dx::XMMatrixPerspectiveLH(1.0f, 9.0f / 16.0f, 0.5f, 40.0f));
 }
 
 void App::DoFrame()
@@ -42,9 +46,15 @@ void App::DoFrame()
 	//	dx::XMMatrixTranslation(pos.x, pos.y, pos.z);// 自定义变换==旋转矩阵*移动矩阵
 	//nano.Draw(wnd.Gfx(), transform);// 绘制指定的模型
 
-	nano.Draw(wnd.Gfx());
-	nano2.Draw(wnd.Gfx());
-	light.Draw(wnd.Gfx());
+	//wall.Draw(wnd.Gfx());
+	//tp.Draw(wnd.Gfx());
+	//nano.Draw(wnd.Gfx());
+	gobber.Draw(wnd.Gfx());
+
+	//nano2.Draw(wnd.Gfx());
+	light.Draw(wnd.Gfx());//注意此处灯光被覆写，所以下一步绘制plane模型时候保留了插槽0，所以会渲染失败，故要在着色器里将灯光着色器绑定至下一个插槽1
+	//plane.Draw(wnd.Gfx());
+	//cube.Draw(wnd.Gfx());
 
 
 	while (const auto e = wnd.kbd.ReadKey())
@@ -122,8 +132,15 @@ void App::DoFrame()
 	// 根据助手开关来动态显隐Imgui助手DEMO窗口
 	ShowImguiDemoWindow();
 	// 展示模型IMGUI窗口
-	nano.ShowWindow("Model 1");
-	nano2.ShowWindow("Model 2");
+	//nano.ShowWindow("Model 1");
+	//nano2.ShowWindow("Model 2");
+	//plane.SpawnControlWindow(wnd.Gfx());
+	
+	//wall.ShowWindow("Wall");
+	//tp.SpawnControlWindow(wnd.Gfx());
+	gobber.ShowWindow("gobber");
+
+	//cube.SpawnControlWindow(wnd.Gfx());
 	//ShowRawInputWindow();
 
 	// present

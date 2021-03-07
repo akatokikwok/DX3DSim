@@ -27,10 +27,10 @@ SamplerState splr;
 
 
 // 带法线的着色器,用于接受光源的照射;供给给那些承受光照的绘制物使用
-float4 main(float3 worldPos : Position, float3 n : Normal, float2 tc : Texcoord) : SV_Target
+float4 main(float3 viewPos : Position, float3 n : Normal, float2 tc : Texcoord) : SV_Target
 {
 	// fragment to light vector data
-	const float3 vToL = lightPos - worldPos;
+	const float3 vToL = lightPos - viewPos;/* 注意这里的入参是视图空间*/
 	const float distToL = length( vToL );
 	const float3 dirToL = vToL / distToL;
 	// 衰减
@@ -45,7 +45,7 @@ float4 main(float3 worldPos : Position, float3 n : Normal, float2 tc : Texcoord)
 	// calculate specular intensity based on angle between viewing vector and reflection vector, narrow with power function
 	// 镜面光== (漫反射颜色*漫反射强度)* 镜面光强度 * ()的镜面级数
 	// 此时就可以实现让距离不同的绘制对象显示出的高光强弱有差异
-    const float3 specular = att * (diffuseColor * diffuseIntensity) * specularIntensity * pow(max(0.0f, dot(normalize(-r), normalize(worldPos))), specularPower);
+    const float3 specular = att * (diffuseColor * diffuseIntensity) * specularIntensity * pow(max(0.0f, dot(normalize(-r), normalize(viewPos))), specularPower);
 	
 	// final color
     //return float4(saturate((diffuse + ambient) * materialColor), 1.0f);

@@ -9,13 +9,13 @@ namespace Bind
 	class ConstantBuffer : public Bindable
 	{
 	public:
-		// 按参数常量并以map形式更新常量缓存
+		// 以MAP映射方式把入参 泛型变量consts写入常量缓存以此达到更新常数缓存目的
 		void Update(Graphics& gfx, const C& consts)
 		{
 			INFOMAN(gfx);
 
 			D3D11_MAPPED_SUBRESOURCE msr;
-			GFX_THROW_INFO(GetContext(gfx)->Map(
+			GFX_THROW_INFO(GetContext(gfx)->Map(//把常数缓存映射到一块内存空间上
 				pConstantBuffer.Get(), 0u,
 				D3D11_MAP_WRITE_DISCARD, 0u,
 				&msr
@@ -24,7 +24,7 @@ namespace Bind
 			GetContext(gfx)->Unmap(pConstantBuffer.Get(), 0u);
 		}
 
-		/* 带常数, 插槽的构造;负责创建出常量缓存*/
+		/* 构造器：带常数, 插槽的构造;负责创建出常量缓存*/
 		ConstantBuffer(Graphics& gfx, const C& consts, UINT slot = 0u)
 			:
 			slot(slot)// 初始化插槽槽位
@@ -44,7 +44,7 @@ namespace Bind
 			GFX_THROW_INFO(GetDevice(gfx)->CreateBuffer(&cbd, &csd, &pConstantBuffer));
 		}
 
-		/* 不带常数,只带插槽的构造;负责创建出常量缓存*/
+		/* 构造器:不带常数,只带插槽的构造;负责创建出常量缓存*/
 		ConstantBuffer(Graphics& gfx, UINT slot = 0u)
 			:
 			slot(slot)// 初始化插槽槽位

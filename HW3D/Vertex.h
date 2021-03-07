@@ -27,6 +27,8 @@ namespace Dvtx
 			Position3D,//3D位置
 			Texture2D,//纹理
 			Normal,//法线
+			Tangent,	//切线--T
+			Bitangent,	//切线--B
 			Float3Color,
 			Float4Color,
 			BGRAColor,
@@ -63,6 +65,22 @@ namespace Dvtx
 			static constexpr const char* semantic = "Normal";
 			static constexpr const char* code = "N";
 		};
+
+		template<> struct Map<Tangent>
+		{
+			using SysType = DirectX::XMFLOAT3;
+			static constexpr DXGI_FORMAT dxgiFormat = DXGI_FORMAT_R32G32B32_FLOAT;
+			static constexpr const char* semantic = "Tangent";
+			static constexpr const char* code = "Nt";
+		};
+		template<> struct Map<Bitangent>
+		{
+			using SysType = DirectX::XMFLOAT3;
+			static constexpr DXGI_FORMAT dxgiFormat = DXGI_FORMAT_R32G32B32_FLOAT;
+			static constexpr const char* semantic = "Bitangent";
+			static constexpr const char* code = "Nb";
+		};
+
 		template<> struct Map<Float3Color>
 		{
 			using SysType = DirectX::XMFLOAT3;
@@ -239,6 +257,14 @@ namespace Dvtx
 		case VertexLayout::Normal:
 			SetAttribute<VertexLayout::Normal>(pAttribute, std::forward<T>(val));
 			break;
+
+		case VertexLayout::Tangent:
+			SetAttribute<VertexLayout::Tangent>(pAttribute, std::forward<T>(val));
+			break;
+		case VertexLayout::Bitangent:
+			SetAttribute<VertexLayout::Bitangent>(pAttribute, std::forward<T>(val));
+			break;
+
 		case VertexLayout::Float3Color:
 			SetAttribute<VertexLayout::Float3Color>(pAttribute, std::forward<T>(val));
 			break;
@@ -312,11 +338,13 @@ namespace Dvtx
 	class VertexBuffer
 	{
 	public:
-		VertexBuffer(VertexLayout layout) noxnd;
+		VertexBuffer(VertexLayout layout, size_t size = 0u) noxnd;
 		// 获取字节缓存的地址
 		const char* GetData() const noxnd;
 		// 用于获取layout
 		const VertexLayout& GetLayout() const noexcept;
+		// 若分配过大，则重设缓存的大小以达到适配入参
+		void Resize(size_t newSize) noxnd;
 		// 用于获取顶点缓存大小除以输入布局的大小,以layout为单位而非以字节为单位
 		size_t Size() const noxnd;
 		// 获取字节缓存数组的大小
