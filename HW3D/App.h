@@ -38,8 +38,8 @@ private:
 	
 	//TestCube cube;
 
-	Model wall{ wnd.Gfx(),"Models\\brick_wall\\brick_wall.obj" };
-	TestPlane tp{ wnd.Gfx(),1.0 };
+	Model gobber{ wnd.Gfx(),"Models\\gobber\\GoblinX.obj" };
+	//TestPlane tp{ wnd.Gfx(),1.0 };
 	// 一些有关于导入模型的控制IMGUI配置
 	/*struct
 	{
