@@ -17,7 +17,9 @@ cbuffer LightCBuf           //[0]
 cbuffer ObjectCBuf          //[1]
 {
     bool normalMapEnabled;//法线贴图采样开关
-    float padding[3];
+    bool hasGloss; //透明通道;通知shader是否存在透明通道
+    float specularPowerConst;//自定义一个高光功率系数
+    float padding[1];       
 };
 
 Texture2D tex;  // 纹理
@@ -71,7 +73,18 @@ float4 main(float3 viewPos : Position, float3 n : Normal, float3 tan : Tangent, 
     const float3 specularReflectionColor = specularSample.rgb;   //剔除透明通道后的高光颜色 
     
     //const float specularPower = specularSample.a * specularPowerFactor; 
-    const float specularPower = pow(2.0f, specularSample.a * 13.0f); //specularPower代表高光贴图的功率; ==保留透明通道的镜面光*系数或者指数
+    //const float specularPower = pow(2.0f, specularSample.a * 13.0f); //specularPower代表高光贴图的功率; ==保留透明通道的镜面光*系数或者指数
+    
+    float specularPower;
+    if (hasGloss)
+    {   // 若存在透明通道则从高光贴图中加载透明通道
+        specularPower = pow(2.0f, specularSample.a * 13.0f); //specularPower代表高光贴图的功率; ==保留透明通道的镜面光*系数或者指数
+    }
+    else
+    {   // 若不存在透明通道，则从一个常量中加载
+        specularPower = specularPowerConst;
+    }
+    
     const float3 specular = att * (diffuseColor * diffuseIntensity) * pow(max(0.0f, dot(normalize(-r), normalize(viewPos))), specularPower);// 镜面光 == 衰减 *(漫反射*其功率) * (反射光-r 和worldpos的点积 pow镜面光功率 )
 	// final color
     return float4(

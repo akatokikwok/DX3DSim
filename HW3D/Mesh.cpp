@@ -340,6 +340,7 @@ std::unique_ptr<Mesh> Model::ParseMesh(Graphics& gfx, const aiMesh& mesh, const 
 	const auto base = "Models\\gobber\\"s;	//自定义一个具体路径"Models\\gobber\\"s;存储哥布林模型的纹理的路径
 
 	bool hasSpecularMap = false;//高光纹理开关;默认不带有高光贴图
+	bool hasAlphaGloss = false;	//高光纹理的透明通道开关
 	bool hasNormalMap = false;	//法线纹理开关,默认关闭
 	bool hasDiffuseMap = false;	//漫反射纹理开关,默认关闭
 	float shininess = 35.0f;	//定义一个高光参数
@@ -362,10 +363,14 @@ std::unique_ptr<Mesh> Model::ParseMesh(Graphics& gfx, const aiMesh& mesh, const 
 		/// 读硬盘里镜面光纹理(有可能存在读不到的情况)
 		if (material.GetTexture(aiTextureType_SPECULAR, 0, &texFileName) == aiReturn_SUCCESS) //若该mesh确实在硬盘里持有高光贴图资源,拿一张镜面光纹理存到字符串里
 		{
-			bindablePtrs.push_back(Bind::Texture::Resolve(gfx, (base + texFileName.C_Str()), 1 )); // 创建(实际上是Reslove泛型方法按给定参数查找并获得了)1个镜面光纹理，位于插槽1， 表示第[1]个纹理
+			//bindablePtrs.push_back(Bind::Texture::Resolve(gfx, (base + texFileName.C_Str()), 1 )); // 创建(实际上是Reslove泛型方法按给定参数查找并获得了)1个镜面光纹理，位于插槽1， 表示第[1]个纹理
+			auto tex = Bind::Texture::Resolve(gfx, base + texFileName.C_Str(), 1); 
+			hasAlphaGloss = tex->HasAlpha();			// 透明通道开关由解析出来的纹理决定
+			bindablePtrs.push_back(std::move(tex));		//创建(实际上是Reslove泛型方法按给定参数查找并获得了)1个镜面光纹理，位于插槽1， 表示第[1]个纹理
+			
 			hasSpecularMap = true;																// 若能在硬盘里读到高光贴图，就开启高光开关
 		}
-		else //若硬盘里没读到高光贴图资源
+		if (!hasAlphaGloss) //若硬盘里没读到高光贴图资源且未开启alpha通道
 		{
 			material.Get(AI_MATKEY_SHININESS, shininess); //若没查找到高光贴图，就让当面材质读取上面自定义的高光参数
 		}
@@ -374,7 +379,11 @@ std::unique_ptr<Mesh> Model::ParseMesh(Graphics& gfx, const aiMesh& mesh, const 
 		/// 读硬盘里的法线纹理
 		if (material.GetTexture(aiTextureType_NORMALS, 0, &texFileName) == aiReturn_SUCCESS)
 		{
-			bindablePtrs.push_back(Texture::Resolve(gfx, base + texFileName.C_Str(), 2));	// 创建(实际上是Reslove泛型方法按给定参数查找并获得了)1个镜面光纹理，位于插槽1， 表示第[2]个纹理
+			//bindablePtrs.push_back(Texture::Resolve(gfx, base + texFileName.C_Str(), 2));	// 创建(实际上是Reslove泛型方法按给定参数查找并获得了)1个镜面光纹理，位于插槽1， 表示第[2]个纹理
+			auto tex = Bind::Texture::Resolve(gfx, base + texFileName.C_Str(), 2);
+			hasAlphaGloss = tex->HasAlpha();
+			bindablePtrs.push_back(std::move(tex));
+
 			hasNormalMap = true;
 		}
 
@@ -448,10 +457,12 @@ std::unique_ptr<Mesh> Model::ParseMesh(Graphics& gfx, const aiMesh& mesh, const 
 		struct PSMaterialConstantFullmonte
 		{
 			BOOL  normalMapEnabled = TRUE;
-			float padding[3];
+			BOOL  hasGlossMap;	//透明通道
+			float specularPower;	//高光功率
+			float padding[1];
 		} pmc;
-		// this is CLEARLY an issue... all meshes will share same mat const, but may have different
-		// Ns (specular power) specified for each in the material properties... bad conflict
+		pmc.specularPower = shininess;	//材质里高光由外部高光参数更新									
+		pmc.hasGlossMap = hasAlphaGloss ? TRUE : FALSE;		//材质里透明通道由外部透明更新
 		bindablePtrs.push_back(PixelConstantBuffer<PSMaterialConstantFullmonte>::Resolve(gfx, pmc, 1u));			//创建像素常量缓存<材质>
 	
 	}
@@ -603,7 +614,7 @@ std::unique_ptr<Mesh> Model::ParseMesh(Graphics& gfx, const aiMesh& mesh, const 
 
 		struct PSMaterialConstantNotex
 		{
-			dx::XMFLOAT4 materialColor = { 0.65f,0.65f,0.85f,1.0f };//由于读不到漫反射贴图，所以给一个自定义颜色
+			dx::XMFLOAT4 materialColor = { 0.45f,0.45f,0.85f,1.0f };//由于读不到漫反射贴图，所以给一个自定义颜色
 			float specularIntensity = 0.18f;
 			float specularPower;
 			float padding[2];
