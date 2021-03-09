@@ -457,9 +457,12 @@ std::unique_ptr<Mesh> Model::ParseMesh(Graphics& gfx, const aiMesh& mesh, const 
 		struct PSMaterialConstantFullmonte
 		{
 			BOOL  normalMapEnabled = TRUE;
-			BOOL  hasGlossMap;	//透明通道
+			BOOL  specularMapEnabled = TRUE;
+			BOOL  hasGlossMap;		//透明通道开关
 			float specularPower;	//高光功率
-			float padding[1];
+
+			dx::XMFLOAT3 specularColor = { 1.0f,1.0f,1.0f };
+			float specularMapWeight = 1.0f;
 		} pmc;
 		pmc.specularPower = shininess;	//材质里高光由外部高光参数更新									
 		pmc.hasGlossMap = hasAlphaGloss ? TRUE : FALSE;		//材质里透明通道由外部透明更新
