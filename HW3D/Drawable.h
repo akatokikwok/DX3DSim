@@ -27,9 +27,8 @@ public:
 	//virtual void Update(float dt) noexcept
 	//{}
 	
-protected:
 
-	// 此方法允许查询拿到所需Bindable对象
+	/* 此方法允许查询拿到所需Bindable对象*/
 	template<class T>
 	T* QueryBindable() noexcept
 	{
@@ -48,6 +47,7 @@ protected:
 //private:
 //	virtual const std::vector<std::unique_ptr<Bind::Bindable>>& GetStaticBinds() const noexcept = 0;
 
+protected:
 	/* 负责把指定绑定物资源存入绑定集合*/
 	void AddBind(std::shared_ptr<Bind::Bindable> bind) noxnd;
 private:

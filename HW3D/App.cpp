@@ -138,7 +138,7 @@ void App::DoFrame()
 	
 	//wall.ShowWindow("Wall");
 	//tp.SpawnControlWindow(wnd.Gfx());
-	gobber.ShowWindow("gobber");
+	gobber.ShowWindow(wnd.Gfx(), "gobber");
 
 	//cube.SpawnControlWindow(wnd.Gfx());
 	//ShowRawInputWindow();

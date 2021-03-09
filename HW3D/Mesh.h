@@ -7,6 +7,7 @@
 #include "ConditionalNoexcept.h"
 #include <optional>
 #include "Drawable.h"
+#include "ConstantBuffers.h"
 
 /* 用于捕获异常的模型异常类*/
 class ModelException : public ChiliException
@@ -39,6 +40,19 @@ class Node
 {
 	friend class Model;
 	//friend class ModelWindow;// 定义在源文件里
+
+public:
+	/* 自定义1个材质常量shader,持有法线、高光纹理开关、高光alpha通道、高光功率、高光颜色、高光权重*/
+	struct PSMaterialConstantFullmonte
+	{
+		BOOL  normalMapEnabled = TRUE;	//法线贴图开关
+		BOOL  specularMapEnabled = TRUE;	//高光贴图开关
+		BOOL  hasGlossMap = FALSE;	// 检查alpha通道开关
+		float specularPower = 1.0f;	//高光功率
+		DirectX::XMFLOAT3 specularColor = { 1.0f,1.0f,1.0f };	//高光颜色，默认为{ 1.0f,1.0f,1.0f };
+		float specularMapWeight = 1.0f;	//高光贴图权重
+	};
+
 public:
 	// 构造函数,用参数Mesh集合初始化自己的Mesh集合,并保存参数变换
 	//Node(std::vector<Mesh*> meshPtrs, const DirectX::XMMATRIX& transform) noxnd;
@@ -54,6 +68,8 @@ public:
 	   要求提供 传进节点的引用
 	*/
 	void ShowTree(/*std::optional<int>& selectedIndex, */Node*& pSelectedNode) const noexcept;
+	/* 查询到管线上绑定的 材质常数缓存构建IMGUI 并更新这个常数缓存*/
+	void ControlMeDaddy(Graphics& gfx, PSMaterialConstantFullmonte& c);
 
 private:
 	// 添加子节点,仅供Model类实例使用,因为Model类是Node类的友元
@@ -81,7 +97,7 @@ public:
 	//void Draw(Graphics& gfx, DirectX::FXMMATRIX transform) const;
 	void Draw(Graphics& gfx) const noxnd;
 	/* 用于展示Model的IMGUI窗口*/
-	void ShowWindow(const char* windowName = nullptr) noexcept;
+	void ShowWindow(Graphics& gfx, const char* windowName = nullptr) noexcept;
 	/* 设置模型根节点的变换*/
 	void SetRootTransform(DirectX::FXMMATRIX tf) noexcept;
 	~Model() noexcept;

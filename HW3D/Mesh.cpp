@@ -164,6 +164,39 @@ void Node::ShowTree(/*std::optional<int>& selectedIndex, */Node*& pSelectedNode)
 	}
 }
 
+void Node::ControlMeDaddy(Graphics& gfx, PSMaterialConstantFullmonte& c)
+{
+	if (meshPtrs.empty())// 没mesh就直接错误返回
+	{
+		return;
+	}
+
+	if (auto pcb = meshPtrs.front()->QueryBindable<Bind::PixelConstantBuffer<PSMaterialConstantFullmonte>>())//查询到管线上绑定的 材质常数缓存
+	{
+		ImGui::Text("Material");
+
+		bool normalMapEnabled = (bool)c.normalMapEnabled;
+		ImGui::Checkbox("Norm Map", &normalMapEnabled);
+		c.normalMapEnabled = normalMapEnabled ? TRUE : FALSE;
+
+		bool specularMapEnabled = (bool)c.specularMapEnabled;
+		ImGui::Checkbox("Spec Map", &specularMapEnabled);
+		c.specularMapEnabled = specularMapEnabled ? TRUE : FALSE;
+
+		bool hasGlossMap = (bool)c.hasGlossMap;
+		ImGui::Checkbox("Gloss Alpha", &hasGlossMap);
+		c.hasGlossMap = hasGlossMap ? TRUE : FALSE;
+
+		ImGui::SliderFloat("Spec Weight", &c.specularMapWeight, 0.0f, 2.0f);
+
+		ImGui::SliderFloat("Spec Pow", &c.specularPower, 0.0f, 1000.0f, "%f", 5.0f);
+
+		ImGui::ColorPicker3("Spec Color", reinterpret_cast<float*>(&c.specularColor));
+
+		pcb->Update(gfx, c); //更新常数缓存
+	}
+}
+
 void Node::SetAppliedTransform(DirectX::FXMMATRIX transform) noexcept
 {
 	dx::XMStoreFloat4x4(&appliedTransform, transform);
@@ -177,7 +210,7 @@ class ModelWindow // pImpl idiom
 {
 public:
 	// 封装的方法，用于分两列展示各个模型的细节控制
-	void Show(const char* windowName, const Node& root) noexcept
+	void Show(Graphics& gfx, const char* windowName, const Node& root) noexcept
 	{
 		// window name defaults to "Model"
 		windowName = windowName ? windowName : "Model";
@@ -202,6 +235,7 @@ public:
 				ImGui::SliderFloat("X", &transform.x, -20.0f, 20.0f);
 				ImGui::SliderFloat("Y", &transform.y, -20.0f, 20.0f);
 				ImGui::SliderFloat("Z", &transform.z, -20.0f, 20.0f);
+				pSelectedNode->ControlMeDaddy(gfx, mc);	//控制且更新材质常数缓存
 			}
 		}
 		ImGui::End();
@@ -237,6 +271,7 @@ private:
 		float z = 0.0f;
 	} ;
 	
+	Node::PSMaterialConstantFullmonte mc;
 	// 无序map负责把索引映射到数据参数结构体TransformParameters上;目的是追踪每个骨骼节点的变换
 	std::unordered_map<int, TransformParameters> transforms;
 };
@@ -286,7 +321,7 @@ void Model::Draw(Graphics& gfx) const noxnd
 	pRoot->Node::Draw(gfx, dx::XMMatrixIdentity());
 }
 
-void Model::ShowWindow(const char* windowName) noexcept
+void Model::ShowWindow(Graphics& gfx, const char* windowName) noexcept
 {
 	//windowName = windowName ? windowName : "Model";//若提供参数名就用参数名,不提供参数窗口名字则默认使用"Model"
 	//if (ImGui::Begin(windowName))
@@ -306,7 +341,7 @@ void Model::ShowWindow(const char* windowName) noexcept
 	//ImGui::End();
 
 	// 展示模型控制窗口
-	pWindow->Show(windowName, *pRoot);
+	pWindow->Show(gfx, windowName, *pRoot);
 }
 
 void Model::SetRootTransform(DirectX::FXMMATRIX tf) noexcept
@@ -453,20 +488,11 @@ std::unique_ptr<Mesh> Model::ParseMesh(Graphics& gfx, const aiMesh& mesh, const 
 		bindablePtrs.push_back(PixelShader::Resolve(gfx, "PhongPSSpecNormalMap.cso"));	//创建像素shader，指定以"带法线贴图、高光贴图的像素着色器"
 
 		bindablePtrs.push_back(Bind::InputLayout::Resolve(gfx, vbuf.GetLayout()/*.GetD3DLayout()*/, pvsbc)); // 创建输入布局
-
-		struct PSMaterialConstantFullmonte
-		{
-			BOOL  normalMapEnabled = TRUE;
-			BOOL  specularMapEnabled = TRUE;
-			BOOL  hasGlossMap;		//透明通道开关
-			float specularPower;	//高光功率
-
-			dx::XMFLOAT3 specularColor = { 1.0f,1.0f,1.0f };
-			float specularMapWeight = 1.0f;
-		} pmc;
+		
+		Node::PSMaterialConstantFullmonte pmc;	//PSMaterialConstantFullmonte结构体数据位于头文件里
 		pmc.specularPower = shininess;	//材质里高光由外部高光参数更新									
 		pmc.hasGlossMap = hasAlphaGloss ? TRUE : FALSE;		//材质里透明通道由外部透明更新
-		bindablePtrs.push_back(PixelConstantBuffer<PSMaterialConstantFullmonte>::Resolve(gfx, pmc, 1u));			//创建像素常量缓存<材质>
+		bindablePtrs.push_back(PixelConstantBuffer<Node::PSMaterialConstantFullmonte>::Resolve(gfx, pmc, 1u));			//创建像素常量缓存<材质>
 	
 	}
 	/// 只开启漫反射、法线贴图，没有高光贴图
