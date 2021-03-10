@@ -103,6 +103,6 @@ float4 main(float3 viewPos : Position, float3 n : Normal, float3 tan : Tangent, 
 	// final color
     return float4(
         saturate((diffuse + ambient) * tex.Sample(splr, tc).rgb + specular * specularReflectionColor), //最终颜色== (环境光常数+漫反射强度) * (剔除透明通道后的采样纹理) + 镜面光 * 镜面反射颜色;
-    // 简化了就是 漫反射光 * 漫反射贴图 + 高光 * 高光贴图
+    // 简化了就是 漫反射光 * 漫反射贴图(或者漫反射颜色) + 高光 * 高光贴图(或者是高光反射颜色)
     1.0f);
 }
