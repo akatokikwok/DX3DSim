@@ -48,9 +48,9 @@ public:
 		BOOL  normalMapEnabled = TRUE;	//法线贴图开关
 		BOOL  specularMapEnabled = TRUE;	//高光贴图开关
 		BOOL  hasGlossMap = FALSE;	// 检查alpha通道开关
-		float specularPower = 1.0f;	//高光功率
-		DirectX::XMFLOAT3 specularColor = { 1.0f,1.0f,1.0f };	//高光颜色，默认为{ 1.0f,1.0f,1.0f };
-		float specularMapWeight = 1.0f;	//高光贴图权重
+		float specularPower = 3.1f;	//高光功率
+		DirectX::XMFLOAT3 specularColor = { 0.75f,0.75f,0.75f };	//高光颜色，默认为{ 1.0f,1.0f,1.0f };
+		float specularMapWeight = 0.671f;	//高光贴图权重
 	};
 
 public:

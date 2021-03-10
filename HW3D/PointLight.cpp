@@ -20,7 +20,7 @@ void PointLight::SpawnControlWindow() noexcept
 		ImGui::SliderFloat("Z", &cbData.pos.z, -60.0f, 60.0f, "%.1f");
 
 		ImGui::Text("Intensity/Color");
-		ImGui::SliderFloat("Intensity", &cbData.diffuseIntensity, 0.01f, 2.0f, "%.2f", 2);
+		ImGui::SliderFloat("Intensity", &cbData.diffuseIntensity, 0.01f, 20.0f, "%.2f", 2);
 		// 给各项参数调色面板
 		ImGui::ColorEdit3("Diffuse Color", &cbData.diffuseColor.x);
 		ImGui::ColorEdit3("Ambient", &cbData.ambient.x);
@@ -44,7 +44,7 @@ void PointLight::Reset() noexcept
 {
 	cbData = {
 		{ 2.0f,9.0f,-17.0f },
-		{ 0.05f,0.05f,0.05f },
+		{ 0.4f,0.4f,0.4f },
 		{ 1.0f,1.0f,1.0f },
 		1.0f,
 		1.0f,
