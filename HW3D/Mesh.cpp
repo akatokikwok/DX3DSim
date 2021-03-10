@@ -386,7 +386,7 @@ std::unique_ptr<Mesh> Model::ParseMesh(Graphics& gfx, const aiMesh& mesh, const 
 	bool hasNormalMap = false;	//法线纹理开关,默认关闭
 	bool hasDiffuseMap = false;	//漫反射纹理开关,默认关闭
 	float shininess = 2.0f;	//自定义一个高光功率系数，默认为2.0f
-	dx::XMFLOAT4 specularColor = { 0.18f,0.18f,0.18f,1.0f };//自定义高光颜色
+	dx::XMFLOAT4 specularColor = { 0.18f,0.18f,0.18f,1.0f };//自定义镜面光颜色
 	dx::XMFLOAT4 diffuseColor = { 0.45f,0.45f,0.85f,1.0f };//自定义漫反射光颜色
 
 	/// 从硬盘里读各种贴图并创建出Texture绑定物，同时更新各类纹理开关为打开，最后创建采样器
@@ -661,7 +661,7 @@ std::unique_ptr<Mesh> Model::ParseMesh(Graphics& gfx, const aiMesh& mesh, const 
 
 		Node::PSMaterialConstantNotex pmc;//定义在头文件Node类下
 		pmc.specularPower = shininess;		
-		pmc.specularIntensity = (specularColor.x + specularColor.y + specularColor.z) / 3.0f;
+		pmc.specularColor = specularColor;//结构体成员更新为自定义的镜面光颜色
 		pmc.materialColor = diffuseColor;
 		bindablePtrs.push_back(PixelConstantBuffer<Node::PSMaterialConstantNotex>::Resolve(gfx, pmc, 1u));
 	}
