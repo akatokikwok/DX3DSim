@@ -17,6 +17,8 @@ namespace Bind
 		// 加载Surface型的图片
 		const auto s = Surface::FromFile(path);
 
+		hasAlpha = s.AlphaLoaded();// 检查是否加载了透明通道
+
 		// create texture resource
 		D3D11_TEXTURE2D_DESC textureDesc = {};
 		textureDesc.Width = s.GetWidth();
@@ -68,4 +70,10 @@ namespace Bind
 	{
 		return GenerateUID(path, slot);
 	}
+
+	bool Texture::HasAlpha() const noexcept
+	{
+		return hasAlpha;
+	}
+
 }

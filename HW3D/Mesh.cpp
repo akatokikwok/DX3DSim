@@ -164,6 +164,39 @@ void Node::ShowTree(/*std::optional<int>& selectedIndex, */Node*& pSelectedNode)
 	}
 }
 
+//void Node::ControlMeDaddy(Graphics& gfx, PSMaterialConstantFullmonte& c)
+//{
+//	if (meshPtrs.empty())// 没mesh就直接错误返回
+//	{
+//		return;
+//	}
+//
+//	if (auto pcb = meshPtrs.front()->QueryBindable<Bind::PixelConstantBuffer<PSMaterialConstantFullmonte>>())//查询到管线上绑定的 材质常数缓存
+//	{
+//		ImGui::Text("Material");
+//
+//		bool normalMapEnabled = (bool)c.normalMapEnabled;
+//		ImGui::Checkbox("Norm Map", &normalMapEnabled);
+//		c.normalMapEnabled = normalMapEnabled ? TRUE : FALSE;
+//
+//		bool specularMapEnabled = (bool)c.specularMapEnabled;
+//		ImGui::Checkbox("Spec Map", &specularMapEnabled);
+//		c.specularMapEnabled = specularMapEnabled ? TRUE : FALSE;
+//
+//		bool hasGlossMap = (bool)c.hasGlossMap;
+//		ImGui::Checkbox("Gloss Alpha", &hasGlossMap);
+//		c.hasGlossMap = hasGlossMap ? TRUE : FALSE;
+//
+//		ImGui::SliderFloat("Spec Weight", &c.specularMapWeight, 0.0f, 2.0f);
+//
+//		ImGui::SliderFloat("Spec Pow", &c.specularPower, 0.0f, 1000.0f, "%f", 5.0f);
+//
+//		ImGui::ColorPicker3("Spec Color", reinterpret_cast<float*>(&c.specularColor));
+//
+//		pcb->Update(gfx, c); //更新常数缓存
+//	}
+//}
+
 void Node::SetAppliedTransform(DirectX::FXMMATRIX transform) noexcept
 {
 	dx::XMStoreFloat4x4(&appliedTransform, transform);
@@ -177,7 +210,7 @@ class ModelWindow // pImpl idiom
 {
 public:
 	// 封装的方法，用于分两列展示各个模型的细节控制
-	void Show(const char* windowName, const Node& root) noexcept
+	void Show(Graphics& gfx, const char* windowName, const Node& root) noexcept
 	{
 		// window name defaults to "Model"
 		windowName = windowName ? windowName : "Model";
@@ -202,6 +235,13 @@ public:
 				ImGui::SliderFloat("X", &transform.x, -20.0f, 20.0f);
 				ImGui::SliderFloat("Y", &transform.y, -20.0f, 20.0f);
 				ImGui::SliderFloat("Z", &transform.z, -20.0f, 20.0f);
+				//pSelectedNode->ControlMeDaddy(gfx, mc);	//控制且更新材质常数缓存
+
+				/// pSelectedNode->ControlMeDaddy(gfx, skinMaterial)返回真表明当前选中的节点为皮肤;返回假则表面它是耳环
+				if ( !( pSelectedNode->ControlMeDaddy(gfx, skinMaterial)) )
+				{
+					pSelectedNode->ControlMeDaddy(gfx, ringMaterial);//对耳环应用材质ringMaterial
+				}
 			}
 		}
 		ImGui::End();
@@ -237,6 +277,8 @@ private:
 		float z = 0.0f;
 	} ;
 	
+	Node::PSMaterialConstantFullmonte skinMaterial; //用定义在头文件的这个材质常数结构体表示 "哥布林皮肤材质"
+	Node::PSMaterialConstantNotex ringMaterial;// 用定义在头文件的这个材质常数结构体表示 "耳环材质"
 	// 无序map负责把索引映射到数据参数结构体TransformParameters上;目的是追踪每个骨骼节点的变换
 	std::unordered_map<int, TransformParameters> transforms;
 };
@@ -286,7 +328,7 @@ void Model::Draw(Graphics& gfx) const noxnd
 	pRoot->Node::Draw(gfx, dx::XMMatrixIdentity());
 }
 
-void Model::ShowWindow(const char* windowName) noexcept
+void Model::ShowWindow(Graphics& gfx, const char* windowName) noexcept
 {
 	//windowName = windowName ? windowName : "Model";//若提供参数名就用参数名,不提供参数窗口名字则默认使用"Model"
 	//if (ImGui::Begin(windowName))
@@ -306,7 +348,7 @@ void Model::ShowWindow(const char* windowName) noexcept
 	//ImGui::End();
 
 	// 展示模型控制窗口
-	pWindow->Show(windowName, *pRoot);
+	pWindow->Show(gfx, windowName, *pRoot);
 }
 
 void Model::SetRootTransform(DirectX::FXMMATRIX tf) noexcept
@@ -340,9 +382,12 @@ std::unique_ptr<Mesh> Model::ParseMesh(Graphics& gfx, const aiMesh& mesh, const 
 	const auto base = "Models\\gobber\\"s;	//自定义一个具体路径"Models\\gobber\\"s;存储哥布林模型的纹理的路径
 
 	bool hasSpecularMap = false;//高光纹理开关;默认不带有高光贴图
+	bool hasAlphaGloss = false;	//高光纹理的透明通道开关
 	bool hasNormalMap = false;	//法线纹理开关,默认关闭
 	bool hasDiffuseMap = false;	//漫反射纹理开关,默认关闭
-	float shininess = 35.0f;	//定义一个高光参数
+	float shininess = 2.0f;	//自定义一个高光功率系数，默认为2.0f
+	dx::XMFLOAT4 specularColor = { 0.18f,0.18f,0.18f,1.0f };//自定义镜面光颜色
+	dx::XMFLOAT4 diffuseColor = { 0.45f,0.45f,0.85f,1.0f };//自定义漫反射光颜色
 
 	/// 从硬盘里读各种贴图并创建出Texture绑定物，同时更新各类纹理开关为打开，最后创建采样器
 	if (mesh.mMaterialIndex >= 0)
@@ -359,13 +404,29 @@ std::unique_ptr<Mesh> Model::ParseMesh(Graphics& gfx, const aiMesh& mesh, const 
 			bindablePtrs.push_back(Bind::Texture::Resolve(gfx, (base + texFileName.C_Str()), 0 ));	// 创建(实际上是Reslove泛型方法按给定参数查找并获得了)1个漫反射纹理, 位于插槽0 ，表示第[0]个纹理
 			hasDiffuseMap = true;																// 若查到漫反射纹理就打开漫反射开关
 		}		
+		else/* 若硬盘里不存在漫反射贴图*/
+		{
+			material.Get(AI_MATKEY_COLOR_DIFFUSE, reinterpret_cast<aiColor3D&>(diffuseColor));// 就使用自定义的漫反射光颜色
+		}
+
+
 		/// 读硬盘里镜面光纹理(有可能存在读不到的情况)
 		if (material.GetTexture(aiTextureType_SPECULAR, 0, &texFileName) == aiReturn_SUCCESS) //若该mesh确实在硬盘里持有高光贴图资源,拿一张镜面光纹理存到字符串里
 		{
-			bindablePtrs.push_back(Bind::Texture::Resolve(gfx, (base + texFileName.C_Str()), 1 )); // 创建(实际上是Reslove泛型方法按给定参数查找并获得了)1个镜面光纹理，位于插槽1， 表示第[1]个纹理
+			//bindablePtrs.push_back(Bind::Texture::Resolve(gfx, (base + texFileName.C_Str()), 1 )); // 创建(实际上是Reslove泛型方法按给定参数查找并获得了)1个镜面光纹理，位于插槽1， 表示第[1]个纹理
+			auto tex = Bind::Texture::Resolve(gfx, base + texFileName.C_Str(), 1); 
+			hasAlphaGloss = tex->HasAlpha();			// 透明通道开关由解析出来的纹理决定
+			bindablePtrs.push_back(std::move(tex));		//创建(实际上是Reslove泛型方法按给定参数查找并获得了)1个镜面光纹理，位于插槽1， 表示第[1]个纹理
+			
 			hasSpecularMap = true;																// 若能在硬盘里读到高光贴图，就开启高光开关
 		}
-		else //若硬盘里没读到高光贴图资源
+		else/* 若硬盘里不存在高光贴图*/
+		{
+			material.Get(AI_MATKEY_COLOR_SPECULAR, reinterpret_cast<aiColor3D&>(specularColor));// 就使用自定义的高光颜色
+		}
+
+
+		if (!hasAlphaGloss) //若硬盘里没读到高光贴图资源且未开启alpha通道
 		{
 			material.Get(AI_MATKEY_SHININESS, shininess); //若没查找到高光贴图，就让当面材质读取上面自定义的高光参数
 		}
@@ -374,7 +435,11 @@ std::unique_ptr<Mesh> Model::ParseMesh(Graphics& gfx, const aiMesh& mesh, const 
 		/// 读硬盘里的法线纹理
 		if (material.GetTexture(aiTextureType_NORMALS, 0, &texFileName) == aiReturn_SUCCESS)
 		{
-			bindablePtrs.push_back(Texture::Resolve(gfx, base + texFileName.C_Str(), 2));	// 创建(实际上是Reslove泛型方法按给定参数查找并获得了)1个镜面光纹理，位于插槽1， 表示第[2]个纹理
+			//bindablePtrs.push_back(Texture::Resolve(gfx, base + texFileName.C_Str(), 2));	// 创建(实际上是Reslove泛型方法按给定参数查找并获得了)1个镜面光纹理，位于插槽1， 表示第[2]个纹理
+			auto tex = Bind::Texture::Resolve(gfx, base + texFileName.C_Str(), 2);
+			hasAlphaGloss = tex->HasAlpha();
+			bindablePtrs.push_back(std::move(tex));
+
 			hasNormalMap = true;
 		}
 
@@ -435,24 +500,15 @@ std::unique_ptr<Mesh> Model::ParseMesh(Graphics& gfx, const aiMesh& mesh, const 
 		//auto pvsbc = static_cast<VertexShader&>(*pvs).GetBytecode();
 		auto pvsbc = pvs->GetBytecode();
 		bindablePtrs.push_back(std::move(pvs));	 // 创建顶点shader
-
-	// 检查高光纹理，并加载它 高光的纹理像素着色器(带法线版本)
-	//if (hasSpecularMap)
-	//{
-		//bindablePtrs.push_back(Bind::PixelShader::Resolve(gfx, "PhongPSSpecMap.cso"));			  
 	
 		bindablePtrs.push_back(PixelShader::Resolve(gfx, "PhongPSSpecNormalMap.cso"));	//创建像素shader，指定以"带法线贴图、高光贴图的像素着色器"
 
 		bindablePtrs.push_back(Bind::InputLayout::Resolve(gfx, vbuf.GetLayout()/*.GetD3DLayout()*/, pvsbc)); // 创建输入布局
-
-		struct PSMaterialConstantFullmonte
-		{
-			BOOL  normalMapEnabled = TRUE;
-			float padding[3];
-		} pmc;
-		// this is CLEARLY an issue... all meshes will share same mat const, but may have different
-		// Ns (specular power) specified for each in the material properties... bad conflict
-		bindablePtrs.push_back(PixelConstantBuffer<PSMaterialConstantFullmonte>::Resolve(gfx, pmc, 1u));			//创建像素常量缓存<材质>
+		
+		Node::PSMaterialConstantFullmonte pmc;	//PSMaterialConstantFullmonte结构体数据位于头文件里
+		pmc.specularPower = shininess;	//材质里高光由外部高光参数更新									
+		pmc.hasGlossMap = hasAlphaGloss ? TRUE : FALSE;		//材质里透明通道由外部透明更新
+		bindablePtrs.push_back(PixelConstantBuffer<Node::PSMaterialConstantFullmonte>::Resolve(gfx, pmc, 1u));			//创建像素常量缓存<材质>
 	
 	}
 	/// 只开启漫反射、法线贴图，没有高光贴图
@@ -503,13 +559,14 @@ std::unique_ptr<Mesh> Model::ParseMesh(Graphics& gfx, const aiMesh& mesh, const 
 		struct PSMaterialConstantDiffnorm// 自定义 材质常量struct 并添加进绑定物集合
 		{
 			//DirectX::XMFLOAT3 color = { 0.6f,0.6f,0.8f }; // 由于模型已经有漫反射纹理了，所以这里不再使用自定义的颜色
-			float specularIntensity = 0.18f; //高光强度
+			float specularIntensity /*= 0.18f*/; //高光强度
 			float specularPower;			//高光功率
 
 			BOOL  normalMapEnabled = TRUE;
 			float padding[1];
 		} pmc;
-		pmc.specularPower = shininess; // 注意这里结构体的成员高光功率由之前定义好的高光参数决定
+		//pmc.specularPower = shininess; // 注意这里结构体的成员高光功率由之前定义好的高光参数决定
+		pmc.specularIntensity = (specularColor.x + specularColor.y + specularColor.z) / 3.0f; //高光强度等于高光颜色各分量和的三分之一
 		bindablePtrs.push_back(Bind::PixelConstantBuffer<PSMaterialConstantDiffnorm>::Resolve(gfx, pmc, 1u));//创建出像素常数缓存<材质>
 	}
 	/// 若只开启漫反射
@@ -552,11 +609,12 @@ std::unique_ptr<Mesh> Model::ParseMesh(Graphics& gfx, const aiMesh& mesh, const 
 
 		struct PSMaterialConstantDiffuse
 		{
-			float specularIntensity = 0.18f;
+			float specularIntensity /*= 0.18f*/;
 			float specularPower;
 			float padding[2];
 		} pmc;
 		pmc.specularPower = shininess;
+		pmc.specularIntensity = (specularColor.x + specularColor.y + specularColor.z) / 3.0f;
 		// this is CLEARLY an issue... all meshes will share same mat const, but may have different
 		// Ns (specular power) specified for each in the material properties... bad conflict
 		bindablePtrs.push_back(PixelConstantBuffer<PSMaterialConstantDiffuse>::Resolve(gfx, pmc, 1u));
@@ -601,15 +659,11 @@ std::unique_ptr<Mesh> Model::ParseMesh(Graphics& gfx, const aiMesh& mesh, const 
 
 		bindablePtrs.push_back(InputLayout::Resolve(gfx, vbuf.GetLayout(), pvsbc));
 
-		struct PSMaterialConstantNotex
-		{
-			dx::XMFLOAT4 materialColor = { 0.65f,0.65f,0.85f,1.0f };//由于读不到漫反射贴图，所以给一个自定义颜色
-			float specularIntensity = 0.18f;
-			float specularPower;
-			float padding[2];
-		} pmc;
+		Node::PSMaterialConstantNotex pmc;//定义在头文件Node类下
 		pmc.specularPower = shininess;		
-		bindablePtrs.push_back(PixelConstantBuffer<PSMaterialConstantNotex>::Resolve(gfx, pmc, 1u));
+		pmc.specularColor = specularColor;//结构体成员更新为自定义的镜面光颜色
+		pmc.materialColor = diffuseColor;
+		bindablePtrs.push_back(PixelConstantBuffer<Node::PSMaterialConstantNotex>::Resolve(gfx, pmc, 1u));
 	}
 	else
 	{
