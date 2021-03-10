@@ -164,38 +164,38 @@ void Node::ShowTree(/*std::optional<int>& selectedIndex, */Node*& pSelectedNode)
 	}
 }
 
-void Node::ControlMeDaddy(Graphics& gfx, PSMaterialConstantFullmonte& c)
-{
-	if (meshPtrs.empty())// 没mesh就直接错误返回
-	{
-		return;
-	}
-
-	if (auto pcb = meshPtrs.front()->QueryBindable<Bind::PixelConstantBuffer<PSMaterialConstantFullmonte>>())//查询到管线上绑定的 材质常数缓存
-	{
-		ImGui::Text("Material");
-
-		bool normalMapEnabled = (bool)c.normalMapEnabled;
-		ImGui::Checkbox("Norm Map", &normalMapEnabled);
-		c.normalMapEnabled = normalMapEnabled ? TRUE : FALSE;
-
-		bool specularMapEnabled = (bool)c.specularMapEnabled;
-		ImGui::Checkbox("Spec Map", &specularMapEnabled);
-		c.specularMapEnabled = specularMapEnabled ? TRUE : FALSE;
-
-		bool hasGlossMap = (bool)c.hasGlossMap;
-		ImGui::Checkbox("Gloss Alpha", &hasGlossMap);
-		c.hasGlossMap = hasGlossMap ? TRUE : FALSE;
-
-		ImGui::SliderFloat("Spec Weight", &c.specularMapWeight, 0.0f, 2.0f);
-
-		ImGui::SliderFloat("Spec Pow", &c.specularPower, 0.0f, 1000.0f, "%f", 5.0f);
-
-		ImGui::ColorPicker3("Spec Color", reinterpret_cast<float*>(&c.specularColor));
-
-		pcb->Update(gfx, c); //更新常数缓存
-	}
-}
+//void Node::ControlMeDaddy(Graphics& gfx, PSMaterialConstantFullmonte& c)
+//{
+//	if (meshPtrs.empty())// 没mesh就直接错误返回
+//	{
+//		return;
+//	}
+//
+//	if (auto pcb = meshPtrs.front()->QueryBindable<Bind::PixelConstantBuffer<PSMaterialConstantFullmonte>>())//查询到管线上绑定的 材质常数缓存
+//	{
+//		ImGui::Text("Material");
+//
+//		bool normalMapEnabled = (bool)c.normalMapEnabled;
+//		ImGui::Checkbox("Norm Map", &normalMapEnabled);
+//		c.normalMapEnabled = normalMapEnabled ? TRUE : FALSE;
+//
+//		bool specularMapEnabled = (bool)c.specularMapEnabled;
+//		ImGui::Checkbox("Spec Map", &specularMapEnabled);
+//		c.specularMapEnabled = specularMapEnabled ? TRUE : FALSE;
+//
+//		bool hasGlossMap = (bool)c.hasGlossMap;
+//		ImGui::Checkbox("Gloss Alpha", &hasGlossMap);
+//		c.hasGlossMap = hasGlossMap ? TRUE : FALSE;
+//
+//		ImGui::SliderFloat("Spec Weight", &c.specularMapWeight, 0.0f, 2.0f);
+//
+//		ImGui::SliderFloat("Spec Pow", &c.specularPower, 0.0f, 1000.0f, "%f", 5.0f);
+//
+//		ImGui::ColorPicker3("Spec Color", reinterpret_cast<float*>(&c.specularColor));
+//
+//		pcb->Update(gfx, c); //更新常数缓存
+//	}
+//}
 
 void Node::SetAppliedTransform(DirectX::FXMMATRIX transform) noexcept
 {
@@ -235,7 +235,13 @@ public:
 				ImGui::SliderFloat("X", &transform.x, -20.0f, 20.0f);
 				ImGui::SliderFloat("Y", &transform.y, -20.0f, 20.0f);
 				ImGui::SliderFloat("Z", &transform.z, -20.0f, 20.0f);
-				pSelectedNode->ControlMeDaddy(gfx, mc);	//控制且更新材质常数缓存
+				//pSelectedNode->ControlMeDaddy(gfx, mc);	//控制且更新材质常数缓存
+
+				/// pSelectedNode->ControlMeDaddy(gfx, skinMaterial)返回真表明当前选中的节点为皮肤;返回假则表面它是耳环
+				if ( !( pSelectedNode->ControlMeDaddy(gfx, skinMaterial)) )
+				{
+					pSelectedNode->ControlMeDaddy(gfx, ringMaterial);//对耳环应用材质ringMaterial
+				}
 			}
 		}
 		ImGui::End();
@@ -271,7 +277,8 @@ private:
 		float z = 0.0f;
 	} ;
 	
-	Node::PSMaterialConstantFullmonte mc;
+	Node::PSMaterialConstantFullmonte skinMaterial; //用定义在头文件的这个材质常数结构体表示 "哥布林皮肤材质"
+	Node::PSMaterialConstantNotex ringMaterial;// 用定义在头文件的这个材质常数结构体表示 "耳环材质"
 	// 无序map负责把索引映射到数据参数结构体TransformParameters上;目的是追踪每个骨骼节点的变换
 	std::unordered_map<int, TransformParameters> transforms;
 };
@@ -493,11 +500,6 @@ std::unique_ptr<Mesh> Model::ParseMesh(Graphics& gfx, const aiMesh& mesh, const 
 		//auto pvsbc = static_cast<VertexShader&>(*pvs).GetBytecode();
 		auto pvsbc = pvs->GetBytecode();
 		bindablePtrs.push_back(std::move(pvs));	 // 创建顶点shader
-
-	// 检查高光纹理，并加载它 高光的纹理像素着色器(带法线版本)
-	//if (hasSpecularMap)
-	//{
-		//bindablePtrs.push_back(Bind::PixelShader::Resolve(gfx, "PhongPSSpecMap.cso"));			  
 	
 		bindablePtrs.push_back(PixelShader::Resolve(gfx, "PhongPSSpecNormalMap.cso"));	//创建像素shader，指定以"带法线贴图、高光贴图的像素着色器"
 
@@ -657,17 +659,11 @@ std::unique_ptr<Mesh> Model::ParseMesh(Graphics& gfx, const aiMesh& mesh, const 
 
 		bindablePtrs.push_back(InputLayout::Resolve(gfx, vbuf.GetLayout(), pvsbc));
 
-		struct PSMaterialConstantNotex
-		{
-			dx::XMFLOAT4 materialColor /*= { 0.45f,0.45f,0.85f,1.0f }*/;//由于读不到漫反射贴图，所以给一个自定义颜色
-			float specularIntensity = 0.18f;
-			float specularPower;
-			float padding[2];
-		} pmc;
+		Node::PSMaterialConstantNotex pmc;//定义在头文件Node类下
 		pmc.specularPower = shininess;		
 		pmc.specularIntensity = (specularColor.x + specularColor.y + specularColor.z) / 3.0f;
 		pmc.materialColor = diffuseColor;
-		bindablePtrs.push_back(PixelConstantBuffer<PSMaterialConstantNotex>::Resolve(gfx, pmc, 1u));
+		bindablePtrs.push_back(PixelConstantBuffer<Node::PSMaterialConstantNotex>::Resolve(gfx, pmc, 1u));
 	}
 	else
 	{
