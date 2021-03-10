@@ -378,7 +378,9 @@ std::unique_ptr<Mesh> Model::ParseMesh(Graphics& gfx, const aiMesh& mesh, const 
 	bool hasAlphaGloss = false;	//高光纹理的透明通道开关
 	bool hasNormalMap = false;	//法线纹理开关,默认关闭
 	bool hasDiffuseMap = false;	//漫反射纹理开关,默认关闭
-	float shininess = 35.0f;	//定义一个高光参数
+	float shininess = 2.0f;	//自定义一个高光功率系数，默认为2.0f
+	dx::XMFLOAT4 specularColor = { 0.18f,0.18f,0.18f,1.0f };//自定义高光颜色
+	dx::XMFLOAT4 diffuseColor = { 0.45f,0.45f,0.85f,1.0f };//自定义漫反射光颜色
 
 	/// 从硬盘里读各种贴图并创建出Texture绑定物，同时更新各类纹理开关为打开，最后创建采样器
 	if (mesh.mMaterialIndex >= 0)
@@ -395,6 +397,12 @@ std::unique_ptr<Mesh> Model::ParseMesh(Graphics& gfx, const aiMesh& mesh, const 
 			bindablePtrs.push_back(Bind::Texture::Resolve(gfx, (base + texFileName.C_Str()), 0 ));	// 创建(实际上是Reslove泛型方法按给定参数查找并获得了)1个漫反射纹理, 位于插槽0 ，表示第[0]个纹理
 			hasDiffuseMap = true;																// 若查到漫反射纹理就打开漫反射开关
 		}		
+		else/* 若硬盘里不存在漫反射贴图*/
+		{
+			material.Get(AI_MATKEY_COLOR_DIFFUSE, reinterpret_cast<aiColor3D&>(diffuseColor));// 就使用自定义的漫反射光颜色
+		}
+
+
 		/// 读硬盘里镜面光纹理(有可能存在读不到的情况)
 		if (material.GetTexture(aiTextureType_SPECULAR, 0, &texFileName) == aiReturn_SUCCESS) //若该mesh确实在硬盘里持有高光贴图资源,拿一张镜面光纹理存到字符串里
 		{
@@ -405,6 +413,12 @@ std::unique_ptr<Mesh> Model::ParseMesh(Graphics& gfx, const aiMesh& mesh, const 
 			
 			hasSpecularMap = true;																// 若能在硬盘里读到高光贴图，就开启高光开关
 		}
+		else/* 若硬盘里不存在高光贴图*/
+		{
+			material.Get(AI_MATKEY_COLOR_SPECULAR, reinterpret_cast<aiColor3D&>(specularColor));// 就使用自定义的高光颜色
+		}
+
+
 		if (!hasAlphaGloss) //若硬盘里没读到高光贴图资源且未开启alpha通道
 		{
 			material.Get(AI_MATKEY_SHININESS, shininess); //若没查找到高光贴图，就让当面材质读取上面自定义的高光参数
@@ -543,13 +557,14 @@ std::unique_ptr<Mesh> Model::ParseMesh(Graphics& gfx, const aiMesh& mesh, const 
 		struct PSMaterialConstantDiffnorm// 自定义 材质常量struct 并添加进绑定物集合
 		{
 			//DirectX::XMFLOAT3 color = { 0.6f,0.6f,0.8f }; // 由于模型已经有漫反射纹理了，所以这里不再使用自定义的颜色
-			float specularIntensity = 0.18f; //高光强度
+			float specularIntensity /*= 0.18f*/; //高光强度
 			float specularPower;			//高光功率
 
 			BOOL  normalMapEnabled = TRUE;
 			float padding[1];
 		} pmc;
-		pmc.specularPower = shininess; // 注意这里结构体的成员高光功率由之前定义好的高光参数决定
+		//pmc.specularPower = shininess; // 注意这里结构体的成员高光功率由之前定义好的高光参数决定
+		pmc.specularIntensity = (specularColor.x + specularColor.y + specularColor.z) / 3.0f; //高光强度等于高光颜色各分量和的三分之一
 		bindablePtrs.push_back(Bind::PixelConstantBuffer<PSMaterialConstantDiffnorm>::Resolve(gfx, pmc, 1u));//创建出像素常数缓存<材质>
 	}
 	/// 若只开启漫反射
@@ -592,11 +607,12 @@ std::unique_ptr<Mesh> Model::ParseMesh(Graphics& gfx, const aiMesh& mesh, const 
 
 		struct PSMaterialConstantDiffuse
 		{
-			float specularIntensity = 0.18f;
+			float specularIntensity /*= 0.18f*/;
 			float specularPower;
 			float padding[2];
 		} pmc;
 		pmc.specularPower = shininess;
+		pmc.specularIntensity = (specularColor.x + specularColor.y + specularColor.z) / 3.0f;
 		// this is CLEARLY an issue... all meshes will share same mat const, but may have different
 		// Ns (specular power) specified for each in the material properties... bad conflict
 		bindablePtrs.push_back(PixelConstantBuffer<PSMaterialConstantDiffuse>::Resolve(gfx, pmc, 1u));
@@ -643,12 +659,14 @@ std::unique_ptr<Mesh> Model::ParseMesh(Graphics& gfx, const aiMesh& mesh, const 
 
 		struct PSMaterialConstantNotex
 		{
-			dx::XMFLOAT4 materialColor = { 0.45f,0.45f,0.85f,1.0f };//由于读不到漫反射贴图，所以给一个自定义颜色
+			dx::XMFLOAT4 materialColor /*= { 0.45f,0.45f,0.85f,1.0f }*/;//由于读不到漫反射贴图，所以给一个自定义颜色
 			float specularIntensity = 0.18f;
 			float specularPower;
 			float padding[2];
 		} pmc;
 		pmc.specularPower = shininess;		
+		pmc.specularIntensity = (specularColor.x + specularColor.y + specularColor.z) / 3.0f;
+		pmc.materialColor = diffuseColor;
 		bindablePtrs.push_back(PixelConstantBuffer<PSMaterialConstantNotex>::Resolve(gfx, pmc, 1u));
 	}
 	else
