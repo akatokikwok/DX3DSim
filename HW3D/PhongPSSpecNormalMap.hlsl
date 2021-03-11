@@ -34,16 +34,16 @@ SamplerState splr; // 采样器
 //static const float specularPowerFactor = 100.0f;//自定义个系数，用于控制镜面光功率
 
 
-float4 main(float3 viewPos : Position, float3 n : Normal, float3 tan : Tangent, float3 bitan : Bitangent, float2 tc : Texcoord) : SV_Target
+float4 main(float3 viewPos : Position, float3 viewNormal : Normal, float3 tan : Tangent, float3 bitan : Bitangent, float2 tc : Texcoord) : SV_Target
 {
 	// 若开启法线纹理采样
     if (normalMapEnabled)
     {
-        // build the tranform (rotation) into tangent space
+        // build the tranform (rotation) into tangent space;构建切线空间的旋转矩阵
         const float3x3 tanToView = float3x3(
             normalize(tan),
             normalize(bitan),
-            normalize(n)
+            normalize(viewNormal)
         );
         // 取法线贴图采样后的分量进行分析
         const float3 normalSample = nmap.Sample(splr, tc).xyz;
@@ -52,9 +52,10 @@ float4 main(float3 viewPos : Position, float3 n : Normal, float3 tan : Tangent, 
         //n.z = normalSample.z;
         
         // 由于带切线空间所以按照这条准则
-        n = normalSample * 2.0f - 1.0f;
+        float3 tanNormal;
+        tanNormal = normalSample * 2.0f - 1.0f;
         // bring normal from tanspace into view space
-        n = mul(n, tanToView);
+        viewNormal = mul(tanNormal, tanToView);
     }  
     
     // 主逻辑 ===============================================================================
@@ -65,9 +66,9 @@ float4 main(float3 viewPos : Position, float3 n : Normal, float3 tan : Tangent, 
 	// attenuation
     const float att = 1.0f / (attConst + attLin * distToL + attQuad * (distToL * distToL));
 	// diffuse intensity
-    const float3 diffuse = diffuseColor * diffuseIntensity * att * max(0.0f, dot(dirToL, n));
+    const float3 diffuse = diffuseColor * diffuseIntensity * att * max(0.0f, dot(dirToL, viewNormal));
 	// reflected light vector
-    const float3 w = n * dot(vToL, n);
+    const float3 w = viewNormal * dot(vToL, viewNormal);
     const float3 r = w * 2.0f - vToL;
     
 	// calculate specular intensity based on angle between viewing vector and reflection vector, narrow with power function
