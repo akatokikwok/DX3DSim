@@ -29,6 +29,9 @@ SamplerState splr;
 // 带法线的着色器,用于接受光源的照射;供给给那些承受光照的绘制物使用
 float4 main(float3 viewPos : Position, float3 viewNormal : Normal, float2 tc : Texcoord) : SV_Target
 {
+	// renormalize interpolated normal
+    viewNormal = normalize(viewNormal);
+	
 	// fragment to light vector data
 	const float3 vToL = lightPos - viewPos;/* 注意这里的入参是视图空间*/
 	const float distToL = length( vToL );

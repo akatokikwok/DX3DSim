@@ -45,6 +45,7 @@ float4 main(float3 viewPos : Position, float3 viewNormal : Normal, float3 tan : 
             normalize(viewNormal)
         );        
         
+        // sample and unpack the normal from texture into tangent space        
         const float3 normalSample = nmap.Sample(splr, tc).xyz;//先对法线贴图采样
         
         /* |-- T --|                    |-- X --|
@@ -57,8 +58,8 @@ float4 main(float3 viewPos : Position, float3 viewNormal : Normal, float3 tan : 
         tanNormal = normalSample * 2.0f - 1.0f;
         tanNormal.y = -tanNormal.y;//对第二个分量进行处理
         
-        // 把法线从切线空间转移到视图空间;
-        viewNormal = mul(tanNormal, tanToView);
+        // 把法线从切线空间转移到视图空间;注意重新归一化
+        viewNormal = normalize( mul(tanNormal, tanToView) );
         
         //n = mul(n, (float3x3) modelView); //让n与MV矩阵相乘
     }

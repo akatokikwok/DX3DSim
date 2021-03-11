@@ -45,7 +45,7 @@ float4 main(float3 viewPos : Position, float3 viewNormal : Normal, float3 tan : 
             normalize(bitan),
             normalize(viewNormal)
         );
-        // 取法线贴图采样后的分量进行分析
+        // 取法线贴图采样后的分量进行分析;!!!!!注意此时是把法线从纹理转换到切线空间采样
         const float3 normalSample = nmap.Sample(splr, tc).xyz;
         //n.x = normalSample.x * 2.0f - 1.0f;
         //n.y = -normalSample.y * 2.0f + 1.0f;
@@ -55,7 +55,7 @@ float4 main(float3 viewPos : Position, float3 viewNormal : Normal, float3 tan : 
         float3 tanNormal;
         tanNormal = normalSample * 2.0f - 1.0f;
         // bring normal from tanspace into view space
-        viewNormal = mul(tanNormal, tanToView);
+        viewNormal = normalize(mul(tanNormal, tanToView));
     }  
     
     // 主逻辑 ===============================================================================
