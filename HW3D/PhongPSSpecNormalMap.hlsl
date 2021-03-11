@@ -33,29 +33,47 @@ SamplerState splr; // 采样器
 
 //static const float specularPowerFactor = 100.0f;//自定义个系数，用于控制镜面光功率
 
+float3 MapNormalViewSpace(const float3 tan, const float3 bitan, const float3 viewNormal, const float2 tc, Texture2D nmap, SamplerState splr)
+{
+    // build the tranform (rotation) into tangent space ;构建TBN旋转矩阵
+    const float3x3 tanToView = float3x3(
+        normalize(tan),
+        normalize(bitan),
+        normalize(viewNormal)
+    );
+    // 取法线贴图采样后的分量进行分析;!!!!!注意此时是把法线从纹理转换到切线空间采样
+    const float3 normalSample = nmap.Sample(splr, tc).xyz;
+    // 样本*2-1
+    const float3 tanNormal = normalSample * 2.0f - 1.0f;
+    // bring normal from tanspace into view space
+    return normalize(mul(tanNormal, tanToView));
+}
 
+/* 主shader*/
 float4 main(float3 viewPos : Position, float3 viewNormal : Normal, float3 tan : Tangent, float3 bitan : Bitangent, float2 tc : Texcoord) : SV_Target
 {
 	// 若开启法线纹理采样
     if (normalMapEnabled)
     {
-        // build the tranform (rotation) into tangent space;构建切线空间的旋转矩阵
-        const float3x3 tanToView = float3x3(
-            normalize(tan),
-            normalize(bitan),
-            normalize(viewNormal)
-        );
-        // 取法线贴图采样后的分量进行分析;!!!!!注意此时是把法线从纹理转换到切线空间采样
-        const float3 normalSample = nmap.Sample(splr, tc).xyz;
-        //n.x = normalSample.x * 2.0f - 1.0f;
-        //n.y = -normalSample.y * 2.0f + 1.0f;
-        //n.z = normalSample.z;
+        //// build the tranform (rotation) into tangent space;构建切线空间的旋转矩阵
+        //const float3x3 tanToView = float3x3(
+        //    normalize(tan),
+        //    normalize(bitan),
+        //    normalize(viewNormal)
+        //);
+        //// 取法线贴图采样后的分量进行分析;!!!!!注意此时是把法线从纹理转换到切线空间采样
+        //const float3 normalSample = nmap.Sample(splr, tc).xyz;
+        ////n.x = normalSample.x * 2.0f - 1.0f;
+        ////n.y = -normalSample.y * 2.0f + 1.0f;
+        ////n.z = normalSample.z;
         
-        // 由于带切线空间所以按照这条准则
-        float3 tanNormal;
-        tanNormal = normalSample * 2.0f - 1.0f;
-        // bring normal from tanspace into view space
-        viewNormal = normalize(mul(tanNormal, tanToView));
+        //// 由于带切线空间所以按照这条准则
+        //float3 tanNormal;
+        //tanNormal = normalSample * 2.0f - 1.0f;
+        //// bring normal from tanspace into view space
+        //viewNormal = normalize(mul(tanNormal, tanToView));
+        
+        viewNormal = MapNormalViewSpace(tan, bitan, viewNormal, tc, nmap, splr); // 执行外部方法:把法线映射到viewSpace;
     }  
     
     // 主逻辑 ===============================================================================
