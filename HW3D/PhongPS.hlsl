@@ -27,8 +27,11 @@ SamplerState splr;
 
 
 // 带法线的着色器,用于接受光源的照射;供给给那些承受光照的绘制物使用
-float4 main(float3 viewPos : Position, float3 n : Normal, float2 tc : Texcoord) : SV_Target
+float4 main(float3 viewPos : Position, float3 viewNormal : Normal, float2 tc : Texcoord) : SV_Target
 {
+	// renormalize interpolated normal
+    viewNormal = normalize(viewNormal);
+	
 	// fragment to light vector data
 	const float3 vToL = lightPos - viewPos;/* 注意这里的入参是视图空间*/
 	const float distToL = length( vToL );
@@ -36,10 +39,10 @@ float4 main(float3 viewPos : Position, float3 n : Normal, float2 tc : Texcoord) 
 	// 衰减
 	const float att = 1.0f / (attConst + attLin * distToL + attQuad * (distToL * distToL));
 	// 漫反射最终呈现效果
-	const float3 diffuse = att * diffuseColor * diffuseIntensity *  max( 0.0f,dot( dirToL,n ) );
+    const float3 diffuse = att * diffuseColor * diffuseIntensity * max(0.0f, dot(dirToL, viewNormal));
 	
 	// reflected light vector
-    const float3 w = n * dot(vToL, n);
+    const float3 w = viewNormal * dot(vToL, viewNormal);
 	 // 光反射后的单位方向向量
     const float3 r = w * 2.0f - vToL;
 	// calculate specular intensity based on angle between viewing vector and reflection vector, narrow with power function

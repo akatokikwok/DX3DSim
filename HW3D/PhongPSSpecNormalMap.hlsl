@@ -3,7 +3,7 @@
 // 常数--光照
 cbuffer LightCBuf           //[0]
 {
-    float3 lightPos;        //光源位置
+    float3 viewLightPos;        //光源位置
     float3 ambient;         //环境光常数  
     float3 diffuseColor;    //漫反射颜色常数
     float  diffuseIntensity;//漫反射功率常数
@@ -33,42 +33,43 @@ SamplerState splr; // 采样器
 
 //static const float specularPowerFactor = 100.0f;//自定义个系数，用于控制镜面光功率
 
+float3 MapNormalViewSpace(const float3 tan, const float3 bitan, const float3 viewNormal, const float2 tc, Texture2D nmap, SamplerState splr)
+{
+    // build the tranform (rotation) into tangent space ;构建TBN旋转矩阵
+    const float3x3 tanToView = float3x3(
+        normalize(tan),
+        normalize(bitan),
+        normalize(viewNormal)
+    );
+    // 取法线贴图采样后的分量进行分析;!!!!!注意此时是把法线从纹理转换到切线空间采样
+    const float3 normalSample = nmap.Sample(splr, tc).xyz;
+    // 样本*2-1
+    const float3 tanNormal = normalSample * 2.0f - 1.0f;
+    // bring normal from tanspace into view space
+    return normalize(mul(tanNormal, tanToView));
+}
 
-float4 main(float3 viewPos : Position, float3 n : Normal, float3 tan : Tangent, float3 bitan : Bitangent, float2 tc : Texcoord) : SV_Target
+/* 主shader*/
+float4 main(float3 viewPos : Position, float3 viewNormal : Normal, float3 tan : Tangent, float3 bitan : Bitangent, float2 tc : Texcoord) : SV_Target
 {
 	// 若开启法线纹理采样
     if (normalMapEnabled)
     {
-        // build the tranform (rotation) into tangent space
-        const float3x3 tanToView = float3x3(
-            normalize(tan),
-            normalize(bitan),
-            normalize(n)
-        );
-        // 取法线贴图采样后的分量进行分析
-        const float3 normalSample = nmap.Sample(splr, tc).xyz;
-        //n.x = normalSample.x * 2.0f - 1.0f;
-        //n.y = -normalSample.y * 2.0f + 1.0f;
-        //n.z = normalSample.z;
-        
-        // 由于带切线空间所以按照这条准则
-        n = normalSample * 2.0f - 1.0f;
-        // bring normal from tanspace into view space
-        n = mul(n, tanToView);
+        viewNormal = MapNormalViewSpace(tan, bitan, viewNormal, tc, nmap, splr); // 执行外部方法:把法线映射到viewSpace;
     }  
     
     // 主逻辑 ===============================================================================
     // fragment to light vector data
-    const float3 vToL = lightPos - viewPos;
-    const float distToL = length(vToL);
-    const float3 dirToL = vToL / distToL;
+    const float3 viewFragToL = viewLightPos - viewPos;  /* 视图空间里 模型位置到光源位置的vector*/
+    const float distFragToL = length(viewFragToL);      /* 物体到光源的距离, 浮点数*/
+    const float3 viewDirFragToL = viewFragToL / distFragToL; /*归一化的 '点到光源向量'*/
 	// attenuation
-    const float att = 1.0f / (attConst + attLin * distToL + attQuad * (distToL * distToL));
+    const float att = 1.0f / (attConst + attLin * distFragToL + attQuad * (distFragToL * distFragToL));
 	// diffuse intensity
-    const float3 diffuse = diffuseColor * diffuseIntensity * att * max(0.0f, dot(dirToL, n));
+    const float3 diffuse = diffuseColor * diffuseIntensity * att * max(0.0f, dot(viewDirFragToL, viewNormal));
 	// reflected light vector
-    const float3 w = n * dot(vToL, n);
-    const float3 r = w * 2.0f - vToL;
+    const float3 w = viewNormal * dot(viewFragToL, viewNormal);
+    const float3 r = w * 2.0f - viewFragToL;
     
 	// calculate specular intensity based on angle between viewing vector and reflection vector, narrow with power function
     //// 基于观察方向和光反射方向的夹角、系数来计算 镜面光强度

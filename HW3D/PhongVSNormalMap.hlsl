@@ -9,7 +9,7 @@ cbuffer CBuf
 struct VSOut
 {
     float3 viewPos : Position;
-    float3 normal : Normal;
+    float3 viewNormal : Normal;
     float3 tan : Tangent;
     float3 bitan : Bitangent;
     float2 tc : Texcoord;
@@ -20,7 +20,7 @@ VSOut main(float3 pos : Position, float3 n : Normal, float3 tan : Tangent, float
 {
     VSOut vso;
     vso.viewPos = (float3) mul(float4(pos, 1.0f), modelView);
-    vso.normal = mul(n, (float3x3) modelView);
+    vso.viewNormal = mul(n, (float3x3) modelView);
     
     // 将T切线和B切线也带入视图空间
     vso.tan = mul(tan, (float3x3) modelView);
