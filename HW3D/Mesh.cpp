@@ -4,6 +4,7 @@
 #include <unordered_map>
 #include <sstream>
 #include "Surface.h"
+#include <filesystem>
 
 namespace dx = DirectX;
 
@@ -284,14 +285,14 @@ private:
 };
 //////////////////////////////////////////////////////////////////////////
 
-Model::Model(Graphics& gfx, const std::string fileName)
+Model::Model(Graphics& gfx, const std::string& pathString)
 	:
 	pWindow(std::make_unique<ModelWindow>())
 {
 	// 指定模型名导入
 	Assimp::Importer imp;
 	// pScene是被读取到的模型的aiScene型网格
-	const auto pScene = imp.ReadFile(fileName.c_str(),
+	const auto pScene = imp.ReadFile(pathString.c_str(),
 		aiProcess_Triangulate |
 		aiProcess_JoinIdenticalVertices |
 		aiProcess_ConvertToLeftHanded |
@@ -307,7 +308,7 @@ Model::Model(Graphics& gfx, const std::string fileName)
 	// 加载整个模型网格
 	for (size_t i = 0; i < pScene->mNumMeshes; i++)
 	{
-		meshPtrs.push_back(ParseMesh(gfx, *pScene->mMeshes[i], pScene->mMaterials));
+		meshPtrs.push_back(ParseMesh(gfx, *pScene->mMeshes[i], pScene->mMaterials, pathString));
 	}
 	// 使用ParseNode方法存储模型根节点
 	int nextId = 0;
@@ -362,7 +363,10 @@ Model::~Model() noexcept
 }
 
 // 解析加载单片mesh
-std::unique_ptr<Mesh> Model::ParseMesh(Graphics& gfx, const aiMesh& mesh, const aiMaterial* const* pMaterials)
+std::unique_ptr<Mesh> Model::ParseMesh(Graphics& gfx, const aiMesh& mesh, 
+	const aiMaterial* const* pMaterials, 
+	const std::filesystem::path& path
+)
 {
 	using namespace std::string_literals;
 	using Dvtx::VertexLayout;
@@ -376,10 +380,12 @@ std::unique_ptr<Mesh> Model::ParseMesh(Graphics& gfx, const aiMesh& mesh, const 
 	//	int qqq = 90;
 	//}
 
+	const auto rootPath = path.parent_path().string() + "\\";//比如 c:\Temp\SB.png ;拿到c:\\Temp\\
+
 	std::vector<std::shared_ptr<Bind::Bindable>> bindablePtrs;/* 声明管线上所有绑定物的集合*/
 	
 	//const auto base = "Models\\brick_wall\\"s;	//自定义一个具体路径base = "Models\\brick_wall\\"s;存储贴图的路径
-	const auto base = "Models\\gobber\\"s;	//自定义一个具体路径"Models\\gobber\\"s;存储哥布林模型的纹理的路径
+	//const auto base = "Models\\gobber\\"s;	//自定义一个具体路径"Models\\gobber\\"s;存储哥布林模型的纹理的路径
 
 	bool hasSpecularMap = false;//高光纹理开关;默认不带有高光贴图
 	bool hasAlphaGloss = false;	//高光纹理的透明通道开关
@@ -401,7 +407,7 @@ std::unique_ptr<Mesh> Model::ParseMesh(Graphics& gfx, const aiMesh& mesh, const 
 		/// 读硬盘里漫反射纹理
 		if (material.GetTexture(aiTextureType_DIFFUSE, 0, &texFileName) == aiReturn_SUCCESS)	//检查是否在硬盘上持有漫反射纹理
 		{
-			bindablePtrs.push_back(Bind::Texture::Resolve(gfx, (base + texFileName.C_Str()), 0 ));	// 创建(实际上是Reslove泛型方法按给定参数查找并获得了)1个漫反射纹理, 位于插槽0 ，表示第[0]个纹理
+			bindablePtrs.push_back(Bind::Texture::Resolve(gfx, (rootPath + texFileName.C_Str()), 0 ));	// 创建(实际上是Reslove泛型方法按给定参数查找并获得了)1个漫反射纹理, 位于插槽0 ，表示第[0]个纹理
 			hasDiffuseMap = true;																// 若查到漫反射纹理就打开漫反射开关
 		}		
 		else/* 若硬盘里不存在漫反射贴图*/
@@ -414,7 +420,7 @@ std::unique_ptr<Mesh> Model::ParseMesh(Graphics& gfx, const aiMesh& mesh, const 
 		if (material.GetTexture(aiTextureType_SPECULAR, 0, &texFileName) == aiReturn_SUCCESS) //若该mesh确实在硬盘里持有高光贴图资源,拿一张镜面光纹理存到字符串里
 		{
 			//bindablePtrs.push_back(Bind::Texture::Resolve(gfx, (base + texFileName.C_Str()), 1 )); // 创建(实际上是Reslove泛型方法按给定参数查找并获得了)1个镜面光纹理，位于插槽1， 表示第[1]个纹理
-			auto tex = Bind::Texture::Resolve(gfx, base + texFileName.C_Str(), 1); 
+			auto tex = Bind::Texture::Resolve(gfx, rootPath + texFileName.C_Str(), 1); 
 			hasAlphaGloss = tex->HasAlpha();			// 透明通道开关由解析出来的纹理决定
 			bindablePtrs.push_back(std::move(tex));		//创建(实际上是Reslove泛型方法按给定参数查找并获得了)1个镜面光纹理，位于插槽1， 表示第[1]个纹理
 			
@@ -425,18 +431,20 @@ std::unique_ptr<Mesh> Model::ParseMesh(Graphics& gfx, const aiMesh& mesh, const 
 			material.Get(AI_MATKEY_COLOR_SPECULAR, reinterpret_cast<aiColor3D&>(specularColor));// 就使用自定义的高光颜色
 		}
 
-
-		if (!hasAlphaGloss) //若硬盘里没读到高光贴图资源且未开启alpha通道
+		///若硬盘里没读到高光贴图资源且未开启alpha通道
+		if (!hasAlphaGloss) 
 		{
 			material.Get(AI_MATKEY_SHININESS, shininess); //若没查找到高光贴图，就让当面材质读取上面自定义的高光参数
 		}
+
 		//material.GetTexture(aiTextureType_NORMALS, 0, &texFileName);  //读法线贴图
 		//bindablePtrs.push_back(Texture::Resolve(gfx, (base + texFileName.C_Str()), 2)); 
+
 		/// 读硬盘里的法线纹理
 		if (material.GetTexture(aiTextureType_NORMALS, 0, &texFileName) == aiReturn_SUCCESS)
 		{
 			//bindablePtrs.push_back(Texture::Resolve(gfx, base + texFileName.C_Str(), 2));	// 创建(实际上是Reslove泛型方法按给定参数查找并获得了)1个镜面光纹理，位于插槽1， 表示第[2]个纹理
-			auto tex = Bind::Texture::Resolve(gfx, base + texFileName.C_Str(), 2);
+			auto tex = Bind::Texture::Resolve(gfx, rootPath + texFileName.C_Str(), 2);
 			hasAlphaGloss = tex->HasAlpha();
 			bindablePtrs.push_back(std::move(tex));
 
@@ -450,7 +458,7 @@ std::unique_ptr<Mesh> Model::ParseMesh(Graphics& gfx, const aiMesh& mesh, const 
 		}
 	}
 
-	const auto meshTag = base + "%" + mesh.mName.C_Str();	
+	const auto meshTag = path.string() + "%" + mesh.mName.C_Str();	
 	const float scale = 6.0f;
 
 	/// 依次开启漫反射纹理、高光纹理、法线纹理，并加载它 高光的纹理像素着色器(带法线版本)
