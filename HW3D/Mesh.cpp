@@ -285,7 +285,7 @@ private:
 };
 //////////////////////////////////////////////////////////////////////////
 
-Model::Model(Graphics& gfx, const std::string& pathString)
+Model::Model(Graphics& gfx, const std::string& pathString, const float scale)
 	:
 	pWindow(std::make_unique<ModelWindow>())
 {
@@ -308,7 +308,7 @@ Model::Model(Graphics& gfx, const std::string& pathString)
 	// 加载整个模型网格
 	for (size_t i = 0; i < pScene->mNumMeshes; i++)
 	{
-		meshPtrs.push_back(ParseMesh(gfx, *pScene->mMeshes[i], pScene->mMaterials, pathString));
+		meshPtrs.push_back(ParseMesh(gfx, *pScene->mMeshes[i], pScene->mMaterials, pathString, scale));
 	}
 	// 使用ParseNode方法存储模型根节点
 	int nextId = 0;
@@ -365,7 +365,8 @@ Model::~Model() noexcept
 // 解析加载单片mesh
 std::unique_ptr<Mesh> Model::ParseMesh(Graphics& gfx, const aiMesh& mesh, 
 	const aiMaterial* const* pMaterials, 
-	const std::filesystem::path& path
+	const std::filesystem::path& path,
+	float scale
 )
 {
 	using namespace std::string_literals;
@@ -459,7 +460,7 @@ std::unique_ptr<Mesh> Model::ParseMesh(Graphics& gfx, const aiMesh& mesh,
 	}
 
 	const auto meshTag = path.string() + "%" + mesh.mName.C_Str();	
-	const float scale = 6.0f;
+	//const float scale = 6.0f;
 
 	/// 依次开启漫反射纹理、高光纹理、法线纹理，并加载它 高光的纹理像素着色器(带法线版本)
 	if (hasDiffuseMap && hasNormalMap && hasSpecularMap)
@@ -479,7 +480,7 @@ std::unique_ptr<Mesh> Model::ParseMesh(Graphics& gfx, const aiMesh& mesh,
 		{
 			/* 使用EmplaceBack方法往顶点缓存末端构建一个顶点*/
 			vbuf.EmplaceBack(
-				dx::XMFLOAT3(mesh.mVertices[i].x * scale, mesh.mVertices[i].y * scale, mesh.mVertices[i].z * scale),
+				dx::XMFLOAT3(mesh.mVertices[i].x * scale, mesh.mVertices[i].y * scale, mesh.mVertices[i].z * scale),//注意这里尺寸会缩放
 				*reinterpret_cast<dx::XMFLOAT3*>(&mesh.mNormals[i]),
 				*reinterpret_cast<dx::XMFLOAT3*>(&mesh.mTangents[i]),
 				*reinterpret_cast<dx::XMFLOAT3*>(&mesh.mBitangents[i]),

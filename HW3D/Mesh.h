@@ -158,12 +158,12 @@ private:
 };
 
 /// //////////////////////////////////////////////////////////////////////////
-/* 模型类 // 构造函数;需要图形实例和指定模型名*/
+/* 模型类 // 构造函数;需要图形实例、指定模型的目录、缩放*/
 class Model
 {
 public:
-	// 构造函数;需要图形实例和指定模型名
-	Model(Graphics& gfx, const std::string& pathString);
+	// 构造函数;Model(Graphics& gfx, const std::string& pathString, float scale = 1.0f);
+	Model(Graphics& gfx, const std::string& pathString, float scale = 1.0f);
 	/* 为模型根节点绘制所有网格*/
 	//void Draw(Graphics& gfx, DirectX::FXMMATRIX transform) const;
 	void Draw(Graphics& gfx) const noxnd;
@@ -173,9 +173,12 @@ public:
 	void SetRootTransform(DirectX::FXMMATRIX tf) noexcept;
 	~Model() noexcept;
 private:
-	/* 用于解析加载单个Mesh;静态方法ParseMesh(); 需要材质数组参数, std::filesystem::path文件目录*/
+	/* 用于解析加载单个Mesh;静态方法ParseMesh(); 需要材质数组参数, std::filesystem::path文件目录, scale*/
 	static std::unique_ptr<Mesh> ParseMesh(
-		Graphics& gfx, const aiMesh& mesh, const aiMaterial* const* pMaterials, const std::filesystem::path& path);
+		Graphics& gfx, const aiMesh& mesh, 
+		const aiMaterial* const* pMaterials, 
+		const std::filesystem::path& path, 
+		float scale);
 
 	/* 解析加载单个节点，指定1个参数节点,PS:其实每次加载树时候，树的结构并没有变化*/
 	std::unique_ptr<Node> ParseNode(int& nextId, const aiNode& node) noexcept;

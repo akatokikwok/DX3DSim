@@ -18,8 +18,10 @@ App::App()
 	//,plane(wnd.Gfx(), 3.0f)
 	//,cube(wnd.Gfx(), 4.0f)
 {
-	//wall.SetRootTransform(dx::XMMatrixTranslation(-1.5f, 0.0f, 0.0f)); //设置墙模型的根节点Transform
-	//tp.SetPos({ 1.5f,0.0f,0.0f });										//设置TestPlane绘制物的位置
+	wall.SetRootTransform(dx::XMMatrixTranslation(-12.0f, 0.0f, 0.0f));//设置墙模型的根节点Transform
+	tp.SetPos({ 12.0f,0.0f,0.0f });									//设置TestPlane绘制物的位置
+	gobber.SetRootTransform(dx::XMMatrixTranslation(0.0f, 0.0f, -4.0f));
+	nano.SetRootTransform(dx::XMMatrixTranslation(0.0f, -7.0f, 6.0f));
 
 	//auto a = Bind::VertexShader::Resolve(wnd.Gfx(), "PhongVS.cso");// 解析并拿到名为PhongVS.cso的顶点着色器
 	//auto b = Bind::Sampler::Resolve(wnd.Gfx());	//解析并拿到采样器
@@ -46,9 +48,9 @@ void App::DoFrame()
 	//	dx::XMMatrixTranslation(pos.x, pos.y, pos.z);// 自定义变换==旋转矩阵*移动矩阵
 	//nano.Draw(wnd.Gfx(), transform);// 绘制指定的模型
 
-	//wall.Draw(wnd.Gfx());
-	//tp.Draw(wnd.Gfx());
-	//nano.Draw(wnd.Gfx());
+	wall.Draw(wnd.Gfx());
+	tp.Draw(wnd.Gfx());
+	nano.Draw(wnd.Gfx());
 	gobber.Draw(wnd.Gfx());
 
 	//nano2.Draw(wnd.Gfx());
@@ -134,14 +136,13 @@ void App::DoFrame()
 	// 展示模型IMGUI窗口
 	//nano.ShowWindow("Model 1");
 	//nano2.ShowWindow("Model 2");
-	//plane.SpawnControlWindow(wnd.Gfx());
+	//plane.SpawnControlWindow(wnd.Gfx());	
 	
-	//wall.ShowWindow("Wall");
-	//tp.SpawnControlWindow(wnd.Gfx());
 	gobber.ShowWindow(wnd.Gfx(), "gobber");
 
-	//cube.SpawnControlWindow(wnd.Gfx());
-	//ShowRawInputWindow();
+	wall.ShowWindow(wnd.Gfx(), "Wall");
+	tp.SpawnControlWindow(wnd.Gfx());
+	nano.ShowWindow(wnd.Gfx(), "Nano");
 
 	// present
 	wnd.Gfx().EndFrame();
