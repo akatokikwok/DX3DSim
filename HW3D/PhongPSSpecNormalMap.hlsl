@@ -44,9 +44,7 @@ float3 MapNormal(
 {
     // build the tranform (rotation) into same space as tan/bitan/normal (target space);构建TBN旋转矩阵
     const float3x3 tanToTarget = float3x3(
-        normalize(tan),
-        normalize(bitan),
-        normalize(normal)
+       tan, bitan, normal
     );
     // 对入参法线贴图采样并取分量
     const float3 normalSample = nmap.Sample(splr, tc).xyz;
@@ -94,12 +92,16 @@ float3 Speculate(
 }
 
 /* 主shader*/
-float4 main(float3 viewPos : Position/*相机观察位置*/, float3 viewNormal : Normal, float3 tan : Tangent, float3 bitan : Bitangent, float2 tc : Texcoord) : SV_Target
+float4 main(float3 viewPos : Position /*相机观察位置*/, float3 viewNormal : Normal, 
+    float3 viewTan : Tangent, float3 viewBitan : Bitangent, float2 tc : Texcoord) : SV_Target
 {
+    // normalize the mesh normal
+    viewNormal = normalize(viewNormal);
+    
 	// 若开启法线纹理采样
     if (normalMapEnabled)
     {
-        viewNormal = MapNormal(tan, bitan, viewNormal, tc, nmap, splr); // 执行外部方法:操作法线贴图;
+        viewNormal = MapNormal(normalize(viewTan), normalize(viewBitan), viewNormal, tc, nmap, splr); // 执行外部方法:操作法线贴图;
     }  
     
     // 主逻辑 ===============================================================================
@@ -108,10 +110,6 @@ float4 main(float3 viewPos : Position/*相机观察位置*/, float3 viewNormal :
     const float distFragToL = length(viewFragToL);      /* 物体到光源的距离, 浮点数*/
     const float3 viewDirFragToL = viewFragToL / distFragToL; /*归一化的 '点到光源向量'*/
 	
-    // attenuation;拿到衰减
-    const float att = Attenuate(attConst, attLin, attQuad, distFragToL);
-    // diffuse light;拿到漫反射光
-    const float3 diffuse = Diffuse(diffuseColor, diffuseIntensity, att, viewDirFragToL, viewNormal);
     
     // specular parameter determination (mapped or uniform) ;先按不同情形执行镜面参数配置以获得不同情况下的镜面参数(在这里是镜面反射颜色和功率)
     float3 specularReflectionColor; //表示镜面反射的颜色
@@ -130,6 +128,11 @@ float4 main(float3 viewPos : Position/*相机观察位置*/, float3 viewNormal :
     {   
         specularReflectionColor = specularColor; //镜面反射颜色更新为一个高光颜色(自定义值)
     }    
+    
+    // attenuation;拿到衰减
+    const float att = Attenuate(attConst, attLin, attQuad, distFragToL);
+    // diffuse light;拿到漫反射光
+    const float3 diffuse = Diffuse(diffuseColor, diffuseIntensity, att, viewDirFragToL, viewNormal);    
     // specular reflected; 拿到镜面反射结果
     const float3 specularReflected = Speculate(specularReflectionColor, 1.0f, viewNormal,
         viewFragToL, viewPos, att, specularPower
