@@ -30,6 +30,13 @@ cbuffer ObjectCBuf      //---[1]
 //    matrix modelViewProj;
 //};
 
+///=================================================
+///所以上述所有Pixel ConstantBuffer 顺序是:
+//  光源---[0]
+//  渲染对象上的材质---[1]
+//  Transform---[2]
+
+
 Texture2D tex;
 Texture2D nmap : register(t2);
 
