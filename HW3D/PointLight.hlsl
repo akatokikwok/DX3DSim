@@ -1,4 +1,6 @@
 
+/* 描绘点光源信息*/
+
 // 常数--光照
 cbuffer PointLightCBuf           //[0]
 {

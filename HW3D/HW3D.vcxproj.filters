@@ -332,6 +332,9 @@
     <ClInclude Include="PointLight.hlsl">
       <Filter>Shader\Common</Filter>
     </ClInclude>
+    <ClInclude Include="NormalMapTwerker.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="DXGetErrorDescription.inl">
@@ -376,6 +379,12 @@
       <Filter>Shader</Filter>
     </FxCompile>
     <FxCompile Include="ShaderOps.hlsl">
+      <Filter>Shader\Common</Filter>
+    </FxCompile>
+    <FxCompile Include="Transform.hlsl">
+      <Filter>Shader\Common</Filter>
+    </FxCompile>
+    <FxCompile Include="LightVectorData.hlsl">
       <Filter>Shader\Common</Filter>
     </FxCompile>
   </ItemGroup>

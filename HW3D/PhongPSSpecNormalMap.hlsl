@@ -2,7 +2,7 @@
 
 #include "ShaderOps.hlsl"
 #include "PointLight.hlsl"
-
+#include "LightVectorData.hlsl"
 //// 常数--光照
 //cbuffer LightCBuf           //[0]
 //{
@@ -38,7 +38,7 @@ SamplerState splr; // 采样器
 
 
 /* 主shader*/
-float4 main(float3 viewPos : Position /*相机观察位置*/, float3 viewNormal : Normal, 
+float4 main(float3 viewFragPos : Position /*相机观察位置*/, float3 viewNormal : Normal,
     float3 viewTan : Tangent, float3 viewBitan : Bitangent, float2 tc : Texcoord) : SV_Target
 {
     // normalize the mesh normal
@@ -51,11 +51,13 @@ float4 main(float3 viewPos : Position /*相机观察位置*/, float3 viewNormal 
     }  
     
     // 主逻辑 ===============================================================================
+   
+    //const float3 viewFragToL = viewLightPos - viewPos;  /* 视图空间里 模型位置到光源位置的vector*/
+    //const float distFragToL = length(viewFragToL);      /* 物体到光源的距离, 浮点数*/
+    //const float3 viewDirFragToL = viewFragToL / distFragToL; /*归一化的 '点到光源向量'*/
+    
     // fragment to light vector data
-    const float3 viewFragToL = viewLightPos - viewPos;  /* 视图空间里 模型位置到光源位置的vector*/
-    const float distFragToL = length(viewFragToL);      /* 物体到光源的距离, 浮点数*/
-    const float3 viewDirFragToL = viewFragToL / distFragToL; /*归一化的 '点到光源向量'*/
-	
+    const LightVectorData lv = CalculateLightVectorData(viewLightPos, viewFragPos);
     
     // specular parameter determination (mapped or uniform) ;先按不同情形执行镜面参数配置以获得不同情况下的镜面参数(在这里是镜面反射颜色和功率)
     float3 specularReflectionColor; //表示镜面反射的颜色
@@ -76,12 +78,12 @@ float4 main(float3 viewPos : Position /*相机观察位置*/, float3 viewNormal 
     }    
     
     // attenuation;拿到衰减
-    const float att = Attenuate(attConst, attLin, attQuad, distFragToL);
+    const float att = Attenuate(attConst, attLin, attQuad, lv.distToL);
     // diffuse light;拿到漫反射光
-    const float3 diffuse = Diffuse(diffuseColor, diffuseIntensity, att, viewDirFragToL, viewNormal);    
+    const float3 diffuse = Diffuse(diffuseColor, diffuseIntensity, att, lv.dirToL, viewNormal);
     // specular reflected; 拿到镜面反射结果
     const float3 specularReflected = Speculate(specularReflectionColor, 1.0f, viewNormal,
-        viewFragToL, viewPos, att, specularPower
+        lv.vToL, viewFragPos, att, specularPower
     );
     
 	// final color = attenuate diffuse & ambient by diffuse texture color and add specular reflected

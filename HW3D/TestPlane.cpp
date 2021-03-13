@@ -17,7 +17,7 @@ TestPlane::TestPlane(Graphics& gfx, float size)
 	AddBind(IndexBuffer::Resolve(gfx, geometryTag, model.indices));//创建索引缓存
 
 	AddBind(Texture::Resolve(gfx, "Images\\brickwall.jpg",		  0u));//创建漫反射纹理
-	AddBind(Texture::Resolve(gfx, "Images\\brickwall_normal.jpg", 1u));//创建法线纹理
+	AddBind(Texture::Resolve(gfx, "Images\\brickwall_normal_obj.png", 1u));//创建法线纹理
 
 	auto pvs = VertexShader::Resolve(gfx, "PhongVS.cso");
 	auto pvsbc = pvs->GetBytecode();

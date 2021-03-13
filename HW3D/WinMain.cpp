@@ -1,4 +1,4 @@
-/******************************************************************************************
+﻿/******************************************************************************************
 *	Chili Direct3D Engine																  *
 *	Copyright 2018 PlanetChili <http://www.planetchili.net>								  *
 *																						  *
@@ -28,7 +28,7 @@ int CALLBACK WinMain(
 {
 	try
 	{
-		return App{}.Go();
+		return App{ lpCmdLine }.Go();
 	}
 	catch( const ChiliException& e )
 	{

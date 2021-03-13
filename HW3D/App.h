@@ -12,7 +12,8 @@
 class App
 {
 public:
-	App();
+	/* App(const std::string& commandLine = "") */
+	App(const std::string& commandLine = "");
 	// master frame / message loop
 	int Go();
 	~App();
@@ -23,7 +24,7 @@ private:
 	//// IMGUI窗口:显示光标的累加值
 	//void ShowRawInputWindow();
 private:
-
+	std::string commandLine;
 	bool showDemoWindow = false;//Imgui助手窗口开关,默认关闭
 
 	ImguiManager imgui;

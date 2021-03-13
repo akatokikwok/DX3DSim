@@ -89,4 +89,5 @@ private:
 	int height;
 	HWND hWnd;
 	std::unique_ptr<Graphics> pGfx;
+	std::string commandLine;
 };
