@@ -75,6 +75,8 @@ public:
 	void Draw(Graphics& gfx, DirectX::FXMMATRIX accumulatedTransform) const noxnd;
 	/* 用来设置最终被应用的变换*/
 	void SetAppliedTransform(DirectX::FXMMATRIX transform) noexcept;
+	/* 获取最终应用的变换*/
+	const DirectX::XMFLOAT4X4& GetAppliedTransform() const noexcept;
 	// 接口，拿取每个节点的独有ID	
 	int GetId() const noexcept;
 

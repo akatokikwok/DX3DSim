@@ -5,6 +5,7 @@
 #include <sstream>
 #include "Surface.h"
 #include <filesystem>
+#include "ChiliXM.h"
 
 namespace dx = DirectX;
 
@@ -120,6 +121,11 @@ void Node::AddChild(std::unique_ptr<Node> pChild) noxnd
 	childPtrs.push_back(std::move(pChild));
 }
 
+const DirectX::XMFLOAT4X4& Node::GetAppliedTransform() const noexcept
+{
+	return appliedTransform;
+}
+
 int Node::GetId() const noexcept
 {
 	return id;
@@ -227,7 +233,27 @@ public:
 			// 如果存在有被选中状态的节点,就可以使用IMGUI去控制
 			if (pSelectedNode != nullptr)
 			{
-				auto& transform = transforms[ pSelectedNode->GetId() ];//根据被选中的索引从无序map里取出对应的数据组
+				const auto id = pSelectedNode->GetId();//拿到点中节点的ID
+				auto i = transforms.find(id);//查表，从无序map里拿出相应的TransformParameters
+				if (i == transforms.end())//如果查表查到了最后没查到，就自己创建一个并从里面加载这些参数
+				{
+					// 拿到最终应用变换即这个矩阵的欧拉角和位移
+					const auto& applied = pSelectedNode->GetAppliedTransform();
+					const auto angles = ExtractEulerAngles(applied);
+					const auto translation = ExtractTranslation(applied);
+					// 应用上面的数据
+					TransformParameters tp;
+					tp.roll = angles.z;
+					tp.pitch = angles.x;
+					tp.yaw = angles.y;
+					tp.x = translation.x;
+					tp.y = translation.y;
+					tp.z = translation.z;
+					std::tie(i, std::ignore) = transforms.insert({ id,tp });//std::tie会将变量的引用整合成一个tuple，从而实现批量赋值
+				}
+				auto& transform = i->second;//继续查找下一个TransformParameter
+
+				//auto& transform = transforms[ pSelectedNode->GetId() ];//根据被选中的索引从无序map里取出对应的数据组
 				ImGui::Text("Orientation");
 				ImGui::SliderAngle("Roll", &transform.roll, -180.0f, 180.0f);
 				ImGui::SliderAngle("Pitch", &transform.pitch, -180.0f, 180.0f);
