@@ -12,7 +12,8 @@
 class App
 {
 public:
-	App();
+	/* App(const std::string& commandLine = "") */
+	App(const std::string& commandLine = "");
 	// master frame / message loop
 	int Go();
 	~App();
@@ -23,7 +24,7 @@ private:
 	//// IMGUI窗口:显示光标的累加值
 	//void ShowRawInputWindow();
 private:
-
+	std::string commandLine;
 	bool showDemoWindow = false;//Imgui助手窗口开关,默认关闭
 
 	ImguiManager imgui;
@@ -38,7 +39,12 @@ private:
 	
 	//TestCube cube;
 
-	Model gobber{ wnd.Gfx(),"Models\\gobber\\GoblinX.obj" };
+	Model gobber{ wnd.Gfx(),"Models\\gobber\\GoblinX.obj",6.0f };
+
+	Model wall{ wnd.Gfx(),"Models\\brick_wall\\brick_wall.obj",6.0f };
+	TestPlane tp{ wnd.Gfx(),6.0 };
+	Model nano{ wnd.Gfx(),"Models\\nano_textured\\nanosuit.obj",2.0f };
+
 	//TestPlane tp{ wnd.Gfx(),1.0 };
 	// 一些有关于导入模型的控制IMGUI配置
 	/*struct

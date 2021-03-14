@@ -44,7 +44,7 @@ private:
 		float attQuad;
 	};
 private:
-	PointLightCBuf cbData;							 // 常量结构体实例
+	PointLightCBuf cbData;							 // 常量结构体实例;依次是pos,ambient.diffuse,diffuseIntensity,attconst,attLin,attQuad
 
 	mutable SolidSphere mesh;						 // 灯泡网格体
 	mutable Bind::PixelConstantBuffer<PointLightCBuf> cbuf;// 像素常数缓存

@@ -17,7 +17,15 @@ TestPlane::TestPlane(Graphics& gfx, float size)
 	AddBind(IndexBuffer::Resolve(gfx, geometryTag, model.indices));//创建索引缓存
 
 	AddBind(Texture::Resolve(gfx, "Images\\brickwall.jpg",		  0u));//创建漫反射纹理
-	AddBind(Texture::Resolve(gfx, "Images\\brickwall_normal.jpg", 1u));//创建法线纹理
+	
+	/* 
+	* PS!!!  这里读取的是brickwall_normal_obj.png
+	* 原因是因为PSNormalMapObject.hlsl里使用的是逻辑是先采样object space里的图片（objectNormal = normalSample * 2.0f - 1.0f）
+	* 之后通过与modelView矩阵相乘才得到view space的法线
+	* 它是切线空间的法线贴图;由于对应shader里Texture2D nmap : register(t2);
+	* 所以这里插槽也要匹配，设为2号槽位		
+	*/
+	AddBind(Texture::Resolve(gfx, "Images\\brickwall_normal_obj.png", 2u));
 
 	auto pvs = VertexShader::Resolve(gfx, "PhongVS.cso");
 	auto pvsbc = pvs->GetBytecode();

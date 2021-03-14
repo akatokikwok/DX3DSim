@@ -6,20 +6,42 @@
 #include "GDIPlusManager.h"
 #include "imgui/imgui.h"
 #include "VertexBuffer.h"
+#include "NormalMapTwerker.h"
+#include <shellapi.h>
 
 namespace dx = DirectX;
 
 GDIPlusManager gdipm;
 
-App::App()
+App::App(const std::string& commandLine)
 	:
-	wnd(1280, 720, "The GRB'S Rending Box")
-	,light(wnd.Gfx())
-	//,plane(wnd.Gfx(), 3.0f)
-	//,cube(wnd.Gfx(), 4.0f)
+	commandLine(commandLine),
+	wnd(1280, 720, "The GRB'S Rending Box"),
+	light(wnd.Gfx())	
 {
-	//wall.SetRootTransform(dx::XMMatrixTranslation(-1.5f, 0.0f, 0.0f)); //设置墙模型的根节点Transform
-	//tp.SetPos({ 1.5f,0.0f,0.0f });										//设置TestPlane绘制物的位置
+	// makeshift cli for doing some preprocessing 
+	if (this->commandLine != "")
+	{
+		int nArgs;
+		const auto pLineW = GetCommandLineW();
+		const auto pArgs = CommandLineToArgvW(pLineW, &nArgs);//解析命令行字符并获得指向命令行的一串参数指针数组
+		if (nArgs >= 4 && std::wstring(pArgs[1]) == L"--ntwerk-rotx180")
+		{
+			const std::wstring pathInWide = pArgs[2];
+			const std::wstring pathOutWide = pArgs[3];
+			// 调用静态方法将 图片按X轴翻转180°
+			NormalMapTwerker::RotateXAxis180(
+				std::string(pathInWide.begin(), pathInWide.end()),
+				std::string(pathOutWide.begin(), pathOutWide.end())
+			);
+			throw std::runtime_error("Normal map processed successfully. ");//在上一步执行过操作之后本步抛出一个通知
+		}
+	}
+
+	wall.SetRootTransform(dx::XMMatrixTranslation(-12.0f, 0.0f, 0.0f));//设置墙模型的根节点Transform
+	tp.SetPos({ 12.0f,0.0f,0.0f });									//设置TestPlane绘制物的位置
+	gobber.SetRootTransform(dx::XMMatrixTranslation(0.0f, 0.0f, -4.0f));
+	nano.SetRootTransform(dx::XMMatrixTranslation(0.0f, -7.0f, 6.0f));
 
 	//auto a = Bind::VertexShader::Resolve(wnd.Gfx(), "PhongVS.cso");// 解析并拿到名为PhongVS.cso的顶点着色器
 	//auto b = Bind::Sampler::Resolve(wnd.Gfx());	//解析并拿到采样器
@@ -46,9 +68,9 @@ void App::DoFrame()
 	//	dx::XMMatrixTranslation(pos.x, pos.y, pos.z);// 自定义变换==旋转矩阵*移动矩阵
 	//nano.Draw(wnd.Gfx(), transform);// 绘制指定的模型
 
-	//wall.Draw(wnd.Gfx());
-	//tp.Draw(wnd.Gfx());
-	//nano.Draw(wnd.Gfx());
+	wall.Draw(wnd.Gfx());
+	tp.Draw(wnd.Gfx());
+	nano.Draw(wnd.Gfx());
 	gobber.Draw(wnd.Gfx());
 
 	//nano2.Draw(wnd.Gfx());
@@ -134,14 +156,13 @@ void App::DoFrame()
 	// 展示模型IMGUI窗口
 	//nano.ShowWindow("Model 1");
 	//nano2.ShowWindow("Model 2");
-	//plane.SpawnControlWindow(wnd.Gfx());
+	//plane.SpawnControlWindow(wnd.Gfx());	
 	
-	//wall.ShowWindow("Wall");
-	//tp.SpawnControlWindow(wnd.Gfx());
 	gobber.ShowWindow(wnd.Gfx(), "gobber");
 
-	//cube.SpawnControlWindow(wnd.Gfx());
-	//ShowRawInputWindow();
+	wall.ShowWindow(wnd.Gfx(), "Wall");
+	tp.SpawnControlWindow(wnd.Gfx());
+	nano.ShowWindow(wnd.Gfx(), "Nano");
 
 	// present
 	wnd.Gfx().EndFrame();

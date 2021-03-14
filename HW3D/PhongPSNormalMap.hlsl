@@ -1,15 +1,20 @@
 /* 带法线的像素shader*/
 
-cbuffer LightCBuf// 光源常量;位于[0]
-{
-    float3 lightPos;
-    float3 ambient;
-    float3 diffuseColor;
-    float diffuseIntensity;
-    float attConst;
-    float attLin;
-    float attQuad;
-};
+//cbuffer LightCBuf// 光源常量;位于[0]
+//{
+//    float3 lightPos;
+//    float3 ambient;
+//    float3 diffuseColor;
+//    float diffuseIntensity;
+//    float attConst;
+//    float attLin;
+//    float attQuad;
+//};
+
+#include "ShaderOps.hlsl"
+#include "LightVectorData.hlsl"
+
+#include "PointLight.hlsl"
 
 cbuffer ObjectCBuf//模型里一些参数常量;位于[1]
 {
@@ -32,53 +37,52 @@ Texture2D nmap : register(t2);  // 约定俗成情况下，一般像素shader里
 SamplerState splr;
 
 
-float4 main(float3 viewPos : Position, float3 viewNormal : Normal, float3 tan : Tangent, float3 bitan : Bitangent, float2 tc : Texcoord) : SV_Target
+float4 main(float3 viewFragPos : Position, float3 viewNormal : Normal, 
+    float3 viewTan : Tangent, float3 viewBitan : Bitangent, float2 tc : Texcoord) : SV_Target
 {
-    // sample normal from map if normal mapping enabled
+    // normalize the mesh normal
+    viewNormal = normalize(viewNormal);
+    // replace normal with mapped if normal mapping enabled
     // 说明：DirectX坐标是以左上角为0，而OPENGL是以左下角为0
     if (normalMapEnabled)
     {
         // build the tranform (rotation) into tangent space;切线空间转视图空间的3X3旋转矩阵(利用TBN)
-        const float3x3 tanToView = float3x3(
-            normalize(tan),
-            normalize(bitan),
-            normalize(viewNormal)
-        );        
+        //const float3x3 tanToView = float3x3(
+        //    normalize(tan),
+        //    normalize(bitan),
+        //    normalize(viewNormal)
+        //);        
         
         // sample and unpack the normal from texture into tangent space        
-        const float3 normalSample = nmap.Sample(splr, tc).xyz;//先对法线贴图采样
+        //const float3 normalSample = nmap.Sample(splr, tc).xyz;//先对法线贴图采样
         
         /* |-- T --|                    |-- X --|
            |-- B --|   <==对应关系==>    |-- Z --|             
            |-- N --|                    |-- Y --|
            由于XYZ坐标转换成 TBN坐标是 TNB的顺序，所以n是第二个分量
-        */
-              
-        float3 tanNormal;
-        tanNormal = normalSample * 2.0f - 1.0f;
-        tanNormal.y = -tanNormal.y;//对第二个分量进行处理
+        */              
+        //float3 tanNormal;
+        //tanNormal = normalSample * 2.0f - 1.0f;
+        //tanNormal.y = -tanNormal.y;//对第二个分量进行处理
         
         // 把法线从切线空间转移到视图空间;注意重新归一化
-        viewNormal = normalize( mul(tanNormal, tanToView) );
+        viewNormal = MapNormal(normalize(viewTan), normalize(viewBitan), viewNormal, tc, nmap, splr);
         
-        //n = mul(n, (float3x3) modelView); //让n与MV矩阵相乘
     }
     
     // 主逻辑 ===============================================================================
     
 	// fragment to light vector data
-    const float3 vToL = lightPos - viewPos;
-    const float distToL = length(vToL);
-    const float3 dirToL = vToL / distToL;
+    const LightVectorData lv = CalculateLightVectorData(viewLightPos, viewFragPos);
 	// attenuation
-    const float att = 1.0f / (attConst + attLin * distToL + attQuad * (distToL * distToL));
-	// diffuse intensity
-    const float3 diffuse = diffuseColor * diffuseIntensity * att * max(0.0f, dot(dirToL, viewNormal));
-	// reflected light vector
-    const float3 w = viewNormal * dot(vToL, viewNormal);
-    const float3 r = w * 2.0f - vToL;
-	// calculate specular intensity based on angle between viewing vector and reflection vector, narrow with power function
-    const float3 specular = att * (diffuseColor * diffuseIntensity) * specularIntensity * pow(max(0.0f, dot(normalize(-r), normalize(viewPos))), specularPower);
-	// final color
+    const float att = Attenuate(attConst, attLin, attQuad, lv.distToL);
+	// diffuse
+    const float3 diffuse = Diffuse(diffuseColor, diffuseIntensity, att, lv.dirToL, viewNormal);
+    // specular
+    const float3 specular = Speculate(
+        diffuseColor, diffuseIntensity, viewNormal,
+        lv.vToL, viewFragPos, att, specularPower
+    );
+    // final color
     return float4(saturate((diffuse + ambient) * tex.Sample(splr, tc).rgb + specular), 1.0f);
 }
