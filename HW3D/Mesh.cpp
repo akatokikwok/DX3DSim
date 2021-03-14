@@ -574,7 +574,7 @@ std::unique_ptr<Mesh> Model::ParseMesh(Graphics& gfx, const aiMesh& mesh,
 			BOOL  normalMapEnabled = TRUE;
 			float padding[1];
 		} pmc;
-		//pmc.specularPower = shininess; // 注意这里结构体的成员高光功率由之前定义好的高光参数决定
+		pmc.specularPower = shininess; // 注意这里结构体的成员高光功率由之前定义好的高光参数决定
 		pmc.specularIntensity = (specularColor.x + specularColor.y + specularColor.z) / 3.0f; //高光强度等于高光颜色各分量和的三分之一
 		bindablePtrs.push_back(Bind::PixelConstantBuffer<PSMaterialConstantDiffnorm>::Resolve(gfx, pmc, 1u));//创建出像素常数缓存<材质>
 	}
