@@ -1,10 +1,11 @@
-cbuffer CBuf
-{
-	//matrix model;
+//cbuffer CBuf
+//{
+//	//matrix model;
 	
-    matrix modelView; // 现在更正为modelview,以便之后的VSOut结构体worldpos不再是世界坐标而是相对于摄像机的坐标
-	matrix modelViewProj;
-};
+//    matrix modelView; // 现在更正为modelview,以便之后的VSOut结构体worldpos不再是世界坐标而是相对于摄像机的坐标
+//	matrix modelViewProj;
+//};
+#include "Transform.hlsl"
 
 struct VSOut
 {

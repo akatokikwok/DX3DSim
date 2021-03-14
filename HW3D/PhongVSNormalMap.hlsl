@@ -1,10 +1,11 @@
 /* 带法线的顶点shader*/
 
-cbuffer CBuf
-{
-    matrix modelView;
-    matrix modelViewProj;
-};
+//cbuffer CBuf
+//{
+//    matrix modelView;
+//    matrix modelViewProj;
+//};
+#include "Transform.hlsl"
 
 struct VSOut
 {
