@@ -35,14 +35,6 @@ void TexturePreprocessor::FlipYAllNormalMapsInObj(const std::string& objPath)
 		throw ModelException(__LINE__, __FILE__, imp.GetErrorString());
 	}
 
-	// function for processing each normal in texture
-	using namespace DirectX;
-	const auto flipY = XMVectorSet(1.0f, -1.0f, 1.0f, 1.0f);
-	// Lambda表达式 计算任意入参向量与{1,-1,1,1}的分量乘积
-	const auto ProcessNormal = [flipY](FXMVECTOR n) -> XMVECTOR
-	{
-		return XMVectorMultiply(n, flipY);//拿到
-	};
 
 	// loop through materials and process any normal maps;遍历mesh里的所有材质并且处理所有的法线贴图
 	for (auto i = 0u; i < pScene->mNumMaterials; i++)
@@ -52,9 +44,25 @@ void TexturePreprocessor::FlipYAllNormalMapsInObj(const std::string& objPath)
 		if (mat.GetTexture(aiTextureType_NORMALS, 0, &texFileName) == aiReturn_SUCCESS)
 		{
 			const auto path = rootPath + texFileName.C_Str();
-			TransformFile(path, path, ProcessNormal);
+			//TransformFile(path, path, ProcessNormal);
+			FlipYNormalMap(path, path);
 		}
 	}
+}
+
+void TexturePreprocessor::FlipYNormalMap(const std::string& pathIn, const std::string& pathOut)
+{
+	
+	// function for processing each normal in texture
+	using namespace DirectX;
+	const auto flipY = XMVectorSet(1.0f, -1.0f, 1.0f, 1.0f);
+	// Lambda表达式 计算任意入参向量与{1,-1,1,1}的分量乘积
+	const auto ProcessNormal = [flipY](FXMVECTOR n) -> XMVECTOR
+	{
+		return XMVectorMultiply(n, flipY);//拿到
+	};
+	// execute processing over every texel in file
+	TransformFile(pathIn, pathOut, ProcessNormal);
 }
 
 DirectX::XMVECTOR TexturePreprocessor::ColorToVector(Surface::Color c) noexcept
