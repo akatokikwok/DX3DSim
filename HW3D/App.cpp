@@ -48,7 +48,7 @@ App::App(const std::string& commandLine)
 	//auto c = Bind::Sampler::Resolve(wnd.Gfx());
 	//wnd.DisableCursor();//应用初始化的时候默认关闭光标
 
-	wnd.Gfx().SetProjection(dx::XMMatrixPerspectiveLH(1.0f, 9.0f / 16.0f, 0.5f, 40.0f));
+	wnd.Gfx().SetProjection(dx::XMMatrixPerspectiveLH(1.0f, 9.0f / 16.0f, 0.5f, 400.0f));
 }
 
 void App::DoFrame()
