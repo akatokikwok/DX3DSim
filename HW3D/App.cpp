@@ -6,7 +6,7 @@
 #include "GDIPlusManager.h"
 #include "imgui/imgui.h"
 #include "VertexBuffer.h"
-#include "NormalMapTwerker.h"
+#include "TexturePreprocessor.h"
 #include <shellapi.h>
 
 namespace dx = DirectX;
@@ -25,12 +25,20 @@ App::App(const std::string& commandLine)
 		int nArgs;
 		const auto pLineW = GetCommandLineW();
 		const auto pArgs = CommandLineToArgvW(pLineW, &nArgs);//解析命令行字符并获得指向命令行的一串参数指针数组
-		if (nArgs >= 4 && std::wstring(pArgs[1]) == L"--ntwerk-rotx180")
+		if (nArgs >= 3 && std::wstring(pArgs[1]) == L"--twerk-objnorm")
+		{
+			const std::wstring pathInWide = pArgs[2];
+			//按Y轴翻转入参模型里所有的法线贴图
+			TexturePreprocessor::FlipYAllNormalMapsInObj(
+				std::string(pathInWide.begin(), pathInWide.end())
+			);
+			throw std::runtime_error("Normal maps all processed successfully. Just kidding about that whole runtime error thing.");
+		}
+		else if (nArgs >= 3 && std::wstring(pArgs[1]) == L"--twerk-flipy")
 		{
 			const std::wstring pathInWide = pArgs[2];
 			const std::wstring pathOutWide = pArgs[3];
-			// 调用静态方法将 图片按X轴翻转180°
-			NormalMapTwerker::RotateXAxis180(
+			TexturePreprocessor::FlipYNormalMap(
 				std::string(pathInWide.begin(), pathInWide.end()),
 				std::string(pathOutWide.begin(), pathOutWide.end())
 			);
@@ -38,17 +46,17 @@ App::App(const std::string& commandLine)
 		}
 	}
 
-	wall.SetRootTransform(dx::XMMatrixTranslation(-12.0f, 0.0f, 0.0f));//设置墙模型的根节点Transform
-	tp.SetPos({ 12.0f,0.0f,0.0f });									//设置TestPlane绘制物的位置
-	gobber.SetRootTransform(dx::XMMatrixTranslation(0.0f, 0.0f, -4.0f));
-	nano.SetRootTransform(dx::XMMatrixTranslation(0.0f, -7.0f, 6.0f));
+	//wall.SetRootTransform(dx::XMMatrixTranslation(-12.0f, 0.0f, 0.0f));//设置墙模型的根节点Transform
+	//tp.SetPos({ 12.0f,0.0f,0.0f });									//设置TestPlane绘制物的位置
+	//gobber.SetRootTransform(dx::XMMatrixTranslation(0.0f, 0.0f, -4.0f));
+	//nano.SetRootTransform(dx::XMMatrixTranslation(0.0f, -7.0f, 6.0f));
 
 	//auto a = Bind::VertexShader::Resolve(wnd.Gfx(), "PhongVS.cso");// 解析并拿到名为PhongVS.cso的顶点着色器
 	//auto b = Bind::Sampler::Resolve(wnd.Gfx());	//解析并拿到采样器
 	//auto c = Bind::Sampler::Resolve(wnd.Gfx());
 	//wnd.DisableCursor();//应用初始化的时候默认关闭光标
 
-	wnd.Gfx().SetProjection(dx::XMMatrixPerspectiveLH(1.0f, 9.0f / 16.0f, 0.5f, 40.0f));
+	wnd.Gfx().SetProjection(dx::XMMatrixPerspectiveLH(1.0f, 9.0f / 16.0f, 0.5f, 400.0f));
 }
 
 void App::DoFrame()
@@ -68,16 +76,16 @@ void App::DoFrame()
 	//	dx::XMMatrixTranslation(pos.x, pos.y, pos.z);// 自定义变换==旋转矩阵*移动矩阵
 	//nano.Draw(wnd.Gfx(), transform);// 绘制指定的模型
 
-	wall.Draw(wnd.Gfx());
-	tp.Draw(wnd.Gfx());
-	nano.Draw(wnd.Gfx());
-	gobber.Draw(wnd.Gfx());
+	//wall.Draw(wnd.Gfx());
+	//tp.Draw(wnd.Gfx());
+	//nano.Draw(wnd.Gfx());
+	//gobber.Draw(wnd.Gfx());
 
 	//nano2.Draw(wnd.Gfx());
 	light.Draw(wnd.Gfx());//注意此处灯光被覆写，所以下一步绘制plane模型时候保留了插槽0，所以会渲染失败，故要在着色器里将灯光着色器绑定至下一个插槽1
 	//plane.Draw(wnd.Gfx());
 	//cube.Draw(wnd.Gfx());
-
+	sponza.Draw(wnd.Gfx());
 
 	while (const auto e = wnd.kbd.ReadKey())
 	{
@@ -158,12 +166,12 @@ void App::DoFrame()
 	//nano2.ShowWindow("Model 2");
 	//plane.SpawnControlWindow(wnd.Gfx());	
 	
-	gobber.ShowWindow(wnd.Gfx(), "gobber");
+	//gobber.ShowWindow(wnd.Gfx(), "gobber");
+	//wall.ShowWindow(wnd.Gfx(), "Wall");
+	//tp.SpawnControlWindow(wnd.Gfx());
+	//nano.ShowWindow(wnd.Gfx(), "Nano");
 
-	wall.ShowWindow(wnd.Gfx(), "Wall");
-	tp.SpawnControlWindow(wnd.Gfx());
-	nano.ShowWindow(wnd.Gfx(), "Nano");
-
+	sponza.ShowWindow(wnd.Gfx(), "Sponza");
 	// present
 	wnd.Gfx().EndFrame();
 }
