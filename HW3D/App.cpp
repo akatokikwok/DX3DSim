@@ -6,7 +6,7 @@
 #include "GDIPlusManager.h"
 #include "imgui/imgui.h"
 #include "VertexBuffer.h"
-#include "NormalMapTwerker.h"
+#include "TexturePreprocessor.h"
 #include <shellapi.h>
 
 namespace dx = DirectX;
@@ -25,14 +25,12 @@ App::App(const std::string& commandLine)
 		int nArgs;
 		const auto pLineW = GetCommandLineW();
 		const auto pArgs = CommandLineToArgvW(pLineW, &nArgs);//解析命令行字符并获得指向命令行的一串参数指针数组
-		if (nArgs >= 4 && std::wstring(pArgs[1]) == L"--ntwerk-rotx180")
+		if (nArgs >= 3 && std::wstring(pArgs[1]) == L"--twerk-objnorm")
 		{
 			const std::wstring pathInWide = pArgs[2];
-			const std::wstring pathOutWide = pArgs[3];
-			// 调用静态方法将 图片按X轴翻转180°
-			NormalMapTwerker::RotateXAxis180(
-				std::string(pathInWide.begin(), pathInWide.end()),
-				std::string(pathOutWide.begin(), pathOutWide.end())
+			//按Y轴翻转入参模型里所有的法线贴图
+			TexturePreprocessor::FlipYAllNormalMapsInObj(
+				std::string(pathInWide.begin(), pathInWide.end())
 			);
 			throw std::runtime_error("Normal map processed successfully. ");//在上一步执行过操作之后本步抛出一个通知
 		}
