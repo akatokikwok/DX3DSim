@@ -38,10 +38,10 @@ App::App(const std::string& commandLine)
 		}
 	}
 
-	wall.SetRootTransform(dx::XMMatrixTranslation(-12.0f, 0.0f, 0.0f));//设置墙模型的根节点Transform
-	tp.SetPos({ 12.0f,0.0f,0.0f });									//设置TestPlane绘制物的位置
-	gobber.SetRootTransform(dx::XMMatrixTranslation(0.0f, 0.0f, -4.0f));
-	nano.SetRootTransform(dx::XMMatrixTranslation(0.0f, -7.0f, 6.0f));
+	//wall.SetRootTransform(dx::XMMatrixTranslation(-12.0f, 0.0f, 0.0f));//设置墙模型的根节点Transform
+	//tp.SetPos({ 12.0f,0.0f,0.0f });									//设置TestPlane绘制物的位置
+	//gobber.SetRootTransform(dx::XMMatrixTranslation(0.0f, 0.0f, -4.0f));
+	//nano.SetRootTransform(dx::XMMatrixTranslation(0.0f, -7.0f, 6.0f));
 
 	//auto a = Bind::VertexShader::Resolve(wnd.Gfx(), "PhongVS.cso");// 解析并拿到名为PhongVS.cso的顶点着色器
 	//auto b = Bind::Sampler::Resolve(wnd.Gfx());	//解析并拿到采样器
@@ -68,16 +68,16 @@ void App::DoFrame()
 	//	dx::XMMatrixTranslation(pos.x, pos.y, pos.z);// 自定义变换==旋转矩阵*移动矩阵
 	//nano.Draw(wnd.Gfx(), transform);// 绘制指定的模型
 
-	wall.Draw(wnd.Gfx());
-	tp.Draw(wnd.Gfx());
-	nano.Draw(wnd.Gfx());
-	gobber.Draw(wnd.Gfx());
+	//wall.Draw(wnd.Gfx());
+	//tp.Draw(wnd.Gfx());
+	//nano.Draw(wnd.Gfx());
+	//gobber.Draw(wnd.Gfx());
 
 	//nano2.Draw(wnd.Gfx());
 	light.Draw(wnd.Gfx());//注意此处灯光被覆写，所以下一步绘制plane模型时候保留了插槽0，所以会渲染失败，故要在着色器里将灯光着色器绑定至下一个插槽1
 	//plane.Draw(wnd.Gfx());
 	//cube.Draw(wnd.Gfx());
-
+	sponza.Draw(wnd.Gfx());
 
 	while (const auto e = wnd.kbd.ReadKey())
 	{
@@ -158,12 +158,12 @@ void App::DoFrame()
 	//nano2.ShowWindow("Model 2");
 	//plane.SpawnControlWindow(wnd.Gfx());	
 	
-	gobber.ShowWindow(wnd.Gfx(), "gobber");
+	//gobber.ShowWindow(wnd.Gfx(), "gobber");
+	//wall.ShowWindow(wnd.Gfx(), "Wall");
+	//tp.SpawnControlWindow(wnd.Gfx());
+	//nano.ShowWindow(wnd.Gfx(), "Nano");
 
-	wall.ShowWindow(wnd.Gfx(), "Wall");
-	tp.SpawnControlWindow(wnd.Gfx());
-	nano.ShowWindow(wnd.Gfx(), "Nano");
-
+	sponza.ShowWindow(wnd.Gfx(), "Sponza");
 	// present
 	wnd.Gfx().EndFrame();
 }
