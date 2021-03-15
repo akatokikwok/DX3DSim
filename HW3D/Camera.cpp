@@ -66,9 +66,9 @@ void Camera::Reset() noexcept
 	/*r = 20.0f;
 	theta = 0.0f;
 	phi = 0.0f;*/
-	pos = { -10.0f,0.0f,-20.0f };
+	pos = { -13.5f,6.0f,3.5f };
 	pitch = 0.0f;
-	yaw = 0.45f;
+	yaw = PI / 2.0f;
 	//roll = 0.0f;
 }
 
