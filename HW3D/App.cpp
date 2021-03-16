@@ -44,6 +44,16 @@ App::App(const std::string& commandLine)
 			);
 			throw std::runtime_error("Normal map processed successfully. ");//在上一步执行过操作之后本步抛出一个通知
 		}
+		else if (nArgs >= 4 && std::wstring(pArgs[1]) == L"--twerk-validate")///检索检查法线贴图
+		{
+			const std::wstring minWide = pArgs[2];
+			const std::wstring maxWide = pArgs[3];
+			const std::wstring pathWide = pArgs[4];
+			TexturePreprocessor::ValidateNormalMap(
+				std::string(pathWide.begin(), pathWide.end()), std::stof(minWide), std::stof(maxWide)
+			);
+			throw std::runtime_error("Normal map validated successfully. Just kidding about that whole runtime error thing.");
+		}
 	}
 
 	//wall.SetRootTransform(dx::XMMatrixTranslation(-12.0f, 0.0f, 0.0f));//设置墙模型的根节点Transform
