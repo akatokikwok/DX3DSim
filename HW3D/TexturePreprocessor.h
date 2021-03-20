@@ -26,8 +26,8 @@ private:
 	*/
 	template<typename F>
 	static void TransformSurface(Surface& surf, F&& func);	
-	/* */
+	/* 图片纹理转换成向量*/
 	static DirectX::XMVECTOR ColorToVector(Surface::Color c) noexcept;
-	/* */
+	/* 向量转换成颜色纹理*/
 	static Surface::Color VectorToColor(DirectX::FXMVECTOR n) noexcept;
 };
