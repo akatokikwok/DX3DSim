@@ -416,6 +416,7 @@ std::unique_ptr<Mesh> Model::ParseMesh(Graphics& gfx, const aiMesh& mesh,
 
 	bool hasSpecularMap = false;//高光纹理开关;默认不带有高光贴图
 	bool hasAlphaGloss = false;	//高光纹理的透明通道开关
+	bool hasAlphaDiffuse = false;
 	bool hasNormalMap = false;	//法线纹理开关,默认关闭
 	bool hasDiffuseMap = false;	//漫反射纹理开关,默认关闭
 	float shininess = 2.0f;	//自定义一个高光功率系数，默认为2.0f
@@ -434,7 +435,10 @@ std::unique_ptr<Mesh> Model::ParseMesh(Graphics& gfx, const aiMesh& mesh,
 		/// 读硬盘里漫反射纹理
 		if (material.GetTexture(aiTextureType_DIFFUSE, 0, &texFileName) == aiReturn_SUCCESS)	//检查是否在硬盘上持有漫反射纹理
 		{
-			bindablePtrs.push_back(Bind::Texture::Resolve(gfx, (rootPath + texFileName.C_Str()), 0 ));	// 创建(实际上是Reslove泛型方法按给定参数查找并获得了)1个漫反射纹理, 位于插槽0 ，表示第[0]个纹理
+			//bindablePtrs.push_back(Bind::Texture::Resolve(gfx, (rootPath + texFileName.C_Str()), 0 ));	// 创建(实际上是Reslove泛型方法按给定参数查找并获得了)1个漫反射纹理, 位于插槽0 ，表示第[0]个纹理
+			auto tex = Texture::Resolve(gfx, rootPath + texFileName.C_Str());
+			hasAlphaDiffuse = tex->HasAlpha();
+			bindablePtrs.push_back(std::move(tex));
 			hasDiffuseMap = true;																// 若查到漫反射纹理就打开漫反射开关
 		}		
 		else/* 若硬盘里不存在漫反射贴图*/
@@ -760,7 +764,8 @@ std::unique_ptr<Mesh> Model::ParseMesh(Graphics& gfx, const aiMesh& mesh,
 	{
 		throw std::runtime_error("terrible combination of textures in material smh");
 	}
-	
+	// all materials need a blending mode
+	bindablePtrs.push_back(Blender::Resolve(gfx, hasAlphaDiffuse));
 
 	return std::make_unique<Mesh>(gfx, std::move(bindablePtrs));
 }
