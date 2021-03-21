@@ -14,6 +14,11 @@ namespace Bind
 		samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
 		samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
 
+		/// 为了使用MIPMAP技术,下面采样要设置LOD
+		samplerDesc.MipLODBias = 0.0f;//添加一个LOD偏差系数因子,它负责当进行LOD进行计算的时候可以使用它抵消一些
+		samplerDesc.MinLOD = 0.0f;//LOD最小级别
+		samplerDesc.MaxLOD = D3D11_FLOAT32_MAX;//LOD最大级别
+
 		GFX_THROW_INFO(GetDevice(gfx)->CreateSamplerState(&samplerDesc, &pSampler));
 	}
 
