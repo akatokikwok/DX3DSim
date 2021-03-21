@@ -19,6 +19,8 @@ namespace Bind
 		std::string GetUID() const noexcept override;
 		bool HasAlpha() const noexcept;
 	private:
+		static UINT CalculateNumberOfMipLevels(UINT width, UINT height) noexcept;
+	private:
 		unsigned int slot;// 插槽用于计算使用多少次纹理
 	protected:
 		bool hasAlpha = false;
