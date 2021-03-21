@@ -36,13 +36,23 @@ namespace Bind
 		textureDesc.CPUAccessFlags = 0;
 		// 很明显MiscFlags要设置成生成MIPMAPS
 		textureDesc.MiscFlags = D3D11_RESOURCE_MISC_GENERATE_MIPS;
-		D3D11_SUBRESOURCE_DATA sd = {};
-		sd.pSysMem = s.GetBufferPtr();
-		sd.SysMemPitch = s.GetWidth() * sizeof(Surface::Color);
+
+		//D3D11_SUBRESOURCE_DATA sd = {};
+		//sd.pSysMem = s.GetBufferPtr();
+		//sd.SysMemPitch = s.GetWidth() * sizeof(Surface::Color);
+
+		// 创建2D纹理 pTexture;
 		wrl::ComPtr<ID3D11Texture2D> pTexture;
+		// 注意!! 第二个参数实际上一个指针指向 一个用来描述SubResource的数组;这里设置为空,是为了下一步让s写入SubResource
+		// 目前的情况是我仅持有原始纹理,而并没有一堆subresource;所以这里先填充第一个完整的layer层;
+		// 之后再使用下文的GenerateMips()方法获取剩余的mipmap;所以假如用Subresource去初始这张纹理,则会达不成预计效果
 		GFX_THROW_INFO(GetDevice(gfx)->CreateTexture2D(
-			&textureDesc, &sd, &pTexture
+			&textureDesc, /*&sd,*/ nullptr, &pTexture
 		));
+		// 将图片s数据 写入 top mip level
+		GetContext(gfx)->UpdateSubresource(
+			pTexture.Get(), 0u, nullptr, s.GetBufferPtrConst(), s.GetWidth() * sizeof(Surface::Color), 0u
+		);
 
 		// 创建这个纹理的资源视图
 		D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
@@ -51,6 +61,7 @@ namespace Bind
 		srvDesc.Texture2D.MostDetailedMip = 0;
 		// 设置成-1表明要是用所有的MIP
 		srvDesc.Texture2D.MipLevels = -1;
+		// 创建与pTexture2d相关联的视图堆
 		GFX_THROW_INFO(GetDevice(gfx)->CreateShaderResourceView(
 			pTexture.Get(), &srvDesc, &pTextureView
 		));
@@ -82,6 +93,13 @@ namespace Bind
 	bool Texture::HasAlpha() const noexcept
 	{
 		return hasAlpha;
+	}
+
+	UINT Texture::CalculateNumberOfMipLevels(UINT width, UINT height) noexcept
+	{
+		const float xSteps = std::ceil(log2((float)width));
+		const float ySteps = std::ceil(log2((float)height));
+		return (UINT)std::max(xSteps, ySteps);
 	}
 
 }
