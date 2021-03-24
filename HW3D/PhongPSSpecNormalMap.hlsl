@@ -85,9 +85,12 @@ float4 main(float3 viewFragPos : Position /*相机观察位置*/, float3 viewNor
     const float3 specularReflected = Speculate(specularReflectionColor, 1.0f, viewNormal,
         lv.vToL, viewFragPos, att, specularPower
     );
+    // 采样漫反射贴图
+    float4 dtex = tex.Sample(splr, tc);
     
 	// final color = attenuate diffuse & ambient by diffuse texture color and add specular reflected
-    return float4(saturate((diffuse + ambient) * tex.Sample(splr, tc).rgb + specularReflected), 1.0f);
+    //return float4(saturate((diffuse + ambient) * tex.Sample(splr, tc).rgb + specularReflected), 1.0f);
+    return float4(saturate((diffuse + ambient) * dtex.rgb + specularReflected), dtex.a);//注意最后参数是附上了Alpha通道
     
     
     
