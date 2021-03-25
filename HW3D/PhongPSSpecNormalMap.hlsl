@@ -90,7 +90,7 @@ float4 main(float3 viewFragPos : Position /*相机观察位置*/, float3 viewNor
         lv.vToL, viewFragPos, att, specularPower
     );
     // sample diffuse texture
-    float4 dtex = tex.Sample(splr, tc);
+    //float4 dtex = tex.Sample(splr, tc);
     
 	// final color = attenuate diffuse & ambient by diffuse texture color and add specular reflected
     //return float4(saturate((diffuse + ambient) * tex.Sample(splr, tc).rgb + specularReflected), 1.0f);
