@@ -416,7 +416,7 @@ std::unique_ptr<Mesh> Model::ParseMesh(Graphics& gfx, const aiMesh& mesh,
 
 	bool hasSpecularMap = false;//高光纹理开关;默认不带有高光贴图
 	bool hasAlphaGloss = false;	//高光纹理的透明通道开关
-	bool hasAlphaDiffuse = false;
+	bool hasAlphaDiffuse = false;//检查漫反射贴图是否携带Alpha通道
 	bool hasNormalMap = false;	//法线纹理开关,默认关闭
 	bool hasDiffuseMap = false;	//漫反射纹理开关,默认关闭
 	float shininess = 2.0f;	//自定义一个高光功率系数，默认为2.0f
@@ -764,8 +764,8 @@ std::unique_ptr<Mesh> Model::ParseMesh(Graphics& gfx, const aiMesh& mesh,
 	{
 		throw std::runtime_error("terrible combination of textures in material smh");
 	}
-	// all materials need a blending mode
-	bindablePtrs.push_back(Blender::Resolve(gfx, hasAlphaDiffuse));
+	// 每个材质有alpha状态,但是否启用混合取决于"hasAlphaDiffuse"这个标签;
+	//bindablePtrs.push_back(Blender::Resolve(gfx, hasAlphaDiffuse));//此处先注释,因为不做alpha混合,而是先执行alpha测试
 
 	return std::make_unique<Mesh>(gfx, std::move(bindablePtrs));
 }

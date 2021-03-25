@@ -41,6 +41,10 @@ SamplerState splr; // 采样器
 float4 main(float3 viewFragPos : Position /*相机观察位置*/, float3 viewNormal : Normal,
     float3 viewTan : Tangent, float3 viewBitan : Bitangent, float2 tc : Texcoord) : SV_Target
 {
+    // 先做alpha测试    
+    float4 dtex = tex.Sample(splr, tc);//先采样漫反射贴图
+    clip(dtex.a < 0.1f ? -1 : 1); //再做裁剪测试(alpha测试);哪个值非常小就丢弃像素让像素着色器忽略这个像素
+    
     // normalize the mesh normal
     viewNormal = normalize(viewNormal);
     
@@ -85,8 +89,6 @@ float4 main(float3 viewFragPos : Position /*相机观察位置*/, float3 viewNor
     const float3 specularReflected = Speculate(specularReflectionColor, 1.0f, viewNormal,
         lv.vToL, viewFragPos, att, specularPower
     );
-    // 采样漫反射贴图
-    float4 dtex = tex.Sample(splr, tc);
     
 	// final color = attenuate diffuse & ambient by diffuse texture color and add specular reflected
     //return float4(saturate((diffuse + ambient) * tex.Sample(splr, tc).rgb + specularReflected), 1.0f);
