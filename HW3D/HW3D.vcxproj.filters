@@ -169,7 +169,7 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Blender.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\Bindable</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -348,7 +348,7 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Blender.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\Bindable</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

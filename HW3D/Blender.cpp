@@ -12,28 +12,29 @@ namespace Bind
 
 		D3D11_BLEND_DESC blendDesc = {};
 		auto& brt = blendDesc.RenderTarget[0];
+		// 若启用混合效果
 		if (blending)
 		{
 			brt.BlendEnable = TRUE;
-			brt.SrcBlend = D3D11_BLEND_SRC_ALPHA;
-			brt.DestBlend = D3D11_BLEND_INV_SRC_ALPHA;
+			brt.SrcBlend = D3D11_BLEND_SRC_ALPHA;//源像素以Alpha作为乘数
+			brt.DestBlend = D3D11_BLEND_INV_SRC_ALPHA;//目标像素以1-Alpha作为乘数
 			brt.BlendOp = D3D11_BLEND_OP_ADD;
-			brt.SrcBlendAlpha = D3D11_BLEND_ZERO;
+			brt.SrcBlendAlpha = D3D11_BLEND_ZERO;  //可以使用混合alpha值,但是此时并不需要用到,暂设为0
 			brt.DestBlendAlpha = D3D11_BLEND_ZERO;
 			brt.BlendOpAlpha = D3D11_BLEND_OP_ADD;
-			brt.RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
+			brt.RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;//此处允许写入; 但若想值只写入蓝色或绿色通道,可以再微调这个参数
 		}
-		else
+		else //若不启用混合效果
 		{
 			brt.BlendEnable = FALSE;
 			brt.RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
 		}
-		GFX_THROW_INFO(GetDevice(gfx)->CreateBlendState(&blendDesc, &pBlender));
+		GFX_THROW_INFO(GetDevice(gfx)->CreateBlendState(&blendDesc, &pBlender));//创建混合器
 	}
 
 	void Blender::Bind(Graphics& gfx) noexcept
 	{
-		GetContext(gfx)->OMSetBlendState(pBlender.Get(), nullptr, 0xFFFFFFFFu);
+		GetContext(gfx)->OMSetBlendState(pBlender.Get(), nullptr, 0xFFFFFFFFu);//第二参数可以影响淡入淡出之类的效果;第三参数和多重采样或者抗锯齿相关
 	}
 
 	std::shared_ptr<Blender> Blender::Resolve(Graphics& gfx, bool blending)
