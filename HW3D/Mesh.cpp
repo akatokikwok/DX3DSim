@@ -767,6 +767,8 @@ std::unique_ptr<Mesh> Model::ParseMesh(Graphics& gfx, const aiMesh& mesh,
 	// 每个材质有alpha状态,但是否启用混合取决于"hasAlphaDiffuse"这个标签;
 	//bindablePtrs.push_back(Blender::Resolve(gfx, hasAlphaDiffuse));//此处先注释,因为不做alpha混合,而是先执行alpha测试
 
+	bindablePtrs.push_back(Bind::Rasterizer::Resolve(gfx, false));//光栅化阶段执行
+
 	return std::make_unique<Mesh>(gfx, std::move(bindablePtrs));
 }
 
