@@ -11,6 +11,7 @@ namespace Bind
 		INFOMAN(gfx);
 
 		D3D11_RASTERIZER_DESC rasterDesc = CD3D11_RASTERIZER_DESC(CD3D11_DEFAULT{});//使用异体方式快速创建光栅状态描述符
+		rasterDesc.CullMode = twoSided ? D3D11_CULL_NONE : D3D11_CULL_BACK;//用指定的bool决定裁剪模式
 
 		GFX_THROW_INFO(GetDevice(gfx)->CreateRasterizerState(&rasterDesc, &pRasterizer));
 	}
