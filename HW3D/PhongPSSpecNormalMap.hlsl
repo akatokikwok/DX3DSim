@@ -43,6 +43,9 @@ float4 main(float3 viewFragPos : Position /*表皮像素位置*/, float3 viewNor
 {
     // 先做alpha测试    
     float4 dtex = tex.Sample(splr, tc);//先采样漫反射贴图
+    
+    // 依据外部引用者是否携带MASK_BOI宏(本质上是遮罩贴图) 来开启翻转纹理法线和alpha测试丢弃透明像素
+    #ifdef MASK_BOI
     clip(dtex.a < 0.1f ? -1 : 1); //再做裁剪测试(alpha测试);哪个值非常小就丢弃像素让像素着色器忽略这个像素;这里设成0.1表示丢弃几乎完全透明的像素
     
     // 当使用背面三角形裁剪模式的时候(即纹理不带alpha的时候) 翻转纹理上的normal
@@ -50,6 +53,7 @@ float4 main(float3 viewFragPos : Position /*表皮像素位置*/, float3 viewNor
     {
         viewNormal = -viewNormal;
     }    
+    #endif
     
     // normalize the mesh normal
     viewNormal = normalize(viewNormal);
