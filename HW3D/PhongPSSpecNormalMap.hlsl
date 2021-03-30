@@ -38,12 +38,22 @@ SamplerState splr; // 采样器
 
 
 /* 主shader*/
-float4 main(float3 viewFragPos : Position /*相机观察位置*/, float3 viewNormal : Normal,
+float4 main(float3 viewFragPos : Position /*表皮像素位置*/, float3 viewNormal : Normal,
     float3 viewTan : Tangent, float3 viewBitan : Bitangent, float2 tc : Texcoord) : SV_Target
 {
     // 先做alpha测试    
     float4 dtex = tex.Sample(splr, tc);//先采样漫反射贴图
-    clip(dtex.a < 0.1f ? -1 : 1); //再做裁剪测试(alpha测试);哪个值非常小就丢弃像素让像素着色器忽略这个像素
+    
+    // 依据外部引用者是否携带MASK_BOI宏(本质上是遮罩贴图) 来开启翻转纹理法线和alpha测试丢弃透明像素
+    #ifdef MASK_BOI
+    clip(dtex.a < 0.1f ? -1 : 1); //再做裁剪测试(alpha测试);哪个值非常小就丢弃像素让像素着色器忽略这个像素;这里设成0.1表示丢弃几乎完全透明的像素
+    
+    // 当使用背面三角形裁剪模式的时候(即纹理不带alpha的时候) 翻转纹理上的normal
+    if (dot(viewNormal, viewFragPos) >= 0.0f)//一般情况下法线是指向相机的,若法线与相机视线朝向差不多,可以断定是背面;执行翻转纹理上法线即可
+    {
+        viewNormal = -viewNormal;
+    }    
+    #endif
     
     // normalize the mesh normal
     viewNormal = normalize(viewNormal);
@@ -89,8 +99,6 @@ float4 main(float3 viewFragPos : Position /*相机观察位置*/, float3 viewNor
     const float3 specularReflected = Speculate(specularReflectionColor, 1.0f, viewNormal,
         lv.vToL, viewFragPos, att, specularPower
     );
-    // sample diffuse texture
-    //float4 dtex = tex.Sample(splr, tc);
     
 	// final color = attenuate diffuse & ambient by diffuse texture color and add specular reflected
     //return float4(saturate((diffuse + ambient) * tex.Sample(splr, tc).rgb + specularReflected), 1.0f);

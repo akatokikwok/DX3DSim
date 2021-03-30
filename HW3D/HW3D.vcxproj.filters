@@ -171,6 +171,9 @@
     <ClCompile Include="Blender.cpp">
       <Filter>Source Files\Bindable</Filter>
     </ClCompile>
+    <ClCompile Include="Rasterizer.cpp">
+      <Filter>Source Files\Bindable</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="WindowsMessageMap.h">
@@ -350,6 +353,9 @@
     <ClInclude Include="Blender.h">
       <Filter>Header Files\Bindable</Filter>
     </ClInclude>
+    <ClInclude Include="Rasterizer.h">
+      <Filter>Header Files\Bindable</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="DXGetErrorDescription.inl">
@@ -403,6 +409,9 @@
       <Filter>Shader\Common</Filter>
     </FxCompile>
     <FxCompile Include="PhongPSSpec.hlsl">
+      <Filter>Shader</Filter>
+    </FxCompile>
+    <FxCompile Include="PhongPSSpecNormalMask.hlsl">
       <Filter>Shader</Filter>
     </FxCompile>
   </ItemGroup>

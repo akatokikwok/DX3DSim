@@ -540,7 +540,10 @@ std::unique_ptr<Mesh> Model::ParseMesh(Graphics& gfx, const aiMesh& mesh,
 		auto pvsbc = pvs->GetBytecode();
 		bindablePtrs.push_back(std::move(pvs));	 // 创建顶点shader
 	
-		bindablePtrs.push_back(PixelShader::Resolve(gfx, "PhongPSSpecNormalMap.cso"));	//创建像素shader，指定以"带法线贴图、高光贴图的像素着色器"
+		//创建像素shader，依据贴图的alpha 来绑定遮罩版两面纹理着色器或是高光法线着色器
+		bindablePtrs.push_back(PixelShader::Resolve(gfx,
+			hasAlphaDiffuse ? "PhongPSSpecNormMask.cso" : "PhongPSSpecNormalMap.cso"
+		));
 
 		bindablePtrs.push_back(Bind::InputLayout::Resolve(gfx, vbuf.GetLayout()/*.GetD3DLayout()*/, pvsbc)); // 创建输入布局
 		
@@ -766,6 +769,8 @@ std::unique_ptr<Mesh> Model::ParseMesh(Graphics& gfx, const aiMesh& mesh,
 	}
 	// 每个材质有alpha状态,但是否启用混合取决于"hasAlphaDiffuse"这个标签;
 	//bindablePtrs.push_back(Blender::Resolve(gfx, hasAlphaDiffuse));//此处先注释,因为不做alpha混合,而是先执行alpha测试
+
+	bindablePtrs.push_back(Bind::Rasterizer::Resolve(gfx, hasAlphaDiffuse));//光栅化阶段执行,依据硬盘里的漫反射贴图alpha通道来执行是否双面渲染
 
 	return std::make_unique<Mesh>(gfx, std::move(bindablePtrs));
 }
