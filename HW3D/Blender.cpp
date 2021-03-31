@@ -10,7 +10,7 @@ namespace Bind
 	{
 		INFOMAN(gfx);
 
-		D3D11_BLEND_DESC blendDesc = {};
+		D3D11_BLEND_DESC blendDesc = CD3D11_BLEND_DESC{ CD3D11_DEFAULT{} };
 		auto& brt = blendDesc.RenderTarget[0];
 		// 若启用混合效果
 		if (blending)
@@ -24,11 +24,11 @@ namespace Bind
 			brt.BlendOpAlpha = D3D11_BLEND_OP_ADD;
 			brt.RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;//此处允许写入; 但若想值只写入蓝色或绿色通道,可以再微调这个参数
 		}
-		else //若不启用混合效果
-		{
-			brt.BlendEnable = FALSE;
-			brt.RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
-		}
+		//else //若不启用混合效果
+		//{
+		//	brt.BlendEnable = FALSE;
+		//	brt.RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
+		//}
 		GFX_THROW_INFO(GetDevice(gfx)->CreateBlendState(&blendDesc, &pBlender));//创建混合器
 	}
 
