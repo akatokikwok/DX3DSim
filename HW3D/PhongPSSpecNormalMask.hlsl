@@ -1,4 +1,4 @@
-// сцсзузуж╣да╫цФнфюМвеи╚фВ
+О╩©// Г■╗Д╨▌И│╝Г╫╘Г └Д╦╓И²╒Г╨╧Г░├Г²─Х┴╡Е≥╗
 
 #define MASK_BOI
 #include "PhongPSSpecNormalMap.hlsl"
