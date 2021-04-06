@@ -44,7 +44,7 @@ TestPlane::TestPlane( Graphics& gfx,float size,DirectX::XMFLOAT4 color )
 		float specularPower = 20.0f;
 		float padding[2];
 	} pmc;*///转移到头文件去
-	AddBind(PixelConstantBuffer<PSMaterialConstant>::Resolve(gfx, pmc, 1u));//利用自定义的材质常量创建像素常量缓存
+	AddBind( std::make_shared<PixelConstantBuffer<PSMaterialConstant>>( gfx,pmc,1u ) );//利用自定义的材质常量创建像素常量缓存;注意这里用的是makeshared,因为之后场景里放一块红玻璃板一块蓝色玻璃板,所以要给各自独立的材质常数
 
 	AddBind(InputLayout::Resolve(gfx, model.vertices.GetLayout(), pvsbc));//创建输入布局
 
@@ -79,9 +79,9 @@ DirectX::XMMATRIX TestPlane::GetTransformXM() const noexcept
 	return DirectX::XMMatrixRotationRollPitchYaw(roll, pitch, yaw) * DirectX::XMMatrixTranslation(pos.x, pos.y, pos.z);
 }
 
-void TestPlane::SpawnControlWindow(Graphics& gfx) noexcept
+void TestPlane::SpawnControlWindow( Graphics& gfx,const std::string& name ) noexcept
 {
-	if (ImGui::Begin("Plane"))
+	if (ImGui::Begin(name.c_str()))
 	{
 		ImGui::Text("Position");
 		ImGui::SliderFloat("X", &pos.x, -80.0f, 80.0f, "%.1f");

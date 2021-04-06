@@ -13,7 +13,7 @@ public:
 	/* 获取Testplane模型Transform*/
 	DirectX::XMMATRIX GetTransformXM() const noexcept override;
 
-	void SpawnControlWindow(Graphics& gfx) noexcept;//生成TestPlane模型的IMGUI窗口
+	void SpawnControlWindow(Graphics& gfx,const std::string& name) noexcept;//生成TestPlane模型的IMGUI窗口;允许自定义这个控制窗口的标题
 private:
 	struct PSMaterialConstant
 	{
