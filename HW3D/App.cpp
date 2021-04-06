@@ -66,6 +66,8 @@ App::App(const std::string& commandLine)
 	//auto c = Bind::Sampler::Resolve(wnd.Gfx());
 	//wnd.DisableCursor();//应用初始化的时候默认关闭光标
 
+	bluePlane.SetPos( cam.GetPos() );
+	redPlane.SetPos(cam.GetPos());
 	wnd.Gfx().SetProjection(dx::XMMatrixPerspectiveLH(1.0f, 9.0f / 16.0f, 0.5f, 400.0f));
 }
 
@@ -96,6 +98,8 @@ void App::DoFrame()
 	//plane.Draw(wnd.Gfx());
 	//cube.Draw(wnd.Gfx());
 	sponza.Draw(wnd.Gfx());
+	bluePlane.Draw(wnd.Gfx());
+	redPlane.Draw( wnd.Gfx() );
 
 	while (const auto e = wnd.kbd.ReadKey())
 	{
@@ -182,6 +186,8 @@ void App::DoFrame()
 	//nano.ShowWindow(wnd.Gfx(), "Nano");
 
 	sponza.ShowWindow(wnd.Gfx(), "Sponza");
+	bluePlane.SpawnControlWindow(wnd.Gfx(), "Blue Plane");
+	redPlane.SpawnControlWindow(wnd.Gfx(), "Red Plane");
 	// present
 	wnd.Gfx().EndFrame();
 }

@@ -16,6 +16,8 @@ public:
 	// 设置摄像机的位移
 	void Translate(DirectX::XMFLOAT3 translation) noexcept;
 
+	DirectX::XMFLOAT3 GetPos() const noexcept;
+
 private:
 	DirectX::XMFLOAT3 pos; //相机位置
 	float pitch;// 当前相机pitch角度

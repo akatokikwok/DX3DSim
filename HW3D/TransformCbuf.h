@@ -5,6 +5,7 @@
 
 namespace Bind
 {
+	// 构造器TransformCbuf(Graphics& gfx, const Drawable& parent, UINT slot = 0u);
 	// 模型变换常量缓存类(即顶点常数缓存)
 	/// TransformCbuf是一个特殊的Bindable类，因为它内部还有一个VertexConstantBuffer
 	/// TransformCbuf是沟通绘制物和顶点常数缓存之前的桥梁
