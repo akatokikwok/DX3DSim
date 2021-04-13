@@ -250,6 +250,7 @@
 #include <sstream>
 #include <filesystem>
 #include "ScriptCommander.h"
+#include "ChiliUtil.h"
 
 Surface::Surface(unsigned int width, unsigned int height)
 {
@@ -323,11 +324,11 @@ const Surface::Color* Surface::GetBufferPtrConst() const noexcept
 
 Surface Surface::FromFile(const std::string& name)
 {
-	wchar_t wideName[512];
-	mbstowcs_s(nullptr, wideName, name.c_str(), _TRUNCATE);
+	//wchar_t wideName[512];
+	//mbstowcs_s(nullptr, wideName, name.c_str(), _TRUNCATE);
 
 	DirectX::ScratchImage scratch;
-	HRESULT hr = DirectX::LoadFromWICFile(wideName, DirectX::WIC_FLAGS_NONE, nullptr, scratch);//使用LoadFromWICFile把结果放进scratch里
+	HRESULT hr = DirectX::LoadFromWICFile(ToWide(name).c_str(), DirectX::WIC_FLAGS_NONE, nullptr, scratch);//使用LoadFromWICFile把结果放进scratch里
 
 	if (FAILED(hr))
 	{
@@ -378,14 +379,14 @@ void Surface::Save(const std::string& filename) const
 		throw Exception(__LINE__, __FILE__, filename, "Image format not supported");
 	};
 
-	wchar_t wideName[512];
-	mbstowcs_s(nullptr, wideName, filename.c_str(), _TRUNCATE);
+	//wchar_t wideName[512];
+	//mbstowcs_s(nullptr, wideName, filename.c_str(), _TRUNCATE);
 
 	HRESULT hr = DirectX::SaveToWICFile(
 		*scratch.GetImage(0, 0, 0),
 		DirectX::WIC_FLAGS_NONE,
 		GetWICCodec(GetCodecID(filename)),
-		wideName
+		ToWide(filename).c_str()
 	);
 	if (FAILED(hr))
 	{
