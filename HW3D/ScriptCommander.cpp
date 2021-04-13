@@ -23,45 +23,43 @@ ScriptCommander::ScriptCommander(const std::vector<std::string>& args)
 		script >> top;//使用std::stream将数据读入jso类
 
 		/// 底下都是json文件规则设置
-		if (!top.is_array())
+		if (top.at("enabled"))
 		{
-			throw SCRIPT_ERROR("Top level should be array of commands"s);
-		}
-		/// 规则,每个jso里的东西也是一个jso,然后用相应的键取出相应的值
-		bool abort = false;
-		for (const auto& j : top)
-		{
-			const auto commandName = j.at("command").get<std::string>();
-			const auto params = j.at("params");
-			if (commandName == "flip-y")
+			/// 规则,每个jso里的东西也是一个jso,然后用相应的键取出相应的值
+			bool abort = false;
+			for (const auto& j : top)
 			{
-				const auto source = params.at("source");
-				TexturePreprocessor::FlipYNormalMap(source, params.value("dest", source));
-				abort = true;
+				const auto commandName = j.at("command").get<std::string>();
+				const auto params = j.at("params");
+				if (commandName == "flip-y")
+				{
+					const auto source = params.at("source");
+					TexturePreprocessor::FlipYNormalMap(source, params.value("dest", source));
+					abort = true;
+				}
+				else if (commandName == "flip-y-obj")
+				{
+					TexturePreprocessor::FlipYAllNormalMapsInObj(params.at("source"));
+					abort = true;
+				}
+				else if (commandName == "validate-nmap")
+				{
+					TexturePreprocessor::ValidateNormalMap(params.at("source"), params.at("min"), params.at("max"));
+					abort = true;
+				}
+				else
+				{
+					throw SCRIPT_ERROR("Unknown command: "s + commandName);
+				}
 			}
-			else if (commandName == "flip-y-obj")
+			if (abort) //若abort被命中,证明指令成功了需要立刻杀掉游戏引擎
 			{
-				TexturePreprocessor::FlipYAllNormalMapsInObj(params.at("source"));
-				abort = true;
+				throw Completion("Command(s) completed successfully");
 			}
-			else if (commandName == "validate-nmap")
-			{
-				TexturePreprocessor::ValidateNormalMap(params.at("source"), params.at("min"), params.at("max"));
-				abort = true;
-			}
-			else
-			{
-				throw SCRIPT_ERROR("Unknown command: "s + commandName);
-			}
-		}
-		if (abort) //若abort被命中,证明指令成功了需要立刻杀掉游戏引擎
-		{
-			throw Completion("Command(s) completed successfully");
+
 		}
 	}
 }
-
-
 
 ScriptCommander::Completion::Completion(const std::string& content) noexcept
 	:
@@ -104,3 +102,4 @@ const char* ScriptCommander::Exception::GetType() const noexcept
 {
 	return "Script Command Error";
 }
+
