@@ -3,7 +3,7 @@
 #include <algorithm>
 #include "ChiliMath.h"
 #include "Surface.h"
-#include "GDIPlusManager.h"
+//#include "GDIPlusManager.h"
 #include "imgui/imgui.h"
 #include "VertexBuffer.h"
 #include "TexturePreprocessor.h"
@@ -12,7 +12,7 @@
 
 namespace dx = DirectX;
 
-GDIPlusManager gdipm;
+//GDIPlusManager gdipm;
 
 App::App(const std::string& commandLine)
 	:
@@ -20,13 +20,14 @@ App::App(const std::string& commandLine)
 	wnd(1280, 720, "The GRB'S Rending Box"),
 	light(wnd.Gfx())	
 {
-	auto scratch = DirectX::ScratchImage{};
+	/*auto scratch = DirectX::ScratchImage{};
 	DirectX::LoadFromWICFile(L"Images\\brickwall.jpg", DirectX::WIC_FLAGS_NONE, nullptr, scratch);
 	auto image = scratch.GetImage(0, 0, 0);
 	auto a = image->pixels[0];
 	auto b = image->pixels[1];
 	auto c = image->pixels[2];
-	auto d = image->pixels[3];
+	auto d = image->pixels[3];*/
+
 	// makeshift cli for doing some preprocessing 
 	if (this->commandLine != "")
 	{
