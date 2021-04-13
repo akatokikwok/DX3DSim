@@ -6,9 +6,10 @@
 //#include "GDIPlusManager.h"
 #include "imgui/imgui.h"
 #include "VertexBuffer.h"
-#include "TexturePreprocessor.h"
-#include <shellapi.h>
-#include <dxtex/DirectXTex.h>
+//#include "TexturePreprocessor.h"
+//#include <shellapi.h>
+//#include <dxtex/DirectXTex.h>
+#include "ChiliUtil.h"
 
 namespace dx = DirectX;
 
@@ -18,6 +19,7 @@ App::App(const std::string& commandLine)
 	:
 	commandLine(commandLine),
 	wnd(1280, 720, "The GRB'S Rending Box"),
+	scriptCommander(TokenizeQuoted(commandLine)), //放在初始之列表示为了在初始化一大堆模型之前就可以做这步逻辑
 	light(wnd.Gfx())	
 {
 	/*auto scratch = DirectX::ScratchImage{};
@@ -28,42 +30,42 @@ App::App(const std::string& commandLine)
 	auto c = image->pixels[2];
 	auto d = image->pixels[3];*/
 
-	// makeshift cli for doing some preprocessing 
-	if (this->commandLine != "")
-	{
-		int nArgs;
-		const auto pLineW = GetCommandLineW();
-		const auto pArgs = CommandLineToArgvW(pLineW, &nArgs);//解析命令行字符并获得指向命令行的一串参数指针数组
-		if (nArgs >= 3 && std::wstring(pArgs[1]) == L"--twerk-objnorm")
-		{
-			const std::wstring pathInWide = pArgs[2];
-			//按Y轴翻转入参模型里所有的法线贴图
-			TexturePreprocessor::FlipYAllNormalMapsInObj(
-				std::string(pathInWide.begin(), pathInWide.end())
-			);
-			throw std::runtime_error("Normal maps all processed successfully. Just kidding about that whole runtime error thing.");
-		}
-		else if (nArgs >= 3 && std::wstring(pArgs[1]) == L"--twerk-flipy")
-		{
-			const std::wstring pathInWide = pArgs[2];
-			const std::wstring pathOutWide = pArgs[3];
-			TexturePreprocessor::FlipYNormalMap(
-				std::string(pathInWide.begin(), pathInWide.end()),
-				std::string(pathOutWide.begin(), pathOutWide.end())
-			);
-			throw std::runtime_error("Normal map processed successfully. ");//在上一步执行过操作之后本步抛出一个通知
-		}
-		else if (nArgs >= 4 && std::wstring(pArgs[1]) == L"--twerk-validate")///检索检查法线贴图
-		{
-			const std::wstring minWide = pArgs[2];
-			const std::wstring maxWide = pArgs[3];
-			const std::wstring pathWide = pArgs[4];
-			TexturePreprocessor::ValidateNormalMap(
-				std::string(pathWide.begin(), pathWide.end()), std::stof(minWide), std::stof(maxWide)
-			);
-			throw std::runtime_error("Normal map validated successfully. Just kidding about that whole runtime error thing.");
-		}
-	}
+	//// makeshift cli for doing some preprocessing 
+	//if (this->commandLine != "")
+	//{
+	//	int nArgs;
+	//	const auto pLineW = GetCommandLineW();
+	//	const auto pArgs = CommandLineToArgvW(pLineW, &nArgs);//解析命令行字符并获得指向命令行的一串参数指针数组
+	//	if (nArgs >= 3 && std::wstring(pArgs[1]) == L"--twerk-objnorm")
+	//	{
+	//		const std::wstring pathInWide = pArgs[2];
+	//		//按Y轴翻转入参模型里所有的法线贴图
+	//		TexturePreprocessor::FlipYAllNormalMapsInObj(
+	//			std::string(pathInWide.begin(), pathInWide.end())
+	//		);
+	//		throw std::runtime_error("Normal maps all processed successfully. Just kidding about that whole runtime error thing.");
+	//	}
+	//	else if (nArgs >= 3 && std::wstring(pArgs[1]) == L"--twerk-flipy")
+	//	{
+	//		const std::wstring pathInWide = pArgs[2];
+	//		const std::wstring pathOutWide = pArgs[3];
+	//		TexturePreprocessor::FlipYNormalMap(
+	//			std::string(pathInWide.begin(), pathInWide.end()),
+	//			std::string(pathOutWide.begin(), pathOutWide.end())
+	//		);
+	//		throw std::runtime_error("Normal map processed successfully. ");//在上一步执行过操作之后本步抛出一个通知
+	//	}
+	//	else if (nArgs >= 4 && std::wstring(pArgs[1]) == L"--twerk-validate")///检索检查法线贴图
+	//	{
+	//		const std::wstring minWide = pArgs[2];
+	//		const std::wstring maxWide = pArgs[3];
+	//		const std::wstring pathWide = pArgs[4];
+	//		TexturePreprocessor::ValidateNormalMap(
+	//			std::string(pathWide.begin(), pathWide.end()), std::stof(minWide), std::stof(maxWide)
+	//		);
+	//		throw std::runtime_error("Normal map validated successfully. Just kidding about that whole runtime error thing.");
+	//	}
+	//}
 
 	//wall.SetRootTransform(dx::XMMatrixTranslation(-12.0f, 0.0f, 0.0f));//设置墙模型的根节点Transform
 	//tp.SetPos({ 12.0f,0.0f,0.0f });									//设置TestPlane绘制物的位置

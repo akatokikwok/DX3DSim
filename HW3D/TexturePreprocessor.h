@@ -4,7 +4,9 @@
 #include <string>
 #include <DirectXMath.h>
 
-
+/*
+负责处理法线贴图翻转的类
+*/
 class TexturePreprocessor
 {
 public:
