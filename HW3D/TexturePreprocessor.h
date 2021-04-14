@@ -4,7 +4,9 @@
 #include <string>
 #include <DirectXMath.h>
 
-
+/*
+负责处理法线贴图翻转的类
+*/
 class TexturePreprocessor
 {
 public:
@@ -14,6 +16,8 @@ public:
 	static void FlipYNormalMap(const std::string& pathIn, const std::string& pathOut);
 	/* 将入参纹理进行在两个阈值之间的检查*/
 	static void ValidateNormalMap(const std::string& pathIn, float thresholdMin, float thresholdMax);
+	/* */
+	static void MakeStripes(const std::string& pathOut, int size, int stripeWidth);
 private:
 	/*
 	* 此方法以指定的泛型fun函数指针处理入参纹理，并存到出参传出这张纹理

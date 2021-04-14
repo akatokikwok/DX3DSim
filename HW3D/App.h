@@ -8,6 +8,7 @@
 #include <set>
 #include "TestPlane.h"
 #include "TestCube.h"
+#include "ScriptCommander.h"
 
 class App
 {
@@ -29,6 +30,7 @@ private:
 
 	ImguiManager imgui;
 	Window wnd;
+	ScriptCommander scriptCommander;
 	ChiliTimer timer;
 	float speed_factor = 1.0f;
 	Camera cam;// 摄像机
