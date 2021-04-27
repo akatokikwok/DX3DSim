@@ -68,7 +68,8 @@ App::App(const std::string& commandLine)
 	//	}
 	//}
 
-	Dcb::Struct s(0);
+	auto ps = std::make_shared<Dcb::Struct>(0);
+	Dcb::Struct& s = *ps;
 	s.Add<Dcb::Struct>("butts");
 	s["butts"].Add<Dcb::Float3>("pubes");
 	s["butts"].Add<Dcb::Float>("dank");
@@ -81,7 +82,7 @@ App::App(const std::string& commandLine)
 	s["arr"].T().Add<Dcb::Array>("meta");
 	s["arr"].T()["meta"].Set<Dcb::Array>(6);
 	s["arr"].T()["meta"].T().Set<Dcb::Matrix>(4);
-	Dcb::Buffer b(s);
+	Dcb::Buffer b(std::move(ps));
 	b["butts"]["pubes"] = DirectX::XMFLOAT3{ 69.0f,0.0f,0.0f };
 	b["butts"]["dank"] = 420.0f;
 	b["woot"] = 42.0f;
