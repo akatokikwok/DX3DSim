@@ -8,6 +8,7 @@
 #include "ChiliXM.h"
 #include "DynamicConstant.h"
 #include "ConstantBuffersEx.h"
+#include "LayoutCodex.h"
 
 namespace dx = DirectX;
 
@@ -613,9 +614,19 @@ std::unique_ptr<Mesh> Model::ParseMesh(Graphics& gfx, const aiMesh& mesh,
 		//bindablePtrs.push_back(Bind::PixelConstantBuffer<PSMaterialConstantDiffnorm>::Resolve(gfx, pmc, 1u));//创建出像素常数缓存<材质>
 
 		Dcb::Layout layout;
-		layout.Add<Dcb::Float>("specularIntensity");
-		layout.Add<Dcb::Float>("specularPower");
-		layout.Add<Dcb::Bool>("normalMapEnabled");
+		bool loaded = false;
+		auto tag = "diff&nrm";
+		if (LayoutCodex::Has(tag))
+		{
+			layout = LayoutCodex::Load(tag);
+			loaded = true;
+		}
+		else
+		{
+			layout.Add<Dcb::Float>("specularIntensity");
+			layout.Add<Dcb::Float>("specularPower");
+			layout.Add<Dcb::Bool>("normalMapEnabled");
+		}
 		//layout.Add<Dcb::Float>("padding");
 
 		Dcb::Buffer cbuf{ layout };
@@ -623,6 +634,11 @@ std::unique_ptr<Mesh> Model::ParseMesh(Graphics& gfx, const aiMesh& mesh,
 		cbuf["specularPower"] = shininess;
 		cbuf["normalMapEnabled"] = TRUE;
 		bindablePtrs.push_back(std::make_shared<PixelConstantBufferEX>(gfx, cbuf, 1u));
+
+		if (!loaded)
+		{
+			LayoutCodex::Store(tag, layout);
+		}
 	}
 	/// 只开启漫反射、高光纹理，没有法线纹理
 	else if (hasDiffuseMap && !hasNormalMap && hasSpecularMap)
