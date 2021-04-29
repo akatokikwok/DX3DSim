@@ -268,10 +268,10 @@ public:
 				//pSelectedNode->ControlMeDaddy(gfx, mc);	//控制且更新材质常数缓存
 
 				/// pSelectedNode->ControlMeDaddy(gfx, skinMaterial)返回真表明当前选中的节点为皮肤;返回假则表面它是耳环
-				if ( !( pSelectedNode->ControlMeDaddy(gfx, skinMaterial)) )
-				{
-					pSelectedNode->ControlMeDaddy(gfx, ringMaterial);//对耳环应用材质ringMaterial
-				}
+				//if ( !( pSelectedNode->ControlMeDaddy(gfx, skinMaterial)) )
+				//{
+				//	pSelectedNode->ControlMeDaddy(gfx, ringMaterial);//对耳环应用材质ringMaterial
+				//}
 			}
 		}
 		ImGui::End();
@@ -307,8 +307,8 @@ private:
 		float z = 0.0f;
 	} ;
 	
-	Node::PSMaterialConstantFullmonte skinMaterial; //用定义在头文件的这个材质常数结构体表示 "哥布林皮肤材质"
-	Node::PSMaterialConstantNotex ringMaterial;// 用定义在头文件的这个材质常数结构体表示 "耳环材质"
+	//Node::PSMaterialConstantFullmonte skinMaterial; //用定义在头文件的这个材质常数结构体表示 "哥布林皮肤材质"
+	//Node::PSMaterialConstantNotex ringMaterial;// 用定义在头文件的这个材质常数结构体表示 "耳环材质"
 	// 无序map负责把索引映射到数据参数结构体TransformParameters上;目的是追踪每个骨骼节点的变换
 	std::unordered_map<int, TransformParameters> transforms;
 };
@@ -550,10 +550,28 @@ std::unique_ptr<Mesh> Model::ParseMesh(Graphics& gfx, const aiMesh& mesh,
 
 		bindablePtrs.push_back(Bind::InputLayout::Resolve(gfx, vbuf.GetLayout()/*.GetD3DLayout()*/, pvsbc)); // 创建输入布局
 		
-		Node::PSMaterialConstantFullmonte pmc;	//PSMaterialConstantFullmonte结构体数据位于头文件里
-		pmc.specularPower = shininess;	//材质里高光由外部高光参数更新									
-		pmc.hasGlossMap = hasAlphaGloss ? TRUE : FALSE;		//材质里透明通道由外部透明更新
-		bindablePtrs.push_back(PixelConstantBuffer<Node::PSMaterialConstantFullmonte>::Resolve(gfx, pmc, 1u));			//创建像素常量缓存<材质>
+		//Node::PSMaterialConstantFullmonte pmc;	//PSMaterialConstantFullmonte结构体数据位于头文件里
+		//pmc.specularPower = shininess;	//材质里高光由外部高光参数更新									
+		//pmc.hasGlossMap = hasAlphaGloss ? TRUE : FALSE;		//材质里透明通道由外部透明更新
+		//bindablePtrs.push_back(PixelConstantBuffer<Node::PSMaterialConstantFullmonte>::Resolve(gfx, pmc, 1u));			//创建像素常量缓存<材质>
+
+		Dcb::RawLayout lay;
+		lay.Add<Dcb::Bool>("normalMapEnabled");
+		lay.Add<Dcb::Bool>("specularMapEnabled");
+		lay.Add<Dcb::Bool>("hasGlossMap");
+		lay.Add<Dcb::Float>("specularPower");
+		lay.Add<Dcb::Float3>("specularColor");
+		lay.Add<Dcb::Float>("specularMapWeight");
+
+		auto buf = Dcb::Buffer::Make(std::move(lay));
+		buf["normalMapEnabled"] = true;
+		buf["specularMapEnabled"] = true;
+		buf["hasGlossMap"] = hasAlphaGloss;
+		buf["specularPower"] = shininess;
+		buf["specularColor"] = dx::XMFLOAT3{ 0.75f,0.75f,0.75f };
+		buf["specularMapWeight"] = 0.671f;
+
+		bindablePtrs.push_back(std::make_shared<PixelConstantBufferEX>(gfx, buf, 1u));
 	
 	}
 	/// 只开启漫反射、法线贴图，没有高光贴图
@@ -647,58 +665,70 @@ std::unique_ptr<Mesh> Model::ParseMesh(Graphics& gfx, const aiMesh& mesh,
 	/// 只开启漫反射、高光纹理，没有法线纹理
 	else if (hasDiffuseMap && !hasNormalMap && hasSpecularMap)
 	{
-	Dvtx::VertexBuffer vbuf(std::move(
-		VertexLayout{}
-		.Append(VertexLayout::Position3D)
-		.Append(VertexLayout::Normal)
-		.Append(VertexLayout::Texture2D)
-	));
+		Dvtx::VertexBuffer vbuf(std::move(
+			VertexLayout{}
+			.Append(VertexLayout::Position3D)
+			.Append(VertexLayout::Normal)
+			.Append(VertexLayout::Texture2D)
+		));
 
-	for (unsigned int i = 0; i < mesh.mNumVertices; i++)
-	{
-		vbuf.EmplaceBack(
-			dx::XMFLOAT3(mesh.mVertices[i].x * scale, mesh.mVertices[i].y * scale, mesh.mVertices[i].z * scale),
-			*reinterpret_cast<dx::XMFLOAT3*>(&mesh.mNormals[i]),
-			*reinterpret_cast<dx::XMFLOAT2*>(&mesh.mTextureCoords[0][i])
-		);
-	}
+		for (unsigned int i = 0; i < mesh.mNumVertices; i++)
+		{
+			vbuf.EmplaceBack(
+				dx::XMFLOAT3(mesh.mVertices[i].x * scale, mesh.mVertices[i].y * scale, mesh.mVertices[i].z * scale),
+				*reinterpret_cast<dx::XMFLOAT3*>(&mesh.mNormals[i]),
+				*reinterpret_cast<dx::XMFLOAT2*>(&mesh.mTextureCoords[0][i])
+			);
+		}
 
-	std::vector<unsigned short> indices;
-	indices.reserve(mesh.mNumFaces * 3);
-	for (unsigned int i = 0; i < mesh.mNumFaces; i++)
-	{
-		const auto& face = mesh.mFaces[i];
-		assert(face.mNumIndices == 3);
-		indices.push_back(face.mIndices[0]);
-		indices.push_back(face.mIndices[1]);
-		indices.push_back(face.mIndices[2]);
-	}
+		std::vector<unsigned short> indices;
+		indices.reserve(mesh.mNumFaces * 3);
+		for (unsigned int i = 0; i < mesh.mNumFaces; i++)
+		{
+			const auto& face = mesh.mFaces[i];
+			assert(face.mNumIndices == 3);
+			indices.push_back(face.mIndices[0]);
+			indices.push_back(face.mIndices[1]);
+			indices.push_back(face.mIndices[2]);
+		}
 
-	bindablePtrs.push_back(VertexBuffer::Resolve(gfx, meshTag, vbuf));
+		bindablePtrs.push_back(VertexBuffer::Resolve(gfx, meshTag, vbuf));
 
-	bindablePtrs.push_back(IndexBuffer::Resolve(gfx, meshTag, indices));
+		bindablePtrs.push_back(IndexBuffer::Resolve(gfx, meshTag, indices));
 
-	auto pvs = VertexShader::Resolve(gfx, "PhongVS.cso");
-	auto pvsbc = pvs->GetBytecode();
-	bindablePtrs.push_back(std::move(pvs));
+		auto pvs = VertexShader::Resolve(gfx, "PhongVS.cso");
+		auto pvsbc = pvs->GetBytecode();
+		bindablePtrs.push_back(std::move(pvs));
 
-	bindablePtrs.push_back(PixelShader::Resolve(gfx, "PhongPSSpec.cso"));
+		bindablePtrs.push_back(PixelShader::Resolve(gfx, "PhongPSSpec.cso"));
 
-	bindablePtrs.push_back(InputLayout::Resolve(gfx, vbuf.GetLayout(), pvsbc));
+		bindablePtrs.push_back(InputLayout::Resolve(gfx, vbuf.GetLayout(), pvsbc));
 
-	struct PSMaterialConstantDiffuseSpec
-	{
-		float specularPowerConst;
-		BOOL hasGloss;
-		float specularMapWeight;
-		float padding;
-	} pmc;
-	pmc.specularPowerConst = shininess;
-	pmc.hasGloss = hasAlphaGloss ? TRUE : FALSE;
-	pmc.specularMapWeight = 1.0f;
-	// this is CLEARLY an issue... all meshes will share same mat const, but may have different
-	// Ns (specular power) specified for each in the material properties... bad conflict
-	bindablePtrs.push_back(PixelConstantBuffer<PSMaterialConstantDiffuseSpec>::Resolve(gfx, pmc, 1u));
+		//struct PSMaterialConstantDiffuseSpec
+	//{
+	//	float specularPowerConst;
+	//	BOOL hasGloss;
+	//	float specularMapWeight;
+	//	float padding;
+	//} pmc;
+	//pmc.specularPowerConst = shininess;
+	//pmc.hasGloss = hasAlphaGloss ? TRUE : FALSE;
+	//pmc.specularMapWeight = 1.0f;
+	//// this is CLEARLY an issue... all meshes will share same mat const, but may have different
+	//// Ns (specular power) specified for each in the material properties... bad conflict
+	//bindablePtrs.push_back(PixelConstantBuffer<PSMaterialConstantDiffuseSpec>::Resolve(gfx, pmc, 1u));
+
+		Dcb::RawLayout lay;
+		lay.Add<Dcb::Float>("specularPowerConst");
+		lay.Add<Dcb::Bool>("hasGloss");
+		lay.Add<Dcb::Float>("specularMapWeight");
+
+		auto buf = Dcb::Buffer::Make(std::move(lay));
+		buf["specularPowerConst"] = shininess;
+		buf["hasGloss"] = hasAlphaGloss;
+		buf["specularMapWeight"] = 1.0f;
+
+		bindablePtrs.push_back(std::make_unique<Bind::PixelConstantBufferEX>(gfx, buf, 1u));
 	}
 	/// 若只开启漫反射
 	else if (hasDiffuseMap)
@@ -738,17 +768,28 @@ std::unique_ptr<Mesh> Model::ParseMesh(Graphics& gfx, const aiMesh& mesh,
 		bindablePtrs.push_back(PixelShader::Resolve(gfx, "PhongPS.cso"));
 		bindablePtrs.push_back(InputLayout::Resolve(gfx, vbuf.GetLayout(), pvsbc));
 
-		struct PSMaterialConstantDiffuse
-		{
-			float specularIntensity /*= 0.18f*/;
-			float specularPower;
-			float padding[2];
-		} pmc;
-		pmc.specularPower = shininess;
-		pmc.specularIntensity = (specularColor.x + specularColor.y + specularColor.z) / 3.0f;
-		// this is CLEARLY an issue... all meshes will share same mat const, but may have different
-		// Ns (specular power) specified for each in the material properties... bad conflict
-		bindablePtrs.push_back(PixelConstantBuffer<PSMaterialConstantDiffuse>::Resolve(gfx, pmc, 1u));
+		//struct PSMaterialConstantDiffuse
+		//{
+		//	float specularIntensity /*= 0.18f*/;
+		//	float specularPower;
+		//	float padding[2];
+		//} pmc;
+		//pmc.specularPower = shininess;
+		//pmc.specularIntensity = (specularColor.x + specularColor.y + specularColor.z) / 3.0f;
+		//// this is CLEARLY an issue... all meshes will share same mat const, but may have different
+		//// Ns (specular power) specified for each in the material properties... bad conflict
+		//bindablePtrs.push_back(PixelConstantBuffer<PSMaterialConstantDiffuse>::Resolve(gfx, pmc, 1u));
+
+		Dcb::RawLayout lay;
+		lay.Add<Dcb::Float>("specularIntensity");
+		lay.Add<Dcb::Float>("specularPower");
+
+		auto buf = Dcb::Buffer::Make(std::move(lay));
+		buf["specularIntensity"] = (specularColor.x + specularColor.y + specularColor.z) / 3.0f;
+		buf["specularPower"] = shininess;
+		buf["specularMapWeight"] = 1.0f;
+
+		bindablePtrs.push_back(std::make_unique<Bind::PixelConstantBufferEX>(gfx, buf, 1u));
 	}
 	/// 若没在硬盘里读到任何纹理
 	else if (!hasDiffuseMap && !hasNormalMap && !hasSpecularMap)
@@ -790,11 +831,23 @@ std::unique_ptr<Mesh> Model::ParseMesh(Graphics& gfx, const aiMesh& mesh,
 
 		bindablePtrs.push_back(InputLayout::Resolve(gfx, vbuf.GetLayout(), pvsbc));
 
-		Node::PSMaterialConstantNotex pmc;//定义在头文件Node类下
-		pmc.specularPower = shininess;		
-		pmc.specularColor = specularColor;//结构体成员更新为自定义的镜面光颜色
-		pmc.materialColor = diffuseColor;
-		bindablePtrs.push_back(PixelConstantBuffer<Node::PSMaterialConstantNotex>::Resolve(gfx, pmc, 1u));
+		//Node::PSMaterialConstantNotex pmc;//定义在头文件Node类下
+		//pmc.specularPower = shininess;		
+		//pmc.specularColor = specularColor;//结构体成员更新为自定义的镜面光颜色
+		//pmc.materialColor = diffuseColor;
+		//bindablePtrs.push_back(PixelConstantBuffer<Node::PSMaterialConstantNotex>::Resolve(gfx, pmc, 1u));
+
+		Dcb::RawLayout lay;
+		lay.Add<Dcb::Float4>("materialColor");
+		lay.Add<Dcb::Float4>("specularColor");
+		lay.Add<Dcb::Float>("specularPower");
+
+		auto buf = Dcb::Buffer::Make(std::move(lay));
+		buf["specularPower"] = shininess;
+		buf["specularColor"] = specularColor;
+		buf["materialColor"] = diffuseColor;
+
+		bindablePtrs.push_back(std::make_unique<Bind::PixelConstantBufferEX>(gfx, buf, 1u));
 	}
 	else
 	{
