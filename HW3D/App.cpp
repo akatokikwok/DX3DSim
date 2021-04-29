@@ -34,6 +34,7 @@ void TestDynamicConstant()
 		s["arr"].T().Add<Dcb::Array>("meta");
 		s["arr"].T()["meta"].Set<Dcb::Array>(6);
 		s["arr"].T()["meta"].T().Set<Dcb::Matrix>(4);
+		s["arr"].T().Add<Dcb::Bool>("booler");
 		Dcb::Buffer b(s);
 
 		{
@@ -69,6 +70,18 @@ void TestDynamicConstant()
 			b["arr"][2]["meta"][5][3] = exp;
 			dx::XMFLOAT4X4 act = b["arr"][2]["meta"][5][3];
 			assert(!std::memcmp(&exp, &act, sizeof(DirectX::XMFLOAT4X4)));
+		}
+		{
+			auto exp = true;
+			b["arr"][2]["booler"] = exp;
+			bool act = b["arr"][2]["booler"];
+			assert(act == exp);
+		}
+		{
+			auto exp = false;
+			b["arr"][2]["booler"] = exp;
+			bool act = b["arr"][2]["booler"];
+			assert(act == exp);
 		}
 	}
 	// size test array of arrays
@@ -120,8 +133,7 @@ App::App(const std::string& commandLine)
 	auto b = image->pixels[1];
 	auto c = image->pixels[2];
 	auto d = image->pixels[3];*/
-
-	//// makeshift cli for doing some preprocessing 
+	// makeshift cli for doing some preprocessing 
 	//if (this->commandLine != "")
 	//{
 	//	int nArgs;
