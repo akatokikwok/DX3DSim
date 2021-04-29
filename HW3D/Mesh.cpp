@@ -268,26 +268,30 @@ public:
 					tp.x = translation.x;
 					tp.y = translation.y;
 					tp.z = translation.z;
-					//std::tie(i, std::ignore) = transforms.insert({ id,tp });//std::tie会将变量的引用整合成一个tuple，从而实现批量赋值
 					
 					auto pMatConst = pSelectedNode->GetMaterialConstants();
 					auto buf = pMatConst != nullptr ? std::optional<Dcb::Buffer>{ *pMatConst } : std::optional<Dcb::Buffer>{};
-					std::tie(i, std::ignore) = transforms.insert({ id,{ tp,std::move(buf) } });
+					std::tie(i, std::ignore) = transforms.insert({ id,{ tp,false,std::move(buf),false } });//std::tie会将变量的引用整合成一个tuple，从而实现批量赋值
 				}
-				//auto& transform = i->second;//继续查找下一个TransformParameter
 
-				// link imgui ctrl to our cached transform params
-				auto& transform = i->second.tranformParams;
+				{
+					auto& transform = i->second.tranformParams;;//继续查找下一个TransformParameter
+					// dirty check
+					auto& dirty = i->second.transformParamsDirty;
+					const auto dcheck = [&dirty](bool changed) {dirty = dirty || changed; };
+					//auto& transform = transforms[ pSelectedNode->GetId() ];//根据被选中的索引从无序map里取出对应的数据组
 
-				//auto& transform = transforms[ pSelectedNode->GetId() ];//根据被选中的索引从无序map里取出对应的数据组
-				ImGui::Text("Orientation");
-				ImGui::SliderAngle("Roll", &transform.roll, -180.0f, 180.0f);
-				ImGui::SliderAngle("Pitch", &transform.pitch, -180.0f, 180.0f);
-				ImGui::SliderAngle("Yaw", &transform.yaw, -180.0f, 180.0f);
-				ImGui::Text("Position");
-				ImGui::SliderFloat("X", &transform.x, -20.0f, 20.0f);
-				ImGui::SliderFloat("Y", &transform.y, -20.0f, 20.0f);
-				ImGui::SliderFloat("Z", &transform.z, -20.0f, 20.0f);
+					// IMGUI widgets
+					ImGui::Text("Orientation");
+					dcheck(ImGui::SliderAngle("Roll", &transform.roll, -180.0f, 180.0f));
+					dcheck(ImGui::SliderAngle("Pitch", &transform.pitch, -180.0f, 180.0f));
+					dcheck(ImGui::SliderAngle("Yaw", &transform.yaw, -180.0f, 180.0f));
+					ImGui::Text("Position");
+					dcheck(ImGui::SliderFloat("X", &transform.x, -20.0f, 20.0f));
+					dcheck(ImGui::SliderFloat("Y", &transform.y, -20.0f, 20.0f));
+					dcheck(ImGui::SliderFloat("Z", &transform.z, -20.0f, 20.0f));
+				}
+				
 				//pSelectedNode->ControlMeDaddy(gfx, mc);	//控制且更新材质常数缓存
 
 				/// pSelectedNode->ControlMeDaddy(gfx, skinMaterial)返回真表明当前选中的节点为皮肤;返回假则表面它是耳环
@@ -296,43 +300,49 @@ public:
 				//	pSelectedNode->ControlMeDaddy(gfx, ringMaterial);//对耳环应用材质ringMaterial
 				//}
 
-
 				// link imgui ctrl to our cached material params
 				if (i->second.materialCbuf)
 				{
 					auto& mat = *i->second.materialCbuf;
+					// dirty check
+					auto& dirty = i->second.materialCbufDirty;
+					// check行为的Lambda表达式定义
+					const auto dcheck = [&dirty](bool changed) {
+						dirty = dirty || changed; 
+					};
+					// IMGUI widgets
 					ImGui::Text("Material");
 					if (auto v = mat["normalMapEnabled"]; v.Exists())
 					{
-						ImGui::Checkbox("Norm Map", &v);
+						dcheck(ImGui::Checkbox("Norm Map", &v));
 					}
 					if (auto v = mat["specularMapEnabled"]; v.Exists())
 					{
-						ImGui::Checkbox("Spec Map", &v);
+						dcheck(ImGui::Checkbox("Spec Map", &v));
 					}
 					if (auto v = mat["hasGlossMap"]; v.Exists())
 					{
-						ImGui::Checkbox("Gloss Map", &v);
+						dcheck(ImGui::Checkbox("Gloss Map", &v));
 					}
 					if (auto v = mat["materialColor"]; v.Exists())
 					{
-						ImGui::ColorPicker3("Diff Color", reinterpret_cast<float*>(&static_cast<dx::XMFLOAT3&>(v)));
+						dcheck(ImGui::ColorPicker3("Diff Color", reinterpret_cast<float*>(&static_cast<dx::XMFLOAT3&>(v))));
 					}
 					if (auto v = mat["specularPower"]; v.Exists())
 					{
-						ImGui::SliderFloat("Spec Power", &v, 0.0f, 100.0f, "%.1f", 1.5f);
+						dcheck(ImGui::SliderFloat("Spec Power", &v, 0.0f, 100.0f, "%.1f", 1.5f));
 					}
 					if (auto v = mat["specularColor"]; v.Exists())
 					{
-						ImGui::ColorPicker3("Spec Color", reinterpret_cast<float*>(&static_cast<dx::XMFLOAT3&>(v)));
+						dcheck(ImGui::ColorPicker3("Spec Color", reinterpret_cast<float*>(&static_cast<dx::XMFLOAT3&>(v))));
 					}
 					if (auto v = mat["specularMapWeight"]; v.Exists())
 					{
-						ImGui::SliderFloat("Spec Weight", &v, 0.0f, 4.0f);
+						dcheck(ImGui::SliderFloat("Spec Weight", &v, 0.0f, 4.0f));
 					}
 					if (auto v = mat["specularIntensity"]; v.Exists())
 					{
-						ImGui::SliderFloat("Spec Intens", &v, 0.0f, 1.0f);
+						dcheck(ImGui::SliderFloat("Spec Intens", &v, 0.0f, 1.0f));
 					}
 				}
 
@@ -340,6 +350,22 @@ public:
 		}
 		ImGui::End();
 	}
+
+	void ApplyParameters() noxnd
+	{
+		if (TransformDirty())
+		{
+			pSelectedNode->SetAppliedTransform(GetTransform());
+			ResetTransformDirty();
+		}
+		if (MaterialDirty())
+		{
+			pSelectedNode->SetMaterialConstants(GetMaterial());
+			ResetMaterialDirty();
+		}
+	}
+
+private:
 	// 封装的方法，用于获取模型的变换
 	dx::XMMATRIX GetTransform() const noexcept
 	{
@@ -351,16 +377,35 @@ public:
 		return	dx::XMMatrixRotationRollPitchYaw(transform.roll, transform.pitch, transform.yaw) * dx::XMMatrixTranslation(transform.x, transform.y, transform.z);//取单节点旋转和位移矩阵乘积
 	}
 
-	const Dcb::Buffer* GetMaterial() const noexcept
+	const Dcb::Buffer& GetMaterial() const noxnd
 	{
 		assert(pSelectedNode != nullptr);
 		const auto& mat = transforms.at(pSelectedNode->GetId()).materialCbuf;
-		return mat ? &*mat : nullptr;
+		assert(mat);
+		return *mat;
 	}
 
-	Node* GetSelectedNode() const noexcept
+	bool TransformDirty() const noxnd
 	{
-		return pSelectedNode;
+		return pSelectedNode && transforms.at(pSelectedNode->GetId()).transformParamsDirty;
+	}
+
+	void ResetTransformDirty() noxnd
+	{
+		transforms.at(pSelectedNode->GetId()).transformParamsDirty = false;
+	}
+
+	bool MaterialDirty() const noxnd
+	{
+		return pSelectedNode && transforms.at(pSelectedNode->GetId()).materialCbufDirty;
+	}
+	void ResetMaterialDirty() noxnd
+	{
+		transforms.at(pSelectedNode->GetId()).materialCbufDirty = false;
+	}
+	bool IsDirty() const noxnd
+	{
+		return TransformDirty() || MaterialDirty();
 	}
 
 private:
@@ -381,16 +426,17 @@ private:
 	struct NodeData
 	{
 		TransformParameters tranformParams;
+		bool transformParamsDirty;
 		std::optional<Dcb::Buffer> materialCbuf;
-	};
-	
+		bool materialCbufDirty;
+	};	
 	//Node::PSMaterialConstantFullmonte skinMaterial; //用定义在头文件的这个材质常数结构体表示 "哥布林皮肤材质"
 	//Node::PSMaterialConstantNotex ringMaterial;// 用定义在头文件的这个材质常数结构体表示 "耳环材质"
 	// 无序map负责把索引映射到数据参数结构体TransformParameters上;目的是追踪每个骨骼节点的变换
 	std::unordered_map<int, NodeData> transforms;
 	//std::unordered_map<int, TransformParameters> transforms;
 };
-//////////////////////////////////////////////////////////////////////////
+
 
 Model::Model(Graphics& gfx, const std::string& pathString, const float scale)
 	:
@@ -429,14 +475,8 @@ void Model::Draw(Graphics& gfx) const noxnd
 
 	//pRoot->Node::Draw(gfx, pWindow->GetTransform());
 
-	if (auto node = pWindow->GetSelectedNode())
-	{
-		node->SetAppliedTransform(pWindow->GetTransform());
-		if (auto mat = pWindow->GetMaterial())
-		{
-			node->SetMaterialConstants(*mat);
-		}
-	}
+	
+	pWindow->ApplyParameters();
 	pRoot->Node::Draw(gfx, dx::XMMatrixIdentity());
 }
 
@@ -473,7 +513,7 @@ Model::~Model() noexcept
 
 }
 
-// 解析加载单片mesh
+/// 解析加载单片mesh
 std::unique_ptr<Mesh> Model::ParseMesh(Graphics& gfx, const aiMesh& mesh, 
 	const aiMaterial* const* pMaterials, 
 	const std::filesystem::path& path,
