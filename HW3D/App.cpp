@@ -12,6 +12,7 @@
 #include "ChiliUtil.h"
 #include "DynamicConstant.h"
 #include <cstring>
+#include "LayoutCodex.h"
 
 namespace dx = DirectX;
 
@@ -22,7 +23,7 @@ void TestDynamicConstant()
 	using namespace std::string_literals;
 	// data roundtrip tests
 	{
-		Dcb::Layout s;
+		Dcb::RawLayout s;
 		s.Add<Dcb::Struct>("butts"s);
 		s["butts"s].Add<Dcb::Float3>("pubes"s);
 		s["butts"s].Add<Dcb::Float>("dank"s);
@@ -36,16 +37,9 @@ void TestDynamicConstant()
 		s["arr"s].T()["meta"s].Set<Dcb::Array>(6);
 		s["arr"s].T()["meta"s].T().Set<Dcb::Matrix>(4);
 		s["arr"s].T().Add<Dcb::Bool>("booler");
-		auto b = Dcb::Buffer::Make(s);
+		auto b = Dcb::Buffer::Make(std::move(s));		
 
-
-		// fails: duplicate symbol name
-		// s.Add<Dcb::Bool>( "arr"s );
-
-		// fails: bad symbol name
-		//s.Add<Dcb::Bool>( "69man" );
-
-		const auto sig = b.GetSignature();
+		const auto sig = b.GetLayout().GetSignature();
 
 		{
 			auto exp = 42.0f;
@@ -111,36 +105,53 @@ void TestDynamicConstant()
 	}
 	// size test array of arrays
 	{
-		Dcb::Layout s;
+		Dcb::RawLayout s;
 		s.Add<Dcb::Array>("arr");
 		s["arr"].Set<Dcb::Array>(6);
 		s["arr"].T().Set<Dcb::Matrix>(4);
-		auto b = Dcb::Buffer::Make(s);
+		auto b = Dcb::Buffer::Make(std::move(s));
 
 		auto act = b.GetSizeInBytes();
 		assert(act == 16u * 4u * 4u * 6u);
 	}
 	// size test array of structs with padding
 	{
-		Dcb::Layout s;
+		Dcb::RawLayout s;
 		s.Add<Dcb::Array>("arr");
 		s["arr"].Set<Dcb::Struct>(6);
 		s["arr"s].T().Add<Dcb::Float2>("a");
 		s["arr"].T().Add<Dcb::Float3>("b"s);
-		auto b = Dcb::Buffer::Make(s);
+		auto b = Dcb::Buffer::Make(std::move(s));
 
 		auto act = b.GetSizeInBytes();
 		assert(act == 16u * 2u * 6u);
 	}
 	// size test array of primitive that needs padding
 	{
-		Dcb::Layout s;
+		Dcb::RawLayout s;
 		s.Add<Dcb::Array>("arr");
 		s["arr"].Set<Dcb::Float3>(6);
-		auto b = Dcb::Buffer::Make(s);
+		auto b = Dcb::Buffer::Make(std::move(s));
 
 		auto act = b.GetSizeInBytes();
 		assert(act == 16u * 6u);
+	}
+	// testing CookedLayout
+	{
+		Dcb::RawLayout s;
+		s.Add<Dcb::Array>("arr");
+		s["arr"].Set<Dcb::Float3>(6);
+		auto cooked = Dcb::LayoutCodex::Resolve(std::move(s));
+		// raw is cleared after donating
+		s.Add<Dcb::Float>("arr");
+		// fails to compile, cooked returns const&
+		// cooked["arr"].Add<Dcb::Float>("buttman");
+		auto b1 = Dcb::Buffer::Make(cooked);
+		b1["arr"][0] = dx::XMFLOAT3{ 69.0f,0.0f,0.0f };
+		auto b2 = Dcb::Buffer::Make(cooked);
+		b2["arr"][0] = dx::XMFLOAT3{ 420.0f,0.0f,0.0f };
+		assert(static_cast<dx::XMFLOAT3>(b1["arr"][0]).x == 69.0f);
+		assert(static_cast<dx::XMFLOAT3>(b2["arr"][0]).x == 420.0f);
 	}
 }
 
