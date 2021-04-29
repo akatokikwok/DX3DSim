@@ -38,6 +38,13 @@ void TestDynamicConstant()
 		s["arr"s].T().Add<Dcb::Bool>("booler");
 		Dcb::Buffer b(s);
 
+
+		// fails: duplicate symbol name
+		// s.Add<Dcb::Bool>( "arr"s );
+
+		// fails: bad symbol name
+		//s.Add<Dcb::Bool>( "69man" );
+
 		const auto sig = b.GetSignature();
 
 		{
