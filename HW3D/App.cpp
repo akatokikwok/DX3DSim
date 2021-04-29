@@ -10,10 +10,120 @@
 //#include <shellapi.h>
 //#include <dxtex/DirectXTex.h>
 #include "ChiliUtil.h"
+#include "DynamicConstant.h"
+#include <cstring>
 
 namespace dx = DirectX;
 
 //GDIPlusManager gdipm;
+
+void TestDynamicConstant()
+{
+	using namespace std::string_literals;
+	// data roundtrip tests
+	{
+		Dcb::Layout s;
+		s.Add<Dcb::Struct>("butts");
+		s["butts"].Add<Dcb::Float3>("pubes");
+		s["butts"].Add<Dcb::Float>("dank");
+		s.Add<Dcb::Float>("woot");
+		s.Add<Dcb::Array>("arr");
+		s["arr"].Set<Dcb::Struct>(4);
+		s["arr"].T().Add<Dcb::Float3>("twerk");
+		s["arr"].T().Add<Dcb::Array>("werk");
+		s["arr"].T()["werk"].Set<Dcb::Float>(6);
+		s["arr"].T().Add<Dcb::Array>("meta");
+		s["arr"].T()["meta"].Set<Dcb::Array>(6);
+		s["arr"].T()["meta"].T().Set<Dcb::Matrix>(4);
+		s["arr"].T().Add<Dcb::Bool>("booler");
+		Dcb::Buffer b(s);
+
+		{
+			auto exp = 42.0f;
+			b["woot"] = exp;
+			float act = b["woot"];
+			assert(act == exp);
+		}
+		{
+			auto exp = 420.0f;
+			b["butts"]["dank"] = exp;
+			float act = b["butts"]["dank"];
+			assert(act == exp);
+		}
+		{
+			auto exp = 111.0f;
+			b["arr"][2]["werk"][5] = exp;
+			float act = b["arr"][2]["werk"][5];
+			assert(act == exp);
+		}
+		{
+			auto exp = DirectX::XMFLOAT3{ 69.0f,0.0f,0.0f };
+			b["butts"]["pubes"] = exp;
+			dx::XMFLOAT3 act = b["butts"]["pubes"];
+			assert(!std::memcmp(&exp, &act, sizeof(DirectX::XMFLOAT3)));
+		}
+		{
+			DirectX::XMFLOAT4X4 exp;
+			dx::XMStoreFloat4x4(
+				&exp,
+				dx::XMMatrixIdentity()
+			);
+			b["arr"][2]["meta"][5][3] = exp;
+			dx::XMFLOAT4X4 act = b["arr"][2]["meta"][5][3];
+			assert(!std::memcmp(&exp, &act, sizeof(DirectX::XMFLOAT4X4)));
+		}
+		{
+			auto exp = true;
+			b["arr"][2]["booler"] = exp;
+			bool act = b["arr"][2]["booler"];
+			assert(act == exp);
+		}
+		{
+			auto exp = false;
+			b["arr"][2]["booler"] = exp;
+			bool act = b["arr"][2]["booler"];
+			assert(act == exp);
+		}
+		const auto& cb = b;
+		{
+			dx::XMFLOAT4X4 act = cb["arr"][2]["meta"][5][3];
+			assert(act._11 == 1.0f);
+		}		
+	}
+	// size test array of arrays
+	{
+		Dcb::Layout s;
+		s.Add<Dcb::Array>("arr");
+		s["arr"].Set<Dcb::Array>(6);
+		s["arr"].T().Set<Dcb::Matrix>(4);
+		Dcb::Buffer b(s);
+
+		auto act = b.GetSizeInBytes();
+		assert(act == 16u * 4u * 4u * 6u);
+	}
+	// size test array of structs with padding
+	{
+		Dcb::Layout s;
+		s.Add<Dcb::Array>("arr");
+		s["arr"].Set<Dcb::Struct>(6);
+		s["arr"s].T().Add<Dcb::Float2>("a");
+		s["arr"].T().Add<Dcb::Float3>("b"s);
+		Dcb::Buffer b(s);
+
+		auto act = b.GetSizeInBytes();
+		assert(act == 16u * 2u * 6u);
+	}
+	// size test array of primitive that needs padding
+	{
+		Dcb::Layout s;
+		s.Add<Dcb::Array>("arr");
+		s["arr"].Set<Dcb::Float3>(6);
+		Dcb::Buffer b(s);
+
+		auto act = b.GetSizeInBytes();
+		assert(act == 16u * 6u);
+	}
+}
 
 App::App(const std::string& commandLine)
 	:
@@ -29,8 +139,7 @@ App::App(const std::string& commandLine)
 	auto b = image->pixels[1];
 	auto c = image->pixels[2];
 	auto d = image->pixels[3];*/
-
-	//// makeshift cli for doing some preprocessing 
+	// makeshift cli for doing some preprocessing 
 	//if (this->commandLine != "")
 	//{
 	//	int nArgs;
@@ -66,6 +175,8 @@ App::App(const std::string& commandLine)
 	//		throw std::runtime_error("Normal map validated successfully. Just kidding about that whole runtime error thing.");
 	//	}
 	//}
+
+	TestDynamicConstant();
 
 	//wall.SetRootTransform(dx::XMMatrixTranslation(-12.0f, 0.0f, 0.0f));//设置墙模型的根节点Transform
 	//tp.SetPos({ 12.0f,0.0f,0.0f });									//设置TestPlane绘制物的位置

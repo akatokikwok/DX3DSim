@@ -6,6 +6,9 @@
 #include "Surface.h"
 #include <filesystem>
 #include "ChiliXM.h"
+#include "DynamicConstant.h"
+#include "ConstantBuffersEx.h"
+#include "LayoutCodex.h"
 
 namespace dx = DirectX;
 
@@ -598,18 +601,44 @@ std::unique_ptr<Mesh> Model::ParseMesh(Graphics& gfx, const aiMesh& mesh,
 		bindablePtrs.push_back(PixelShader::Resolve(gfx, "PhongPSNormalMap.cso"));	////创建像素shader，指定以PhongPSNormalMap
 		bindablePtrs.push_back(InputLayout::Resolve(gfx, vbuf.GetLayout(), pvsbc)); // 创建输入布局
 		
-		struct PSMaterialConstantDiffnorm// 自定义 材质常量struct 并添加进绑定物集合
-		{
-			//DirectX::XMFLOAT3 color = { 0.6f,0.6f,0.8f }; // 由于模型已经有漫反射纹理了，所以这里不再使用自定义的颜色
-			float specularIntensity /*= 0.18f*/; //高光强度
-			float specularPower;			//高光功率
+		//struct PSMaterialConstantDiffnorm// 自定义 材质常量struct 并添加进绑定物集合
+		//{
+		//	//DirectX::XMFLOAT3 color = { 0.6f,0.6f,0.8f }; // 由于模型已经有漫反射纹理了，所以这里不再使用自定义的颜色
+		//	float specularIntensity /*= 0.18f*/; //高光强度
+		//	float specularPower;			//高光功率
+		//	BOOL  normalMapEnabled = TRUE;
+		//	float padding[1];
+		//} pmc;
+		//pmc.specularPower = shininess; // 注意这里结构体的成员高光功率由之前定义好的高光参数决定
+		//pmc.specularIntensity = (specularColor.x + specularColor.y + specularColor.z) / 3.0f; //高光强度等于高光颜色各分量和的三分之一
+		//bindablePtrs.push_back(Bind::PixelConstantBuffer<PSMaterialConstantDiffnorm>::Resolve(gfx, pmc, 1u));//创建出像素常数缓存<材质>
 
-			BOOL  normalMapEnabled = TRUE;
-			float padding[1];
-		} pmc;
-		pmc.specularPower = shininess; // 注意这里结构体的成员高光功率由之前定义好的高光参数决定
-		pmc.specularIntensity = (specularColor.x + specularColor.y + specularColor.z) / 3.0f; //高光强度等于高光颜色各分量和的三分之一
-		bindablePtrs.push_back(Bind::PixelConstantBuffer<PSMaterialConstantDiffnorm>::Resolve(gfx, pmc, 1u));//创建出像素常数缓存<材质>
+		Dcb::Layout layout;
+		bool loaded = false;
+		auto tag = "diff&nrm";
+		if (LayoutCodex::Has(tag))
+		{
+			layout = LayoutCodex::Load(tag);
+			loaded = true;
+		}
+		else
+		{
+			layout.Add<Dcb::Float>("specularIntensity");
+			layout.Add<Dcb::Float>("specularPower");
+			layout.Add<Dcb::Bool>("normalMapEnabled");
+		}
+		//layout.Add<Dcb::Float>("padding");
+
+		Dcb::Buffer cbuf{ layout };
+		cbuf["specularIntensity"] = (specularColor.x + specularColor.y + specularColor.z) / 3.0f;
+		cbuf["specularPower"] = shininess;
+		cbuf["normalMapEnabled"] = true;
+		bindablePtrs.push_back(std::make_shared<PixelConstantBufferEX>(gfx, cbuf, 1u));
+
+		if (!loaded)
+		{
+			LayoutCodex::Store(tag, layout);
+		}
 	}
 	/// 只开启漫反射、高光纹理，没有法线纹理
 	else if (hasDiffuseMap && !hasNormalMap && hasSpecularMap)
