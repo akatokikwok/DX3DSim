@@ -2,6 +2,7 @@
 #include <string>
 #include <algorithm>
 #include <cctype>
+#include "LayoutCodex.h"
 
 #define DCB_RESOLVE_BASE(eltype) \
 size_t LayoutElement::Resolve ## eltype() const noxnd \
@@ -51,6 +52,7 @@ reftype::Ptr::operator __VA_ARGS__ eltype::SystemType*() noxnd \
 { \
 	return &static_cast<__VA_ARGS__ eltype::SystemType&>(ref); \
 }
+
 
 
 namespace Dcb
@@ -275,7 +277,8 @@ namespace Dcb
 	{}
 	Layout::Layout(std::shared_ptr<LayoutElement> pLayout)
 		:
-		pLayout(std::move(pLayout))
+		pLayout(std::move(pLayout)),
+		finalized(true)
 	{}
 	LayoutElement& Layout::operator[](const std::string& key)
 	{
@@ -286,15 +289,23 @@ namespace Dcb
 	{
 		return pLayout->GetSizeInBytes();
 	}
-	std::shared_ptr<LayoutElement> Layout::Finalize()
+	void Layout::Finalize()
 	{
-		pLayout->Finalize(0);
+		pLayout->Finalize(0u);
 		finalized = true;
-		return pLayout;
+	}
+	bool Layout::IsFinalized() const noexcept
+	{
+		return finalized;
 	}
 	std::string Layout::GetSignature() const noxnd
 	{
+		assert(finalized);
 		return pLayout->GetSignature();
+	}
+	std::shared_ptr<LayoutElement> Layout::ShareRoot() const noexcept
+	{
+		return pLayout;
 	}
 
 
@@ -395,9 +406,17 @@ namespace Dcb
 
 
 
-		Buffer::Buffer(Layout& lay)
+		Buffer Buffer::Make(Layout& lay) noxnd
+	{
+		return { LayoutCodex::Resolve(lay) };
+	}
+	Buffer::Buffer(Layout&& lay)
 		:
-		pLayout(std::static_pointer_cast<Struct>(lay.Finalize())),
+		Buffer(lay)
+	{}
+	Buffer::Buffer(Layout& lay)
+		:
+		pLayout(lay.ShareRoot()),
 		bytes(pLayout->GetOffsetEnd())
 	{}
 	ElementRef Buffer::operator[](const std::string& key) noxnd
@@ -420,7 +439,7 @@ namespace Dcb
 	{
 		return *pLayout;
 	}
-	std::shared_ptr<LayoutElement> Buffer::CloneLayout() const
+	std::shared_ptr<LayoutElement> Buffer::ShareLayout() const
 	{
 		return pLayout;
 	}
