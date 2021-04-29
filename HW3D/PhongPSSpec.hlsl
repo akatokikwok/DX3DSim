@@ -1,4 +1,4 @@
-/// Ã»ÓĞNormalMapÖ»ÓĞ¾µÃæµÄshader
+ï»¿/// æ²¡æœ‰NormalMapåªæœ‰é•œé¢çš„shader
 
 #include "ShaderOps.hlsl"
 #include "LightVectorData.hlsl"
@@ -7,7 +7,8 @@
 
 cbuffer ObjectCBuf
 {
-    float specularPowerConst;
+    //float specularPowerConst;
+    float specularPower;
     bool hasGloss;
     float specularMapWeight;
 };
@@ -25,13 +26,13 @@ float4 main(float3 viewFragPos : Position, float3 viewNormal : Normal, float2 tc
 	// fragment to light vector data
     const LightVectorData lv = CalculateLightVectorData(viewLightPos, viewFragPos);
     
-    // ¾µÃæ·´Éä²ÎÊıµ÷Õû
-    float specularPower = specularPowerConst;
+    // é•œé¢åå°„å‚æ•°è°ƒæ•´
+    float specularPowerLoaded = specularPower;
     const float4 specularSample = spec.Sample(splr, tc);
     const float3 specularReflectionColor = specularSample.rgb * specularMapWeight;
     if (hasGloss)
     {
-        specularPower = pow(2.0f, specularSample.a * 13.0f);
+        specularPowerLoaded = pow(2.0f, specularSample.a * 13.0f);
     }
     
 	// attenuation
@@ -41,7 +42,7 @@ float4 main(float3 viewFragPos : Position, float3 viewNormal : Normal, float2 tc
     // specular reflected
     const float3 specularReflected = Speculate(
         specularReflectionColor, 1.0f, viewNormal,
-        lv.vToL, viewFragPos, att, specularPower
+        lv.vToL, viewFragPos, att, specularPowerLoaded
     );
 	// final color = attenuate diffuse & ambient by diffuse texture color and add specular reflected
     return float4(saturate((diffuse + ambient) * tex.Sample(splr, tc).rgb + specularReflected), 1.0f);

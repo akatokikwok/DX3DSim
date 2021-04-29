@@ -1,304 +1,370 @@
-﻿#include "DynamicConstant.h"
-
-#define DCB_RESOLVE_BASE(eltype) \
-size_t LayoutElement::Resolve ## eltype() const noxnd \
-{ \
-	assert( false && "Cannot resolve to" #eltype ); return 0u; \
-}
-
-#define DCB_LEAF_ELEMENT_IMPL(eltype,systype,hlslSize) \
-size_t eltype::Resolve ## eltype() const noxnd \
-{ \
-	return GetOffsetBegin(); \
-} \
-size_t eltype::GetOffsetEnd() const noexcept \
-{ \
-	return GetOffsetBegin() + ComputeSize(); \
-} \
-size_t eltype::Finalize( size_t offset_in ) \
-{ \
-	offset = offset_in; \
-	return offset_in + ComputeSize(); \
-} \
-size_t eltype::ComputeSize() const noxnd \
-{ \
-	return (hlslSize); \
-}
-#define DCB_LEAF_ELEMENT(eltype,systype) DCB_LEAF_ELEMENT_IMPL(eltype,systype,sizeof(systype))
-
-#define DCB_REF_CONVERSION(reftype,eltype,...) \
-reftype::operator __VA_ARGS__ eltype::SystemType&() noxnd \
-{ \
-	return *reinterpret_cast<eltype::SystemType*>(pBytes + offset + pLayout->Resolve ## eltype()); \
-}
-#define DCB_REF_ASSIGN(reftype,eltype) \
-eltype::SystemType& reftype::operator=( const eltype::SystemType& rhs ) noxnd \
-{ \
-	return static_cast<eltype::SystemType&>(*this) = rhs; \
-}
-#define DCB_REF_NONCONST(reftype,eltype) DCB_REF_CONVERSION(reftype,eltype) DCB_REF_ASSIGN(reftype,eltype)
-#define DCB_REF_CONST(reftype,eltype) DCB_REF_CONVERSION(reftype,eltype,const)
-
-#define DCB_PTR_CONVERSION(reftype,eltype,...) \
-reftype::Ptr::operator __VA_ARGS__ eltype::SystemType*() noxnd \
-{ \
-	return &static_cast<__VA_ARGS__ eltype::SystemType&>(ref); \
-}
-
+﻿#define DCB_IMPL_SOURCE
+#include "DynamicConstant.h"
+#include <string>
+#include <algorithm>
+#include <cctype>
+#include "LayoutCodex.h"
+#include <string>
 
 namespace Dcb
 {
-	LayoutElement::~LayoutElement()
-	{}
-	LayoutElement& LayoutElement::operator[](const std::string&)
+	struct ExtraData
 	{
-		assert(false && "cannot access member on non Struct");
-		return *this;
+		struct Struct : public LayoutElement::ExtraDataBase
+		{
+			std::vector<std::pair<std::string, LayoutElement>> layoutElements;
+		};
+		struct Array : public LayoutElement::ExtraDataBase
+		{
+			std::optional<LayoutElement> layoutElement;
+			size_t size;
+		};
+	};
+
+	std::string LayoutElement::GetSignature() const noxnd
+	{
+		switch (type)
+		{
+#define X(el) case el: return Map<el>::code;
+			LEAF_ELEMENT_TYPES
+#undef X
+			case Struct:
+				return GetSignatureForStruct();
+			case Array:
+				return GetSignatureForArray();
+			default:
+				assert("Bad type in signature generation" && false);
+				return "???";
+		}
 	}
-	const LayoutElement& LayoutElement::operator[](const std::string& key) const
+	bool LayoutElement::Exists() const noexcept
+	{
+		return type != Empty;
+	}
+	std::pair<size_t, const LayoutElement*> LayoutElement::CalculateIndexingOffset(size_t offset, size_t index) const noxnd
+	{
+		assert("Indexing into non-array" && type == Array);
+		const auto& data = static_cast<ExtraData::Array&>(*pExtraData);
+		assert(index < data.size);
+		return { offset + data.layoutElement->GetSizeInBytes() * index,&*data.layoutElement };
+	}
+	LayoutElement& LayoutElement::operator[](const std::string& key) noxnd
+	{
+		assert("Keying into non-struct" && type == Struct);
+		for (auto& mem : static_cast<ExtraData::Struct&>(*pExtraData).layoutElements)
+		{
+			if (mem.first == key)
+			{
+				return mem.second;
+			}
+		}
+		return GetEmptyElement();
+	}
+	const LayoutElement& LayoutElement::operator[](const std::string& key) const noxnd
 	{
 		return const_cast<LayoutElement&>(*this)[key];
 	}
-	LayoutElement& LayoutElement::T()
+	LayoutElement& LayoutElement::T() noxnd
 	{
-		assert(false);
-		return *this;
+		assert("Accessing T of non-array" && type == Array);
+		return *static_cast<ExtraData::Array&>(*pExtraData).layoutElement;
 	}
-	const LayoutElement& LayoutElement::T() const
+	const LayoutElement& LayoutElement::T() const noxnd
 	{
 		return const_cast<LayoutElement&>(*this).T();
 	}
-	size_t LayoutElement::GetOffsetBegin() const noexcept
+	size_t LayoutElement::GetOffsetBegin() const noxnd
 	{
-		return offset;
+		return *offset;
 	}
-	size_t LayoutElement::GetSizeInBytes() const noexcept
+	size_t LayoutElement::GetOffsetEnd() const noxnd
+	{
+		switch (type)
+		{
+#define X(el) case el: return *offset + Map<el>::hlslSize;
+			LEAF_ELEMENT_TYPES
+#undef X
+			case Struct:
+			{
+				const auto& data = static_cast<ExtraData::Struct&>(*pExtraData);
+				return AdvanceToBoundary(data.layoutElements.back().second.GetOffsetEnd());
+			}
+			case Array:
+			{
+				const auto& data = static_cast<ExtraData::Array&>(*pExtraData);
+				return *offset + AdvanceToBoundary(data.layoutElement->GetSizeInBytes()) * data.size;
+			}
+			default:
+				assert("Tried to get offset of empty or invalid element" && false);
+				return 0u;
+		}
+	}
+	size_t LayoutElement::GetSizeInBytes() const noxnd
 	{
 		return GetOffsetEnd() - GetOffsetBegin();
 	}
-	size_t LayoutElement::GetNextBoundaryOffset(size_t offset) noexcept
+	LayoutElement& LayoutElement::Add(Type addedType, std::string name) noxnd
+	{
+		assert("Add to non-struct in layout" && type == Struct);
+		assert("invalid symbol name in Struct" && ValidateSymbolName(name));
+		auto& structData = static_cast<ExtraData::Struct&>(*pExtraData);
+		for (auto& mem : structData.layoutElements)
+		{
+			if (mem.first == name)
+			{
+				assert("Adding duplicate name to struct" && false);
+			}
+		}
+		structData.layoutElements.emplace_back(std::move(name), LayoutElement{ addedType });
+		return *this;
+	}
+	LayoutElement& LayoutElement::Set(Type addedType, size_t size) noxnd
+	{
+		assert("Set on non-array in layout" && type == Array);
+		assert(size != 0u);
+		auto& arrayData = static_cast<ExtraData::Array&>(*pExtraData);
+		arrayData.layoutElement = { addedType };
+		arrayData.size = size;
+		return *this;
+	}
+	LayoutElement::LayoutElement(Type typeIn) noxnd
+		:
+	type{ typeIn }
+	{
+		assert(typeIn != Empty);
+		if (typeIn == Struct)
+		{
+			pExtraData = std::unique_ptr<ExtraData::Struct>{ new ExtraData::Struct() };
+		}
+		else if (typeIn == Array)
+		{
+			pExtraData = std::unique_ptr<ExtraData::Array>{ new ExtraData::Array() };
+		}
+	}
+	size_t LayoutElement::Finalize(size_t offsetIn) noxnd
+	{
+		switch (type)
+		{
+#define X(el) case el: offset = AdvanceIfCrossesBoundary( offsetIn,Map<el>::hlslSize ); return *offset + Map<el>::hlslSize;
+			LEAF_ELEMENT_TYPES
+#undef X
+			case Struct:
+				return FinalizeForStruct(offsetIn);
+			case Array:
+				return FinalizeForArray(offsetIn);
+			default:
+				assert("Bad type in size computation" && false);
+				return 0u;
+		}
+	}
+	std::string LayoutElement::GetSignatureForStruct() const noxnd
+	{
+		using namespace std::string_literals;
+		auto sig = "St{"s;
+		for (const auto& el : static_cast<ExtraData::Struct&>(*pExtraData).layoutElements)
+		{
+			sig += el.first + ":"s + el.second.GetSignature() + ";"s;
+		}
+		sig += "}"s;
+		return sig;
+	}
+	std::string LayoutElement::GetSignatureForArray() const noxnd
+	{
+		using namespace std::string_literals;
+		const auto& data = static_cast<ExtraData::Array&>(*pExtraData);
+		return "Ar:"s + std::to_string(data.size) + "{"s + data.layoutElement->GetSignature() + "}"s;
+	}
+	size_t LayoutElement::FinalizeForStruct(size_t offsetIn)
+	{
+		auto& data = static_cast<ExtraData::Struct&>(*pExtraData);
+		assert(data.layoutElements.size() != 0u);
+		offset = AdvanceToBoundary(offsetIn);
+		auto offsetNext = *offset;
+		for (auto& el : data.layoutElements)
+		{
+			offsetNext = el.second.Finalize(offsetNext);
+		}
+		return offsetNext;
+	}
+	size_t LayoutElement::FinalizeForArray(size_t offsetIn)
+	{
+		auto& data = static_cast<ExtraData::Array&>(*pExtraData);
+		assert(data.size != 0u);
+		offset = AdvanceToBoundary(offsetIn);
+		data.layoutElement->Finalize(*offset);
+		return GetOffsetEnd();
+	}
+	bool LayoutElement::CrossesBoundary(size_t offset, size_t size) noexcept
+	{
+		const auto end = offset + size;
+		const auto pageStart = offset / 16u;
+		const auto pageEnd = end / 16u;
+		return (pageStart != pageEnd && pageEnd % 16 != 0u) || size > 16u;
+	}
+	size_t LayoutElement::AdvanceIfCrossesBoundary(size_t offset, size_t size) noexcept
+	{
+		return CrossesBoundary(offset, size) ? AdvanceToBoundary(offset) : offset;
+	}
+	size_t LayoutElement::AdvanceToBoundary(size_t offset) noexcept
 	{
 		return offset + (16u - offset % 16u) % 16u;
 	}
-
-
-	DCB_RESOLVE_BASE(Matrix)
-		DCB_RESOLVE_BASE(Float4)
-		DCB_RESOLVE_BASE(Float3)
-		DCB_RESOLVE_BASE(Float2)
-		DCB_RESOLVE_BASE(Float)
-		DCB_RESOLVE_BASE(Bool)
-
-
-
-		DCB_LEAF_ELEMENT(Matrix, dx::XMFLOAT4X4)
-		DCB_LEAF_ELEMENT(Float4, dx::XMFLOAT4)
-		DCB_LEAF_ELEMENT(Float3, dx::XMFLOAT3)
-		DCB_LEAF_ELEMENT(Float2, dx::XMFLOAT2)
-		DCB_LEAF_ELEMENT(Float, float)
-		DCB_LEAF_ELEMENT_IMPL(Bool, bool, 4u)
-
-
-
-		LayoutElement& Struct::operator[](const std::string& key)
+	bool LayoutElement::ValidateSymbolName(const std::string& name) noexcept
 	{
-		return *map.at(key);
-	}
-	size_t Struct::GetOffsetEnd() const noexcept
-	{
-		// bump up to next boundary (because structs are multiple of 16 in size)
-		return LayoutElement::GetNextBoundaryOffset(elements.back()->GetOffsetEnd());
-	}
-	void Struct::Add(const std::string& name, std::unique_ptr<LayoutElement> pElement) noxnd
-	{
-		elements.push_back(std::move(pElement));
-		if (!map.emplace(name, elements.back().get()).second)
-		{
-			assert(false);
-		}
-	}
-	size_t Struct::Finalize(size_t offset_in)
-	{
-		assert(elements.size() != 0u);
-		offset = offset_in;
-		auto offsetNext = offset;
-		for (auto& el : elements)
-		{
-			offsetNext = (*el).Finalize(offsetNext);
-		}
-		return GetOffsetEnd();
-	}
-	size_t Struct::ComputeSize() const noxnd
-	{
-		// compute offsets of all elements by summing size+padding
-		size_t offsetNext = 0u;
-		for (auto& el : elements)
-		{
-			const auto elSize = el->ComputeSize();
-			offsetNext += CalculatePaddingBeforeElement(offsetNext, elSize) + elSize;
-		}
-		// struct size must be multiple of 16 bytes
-		return GetNextBoundaryOffset(offsetNext);
-	}
-	size_t Struct::CalculatePaddingBeforeElement(size_t offset, size_t size) noexcept
-	{
-		// advance to next boundary if straddling 16-byte boundary
-		if (offset / 16u != (offset + size - 1) / 16u)
-		{
-			return GetNextBoundaryOffset(offset) - offset;
-		}
-		return offset;
+		// symbols can contain alphanumeric and underscore, must not start with digit
+		return !name.empty() && !std::isdigit(name.front()) &&
+			std::all_of(name.begin(), name.end(), [](char c) {
+			return std::isalnum(c) || c == '_';
+				}
+		);
 	}
 
 
 
-	size_t Array::GetOffsetEnd() const noexcept
-	{
-		// arrays are not packed in hlsl
-		return GetOffsetBegin() + LayoutElement::GetNextBoundaryOffset(pElement->GetSizeInBytes()) * size;
-	}
-	void Array::Set(std::unique_ptr<LayoutElement> pElement_in, size_t size_in) noxnd
-	{
-		pElement = std::move(pElement_in);
-		size = size_in;
-	}
-	LayoutElement& Array::T()
-	{
-		return *pElement;
-	}
-	size_t Array::Finalize(size_t offset_in)
-	{
-		assert(size != 0u && pElement);
-		offset = offset_in;
-		pElement->Finalize(offset_in);
-		return GetOffsetEnd();
-	}
-	size_t Array::ComputeSize() const noxnd
-	{
-		// arrays are not packed in hlsl
-		return LayoutElement::GetNextBoundaryOffset(pElement->ComputeSize()) * size;
-	}
 
-
-
-	Layout::Layout()
+	Layout::Layout(std::shared_ptr<LayoutElement> pRoot) noexcept
 		:
-		pLayout(std::make_shared<Struct>())
+		pRoot{ std::move(pRoot) }
 	{}
-	Layout::Layout(std::shared_ptr<LayoutElement> pLayout)
-		:
-		pLayout(std::move(pLayout))
-	{}
-	LayoutElement& Layout::operator[](const std::string& key)
-	{
-		assert(!finalized && "cannot modify finalized layout");
-		return (*pLayout)[key];
-	}
 	size_t Layout::GetSizeInBytes() const noexcept
 	{
-		return pLayout->GetSizeInBytes();
+		return pRoot->GetSizeInBytes();
 	}
-	std::shared_ptr<LayoutElement> Layout::Finalize()
+	std::string Layout::GetSignature() const noxnd
 	{
-		pLayout->Finalize(0);
-		finalized = true;
-		return pLayout;
+		return pRoot->GetSignature();
+	}
+
+
+	RawLayout::RawLayout() noexcept
+		:
+		Layout{ std::shared_ptr<LayoutElement>{ new LayoutElement(Struct) } }
+	{}
+	LayoutElement& RawLayout::operator[](const std::string& key) noxnd
+	{
+		return (*pRoot)[key];
+	}
+	std::shared_ptr<LayoutElement> RawLayout::DeliverRoot() noexcept
+	{
+		auto temp = std::move(pRoot);
+		temp->Finalize(0);
+		*this = RawLayout();
+		return std::move(temp);
+	}
+	void RawLayout::ClearRoot() noexcept
+	{
+		*this = RawLayout();
+	}
+
+
+	CookedLayout::CookedLayout(std::shared_ptr<LayoutElement> pRoot) noexcept
+		:
+		Layout(std::move(pRoot))
+	{}
+	std::shared_ptr<LayoutElement> CookedLayout::RelinquishRoot() const noexcept
+	{
+		return std::move(pRoot);
+	}
+	std::shared_ptr<LayoutElement> CookedLayout::ShareRoot() const noexcept
+	{
+		return pRoot;
+	}
+	const LayoutElement& CookedLayout::operator[](const std::string& key) const noxnd
+	{
+		return (*pRoot)[key];
 	}
 
 
 
-	ConstElementRef::Ptr::Ptr(ConstElementRef& ref)
-		:
-		ref(ref)
-	{}
-	DCB_PTR_CONVERSION(ConstElementRef, Matrix, const)
-		DCB_PTR_CONVERSION(ConstElementRef, Float4, const)
-		DCB_PTR_CONVERSION(ConstElementRef, Float3, const)
-		DCB_PTR_CONVERSION(ConstElementRef, Float2, const)
-		DCB_PTR_CONVERSION(ConstElementRef, Float, const)
-		DCB_PTR_CONVERSION(ConstElementRef, Bool, const)
-		ConstElementRef::ConstElementRef(const LayoutElement* pLayout, char* pBytes, size_t offset)
-		:
-		offset(offset),
-		pLayout(pLayout),
-		pBytes(pBytes)
-	{}
-	ConstElementRef ConstElementRef::operator[](const std::string& key) noxnd
+
+
+	bool ConstElementRef::Exists() const noexcept
+	{
+		return pLayout->Exists();
+	}
+	ConstElementRef ConstElementRef::operator[](const std::string& key) const noxnd
 	{
 		return { &(*pLayout)[key],pBytes,offset };
 	}
-	ConstElementRef ConstElementRef::operator[](size_t index) noxnd
+	ConstElementRef ConstElementRef::operator[](size_t index) const noxnd
 	{
-		const auto& t = pLayout->T();
-		// arrays are not packed in hlsl
-		const auto elementSize = LayoutElement::GetNextBoundaryOffset(t.GetSizeInBytes());
-		return { &t,pBytes,offset + elementSize * index };
+		const auto indexingData = pLayout->CalculateIndexingOffset(offset, index);
+		return { indexingData.second,pBytes,indexingData.first };
 	}
-	ConstElementRef::Ptr ConstElementRef::operator&() noxnd
+	ConstElementRef::Ptr ConstElementRef::operator&() const noxnd
 	{
-		return { *this };
+		return Ptr{ this };
 	}
-	DCB_REF_CONST(ConstElementRef, Matrix)
-		DCB_REF_CONST(ConstElementRef, Float4)
-		DCB_REF_CONST(ConstElementRef, Float3)
-		DCB_REF_CONST(ConstElementRef, Float2)
-		DCB_REF_CONST(ConstElementRef, Float)
-		DCB_REF_CONST(ConstElementRef, Bool)
-
-
-		ElementRef::Ptr::Ptr(ElementRef& ref)
-		:
-		ref(ref)
-	{}
-	DCB_PTR_CONVERSION(ElementRef, Matrix)
-		DCB_PTR_CONVERSION(ElementRef, Float4)
-		DCB_PTR_CONVERSION(ElementRef, Float3)
-		DCB_PTR_CONVERSION(ElementRef, Float2)
-		DCB_PTR_CONVERSION(ElementRef, Float)
-		DCB_PTR_CONVERSION(ElementRef, Bool)
-		ElementRef::ElementRef(const LayoutElement* pLayout, char* pBytes, size_t offset)
+	ConstElementRef::ConstElementRef(const LayoutElement* pLayout, const char* pBytes, size_t offset) noexcept
 		:
 		offset(offset),
 		pLayout(pLayout),
 		pBytes(pBytes)
 	{}
+	ConstElementRef::Ptr::Ptr(const ConstElementRef* ref) noexcept : ref(ref)
+	{}
+
+
 	ElementRef::operator ConstElementRef() const noexcept
 	{
 		return { pLayout,pBytes,offset };
 	}
-	ElementRef ElementRef::operator[](const std::string& key) noxnd
+	bool ElementRef::Exists() const noexcept
+	{
+		return pLayout->Exists();
+	}
+	ElementRef ElementRef::operator[](const std::string& key) const noxnd
 	{
 		return { &(*pLayout)[key],pBytes,offset };
 	}
-	ElementRef ElementRef::operator[](size_t index) noxnd
+	ElementRef ElementRef::operator[](size_t index) const noxnd
 	{
-		const auto& t = pLayout->T();
-		// arrays are not packed in hlsl
-		const auto elementSize = LayoutElement::GetNextBoundaryOffset(t.GetSizeInBytes());
-		return { &t,pBytes,offset + elementSize * index };
+		const auto indexingData = pLayout->CalculateIndexingOffset(offset, index);
+		return { indexingData.second,pBytes,indexingData.first };
 	}
-	ElementRef::Ptr ElementRef::operator&() noxnd
+	ElementRef::Ptr ElementRef::operator&() const noxnd
 	{
-		return { *this };
+		return Ptr{ const_cast<ElementRef*>(this) };
 	}
-	DCB_REF_NONCONST(ElementRef, Matrix)
-		DCB_REF_NONCONST(ElementRef, Float4)
-		DCB_REF_NONCONST(ElementRef, Float3)
-		DCB_REF_NONCONST(ElementRef, Float2)
-		DCB_REF_NONCONST(ElementRef, Float)
-		DCB_REF_NONCONST(ElementRef, Bool)
-
-
-
-
-		Buffer::Buffer(Layout& lay)
+	ElementRef::ElementRef(const LayoutElement* pLayout, char* pBytes, size_t offset) noexcept
 		:
-		pLayout(std::static_pointer_cast<Struct>(lay.Finalize())),
-		bytes(pLayout->GetOffsetEnd())
+		offset(offset),
+		pLayout(pLayout),
+		pBytes(pBytes)
+	{}
+	ElementRef::Ptr::Ptr(ElementRef* ref) noexcept : ref(ref)
+	{}
+
+
+
+
+	Buffer::Buffer(RawLayout&& lay) noxnd
+		:
+	Buffer(LayoutCodex::Resolve(std::move(lay)))
+	{}
+	Buffer::Buffer(const CookedLayout& lay) noxnd
+		:
+		pLayoutRoot(lay.ShareRoot()),
+		bytes(pLayoutRoot->GetOffsetEnd())
+	{}
+	Buffer::Buffer(CookedLayout&& lay) noxnd
+		:
+		pLayoutRoot(lay.RelinquishRoot()),
+		bytes(pLayoutRoot->GetOffsetEnd())
+	{}
+	Buffer::Buffer(const Buffer& buf) noexcept
+		:
+		pLayoutRoot(buf.pLayoutRoot),
+		bytes(buf.bytes)
+	{}
+	Buffer::Buffer(Buffer&& buf) noexcept
+		:
+		pLayoutRoot(std::move(buf.pLayoutRoot)),
+		bytes(std::move(buf.bytes))
 	{}
 	ElementRef Buffer::operator[](const std::string& key) noxnd
 	{
-		return { &(*pLayout)[key],bytes.data(),0u };
+		return { &(*pLayoutRoot)[key],bytes.data(),0u };
 	}
 	ConstElementRef Buffer::operator[](const std::string& key) const noxnd
 	{
@@ -312,12 +378,17 @@ namespace Dcb
 	{
 		return bytes.size();
 	}
-	const LayoutElement& Buffer::GetLayout() const noexcept
+	const LayoutElement& Buffer::GetRootLayoutElement() const noexcept
 	{
-		return *pLayout;
+		return *pLayoutRoot;
 	}
-	std::shared_ptr<LayoutElement> Buffer::CloneLayout() const
+	void Buffer::CopyFrom(const Buffer& other) noxnd
 	{
-		return pLayout;
+		assert(&GetRootLayoutElement() == &other.GetRootLayoutElement());
+		std::copy(other.bytes.begin(), other.bytes.end(), bytes.begin());
+	}
+	std::shared_ptr<LayoutElement> Buffer::ShareLayoutRoot() const noexcept
+	{
+		return pLayoutRoot;
 	}
 }
