@@ -11,6 +11,7 @@
 #include <type_traits>
 #include <filesystem>
 #include "imgui/imgui.h"
+#include "DynamicConstant.h"
 
 /* 用于捕获异常的模型异常类*/
 class ModelException : public ChiliException
@@ -149,6 +150,8 @@ public:
 	//	return false;
 	//}
 
+	const Dcb::Buffer* GetMaterialConstants() const noxnd;
+	void SetMaterialConstants(const Dcb::Buffer&) noxnd;
 private:
 	// 添加子节点,仅供Model类实例使用,因为Model类是Node类的友元
 	void AddChild(std::unique_ptr<Node> pChild) noxnd;	
