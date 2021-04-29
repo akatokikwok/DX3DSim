@@ -1,4 +1,4 @@
-ï»¿/// æ²¡æœ‰NormalMapåªæœ‰é•œé¢çš„shader
+/// Ã»ÓĞNormalMapÖ»ÓĞ¾µÃæµÄshader
 
 #include "ShaderOps.hlsl"
 #include "LightVectorData.hlsl"
@@ -26,7 +26,7 @@ float4 main(float3 viewFragPos : Position, float3 viewNormal : Normal, float2 tc
 	// fragment to light vector data
     const LightVectorData lv = CalculateLightVectorData(viewLightPos, viewFragPos);
     
-    // é•œé¢åå°„å‚æ•°è°ƒæ•´
+    // ¾µÃæ·´Éä²ÎÊıµ÷Õû
     float specularPowerLoaded = specularPower;
     const float4 specularSample = spec.Sample(splr, tc);
     const float3 specularReflectionColor = specularSample.rgb * specularMapWeight;
