@@ -676,7 +676,8 @@ std::unique_ptr<Mesh> Model::ParseMesh(Graphics& gfx, const aiMesh& mesh,
 		//pmc.specularPower = shininess;	//材质里高光由外部高光参数更新									
 		//pmc.hasGlossMap = hasAlphaGloss ? TRUE : FALSE;		//材质里透明通道由外部透明更新
 		//bindablePtrs.push_back(PixelConstantBuffer<Node::PSMaterialConstantFullmonte>::Resolve(gfx, pmc, 1u));			//创建像素常量缓存<材质>
-
+		
+		// 创建布局RawLayout,并给布局指定类型
 		Dcb::RawLayout lay;
 		lay.Add<Dcb::Bool>("normalMapEnabled");
 		lay.Add<Dcb::Bool>("specularMapEnabled");
@@ -684,7 +685,7 @@ std::unique_ptr<Mesh> Model::ParseMesh(Graphics& gfx, const aiMesh& mesh,
 		lay.Add<Dcb::Float>("specularPower");
 		lay.Add<Dcb::Float3>("specularColor");
 		lay.Add<Dcb::Float>("specularMapWeight");
-
+		//写入缓存buf数据
 		auto buf = Dcb::Buffer(std::move(lay));
 		buf["normalMapEnabled"] = true;
 		buf["specularMapEnabled"] = true;
@@ -693,7 +694,7 @@ std::unique_ptr<Mesh> Model::ParseMesh(Graphics& gfx, const aiMesh& mesh,
 		buf["specularColor"] = dx::XMFLOAT3{ 0.75f,0.75f,0.75f };
 		buf["specularMapWeight"] = 0.671f;
 
-		bindablePtrs.push_back(std::make_shared<CachingPixelConstantBufferEX>(gfx, buf, 1u));
+		bindablePtrs.push_back(std::make_shared<CachingPixelConstantBufferEX>(gfx, buf, 1u));// 将缓存buf传给需要的地方,比如这里的CachingPixelConstantBufferEX
 	
 	}
 	/// 只开启漫反射、法线贴图，没有高光贴图

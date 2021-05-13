@@ -9,6 +9,7 @@
 #include <string>
 
 // master list of leaf types that generates enum elements and various switches etc.
+// 此动态常数缓存支持的类型
 #define LEAF_ELEMENT_TYPES \
 	X( Float ) \
 	X( Float2 ) \

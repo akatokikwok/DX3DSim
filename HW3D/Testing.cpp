@@ -10,7 +10,7 @@ void TestDynamicConstant()
 	using namespace std::string_literals;
 	// data roundtrip tests
 	{
-		Dcb::RawLayout s;
+		Dcb::RawLayout s; //动态常数缓存首先是一个数据结构有自己的Layout
 		s.Add<Dcb::Struct>("butts"s);
 		s["butts"s].Add<Dcb::Float3>("pubes"s);
 		s["butts"s].Add<Dcb::Float>("dank"s);
@@ -31,7 +31,7 @@ void TestDynamicConstant()
 		// fails: bad symbol name
 		//s.Add<Dcb::Bool>( "69man" );
 
-		auto b = Dcb::Buffer(std::move(s));
+		auto b = Dcb::Buffer(std::move(s));//是真正的缓存
 
 		// fails to compile: conversion not in type map
 		//b["woot"s] = "#"s;
