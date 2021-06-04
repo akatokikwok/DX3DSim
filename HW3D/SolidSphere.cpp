@@ -3,7 +3,7 @@
 #include "GraphicsThrowMacros.h"
 #include "Sphere.h"
 #include "Vertex.h"
-
+#include "Stencil.h"
 
 SolidSphere::SolidSphere( Graphics& gfx,float radius )
 {
@@ -82,6 +82,8 @@ SolidSphere::SolidSphere( Graphics& gfx,float radius )
 	AddBind(Bind::Blender::Resolve(gfx, false));
 
 	AddBind(Bind::Rasterizer::Resolve(gfx, false));
+
+	AddBind(std::make_shared<Stencil>(gfx, Stencil::Mode::Off));
 }
 
 void SolidSphere::SetPos( DirectX::XMFLOAT3 pos ) noexcept

@@ -1,5 +1,7 @@
 ﻿#pragma once
 #include "Drawable.h"
+#include "Bindable.h"
+#include "IndexBuffer.h"
 
 /* */
 class TestCube : public Drawable
@@ -13,8 +15,24 @@ public:
 	/* 拿到模型的Transform*/
 	DirectX::XMMATRIX GetTransformXM() const noexcept override;
 	/* 生成TestCube模型 的IMGUI窗口*/
-	void SpawnControlWindow(Graphics& gfx) noexcept;
+	void SpawnControlWindow(Graphics& gfx, const char* name) noexcept;
+
+	void DrawOutline(Graphics& gfx) noxnd
+	{
+		outlining = true;
+		for (auto& b : outlineEffect)
+		{
+			b->Bind(gfx);
+		}
+		gfx.DrawIndexed(QueryBindable<Bind::IndexBuffer>()->GetCount());
+		outlining = false;
+	}
 private:
+	std::vector<std::shared_ptr<Bind::Bindable>> outlineEffect;
+
+	bool outlining = false;
+
+
 	struct PSMaterialConstant
 	{
 		float specularIntensity = 0.1f;

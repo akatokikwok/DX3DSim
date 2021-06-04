@@ -291,6 +291,7 @@
     <ClInclude Include="Sampler.h" />
     <ClInclude Include="Sheet.h" />
     <ClInclude Include="Sphere.h" />
+    <ClInclude Include="Stencil.h" />
     <ClInclude Include="Surface.h" />
     <ClInclude Include="TestCube.h" />
     <ClInclude Include="Testing.h" />
