@@ -58,14 +58,17 @@ namespace Bind
 		UINT slot;
 	};
 
+	/* 继承自PixelConstantBufferEx, 是cache版本,负责将buffer保存在CPU端*/
 	class CachingPixelConstantBufferEX : public PixelConstantBufferEX
 	{
 	public:
+		/* 此版本构造函数传进来layout,然后负责创建一个没有数据的buffer*/
 		CachingPixelConstantBufferEX(Graphics& gfx, const Dcb::CookedLayout& layout, UINT slot)
 			:
 			PixelConstantBufferEX(gfx, *layout.ShareRoot(), slot, nullptr),
 			buf(Dcb::Buffer(layout))
 		{}
+		/* 此版本构造函数为常用版本,slot指定了buffer需要使用的槽*/
 		CachingPixelConstantBufferEX(Graphics& gfx, const Dcb::Buffer& buf, UINT slot)
 			:
 			PixelConstantBufferEX(gfx, buf.GetRootLayoutElement(), slot, &buf),
@@ -98,6 +101,7 @@ namespace Bind
 		Dcb::Buffer buf;
 	};
 
+	/* 继承自PixelConstantBufferEx, 是非cache版本,负责将buffer直接上川到GPU端而非把副本放在CPU端*/
 	class NocachePixelConstantBufferEX : public PixelConstantBufferEX
 	{
 	public:
