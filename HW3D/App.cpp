@@ -111,10 +111,11 @@ void App::DoFrame()
 	//plane.Draw(wnd.Gfx());
 	//cube.Draw(wnd.Gfx());
 
-	cube.Draw(wnd.Gfx());
-	cube2.Draw(wnd.Gfx());
-	cube.DrawOutline(wnd.Gfx());
-	cube2.DrawOutline(wnd.Gfx());
+	cube.Draw(wnd.Gfx());// 绘制普通cube
+	cube2.Draw(wnd.Gfx());// 绘制普通cube2
+
+	cube.DrawOutline(wnd.Gfx());// 绘制cube1的描边特效
+	cube2.DrawOutline(wnd.Gfx());// 绘制cube2的描边特效
 	//sponza.Draw(wnd.Gfx());
 	//bluePlane.Draw(wnd.Gfx());
 	//redPlane.Draw( wnd.Gfx() );

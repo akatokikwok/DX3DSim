@@ -28,7 +28,6 @@ TestCube::TestCube(Graphics& gfx, float size)
 	AddBind(std::move(pvs));//创建顶点着色器
 
 	//AddBind(PixelShader::Resolve(gfx, "PhongPSNormalMap.cso"));//创建像素着色器--法线贴图的
-
 	AddBind(PixelShader::Resolve(gfx, "PhongPS.cso"));
 
 	AddBind(PixelConstantBuffer<PSMaterialConstant>::Resolve(gfx, pmc, 1u));//利用自定义的材质常量创建像素常量缓存
@@ -40,11 +39,11 @@ TestCube::TestCube(Graphics& gfx, float size)
 	// 创建双常数缓存; 顶点shader绑到插槽0，像素shader绑到插槽2(因为PhongPSNormalMap.hlsl里像素常量缓存cbuffer TransformCBuf位于[2]位置)
 	//AddBind(std::make_shared<TransformCbufDoubleboi>(gfx, *this, 0u, 2u));
 
+	// 添加具备描边效果的绑定物
 	auto tcbdb = std::make_shared<TransformCbufDoubleboi>(gfx, *this, 0u, 2u);
 	AddBind(tcbdb);
-
+	// 正常绘制的时候,使用写入模式,因为这些描边特效绑定物也会被写进mask
 	AddBind(std::make_shared<Stencil>(gfx, Stencil::Mode::Write));
-
 
 	outlineEffect.push_back(VertexBuffer::Resolve(gfx, geometryTag, model.vertices));
 	outlineEffect.push_back(IndexBuffer::Resolve(gfx, geometryTag, model.indices));
@@ -54,13 +53,13 @@ TestCube::TestCube(Graphics& gfx, float size)
 	outlineEffect.push_back(PixelShader::Resolve(gfx, "SolidPS.cso"));
 	struct SolidColorBuffer
 	{
-		DirectX::XMFLOAT4 color = { 1.0f,0.4f,0.4f,1.0f };
+		DirectX::XMFLOAT4 color = { 1.0f,0.4f,0.4f,1.0f };// 设置一个淡红色
 	} scb;
 	outlineEffect.push_back(PixelConstantBuffer<SolidColorBuffer>::Resolve(gfx, scb, 1u));
 	outlineEffect.push_back(InputLayout::Resolve(gfx, model.vertices.GetLayout(), pvsbc));
 	outlineEffect.push_back(Topology::Resolve(gfx, D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST));
 	outlineEffect.push_back(std::move(tcbdb));
-	outlineEffect.push_back(std::make_shared<Stencil>(gfx, Stencil::Mode::Mask));
+	outlineEffect.push_back(std::make_shared<Stencil>(gfx, Stencil::Mode::Mask));// 绘制描边的时候,就用遮罩模式下的模板
 }
 
 void TestCube::SetPos(DirectX::XMFLOAT3 pos) noexcept
