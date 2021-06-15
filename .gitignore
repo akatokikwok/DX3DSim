@@ -39,3 +39,5 @@ HW3D/SolidVS.cso
 HW3D/PhongPSNormalMap.cso
 
 *.cso
+
+HW3D/*.cso
