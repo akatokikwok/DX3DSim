@@ -15,6 +15,7 @@ TestCube::TestCube(Graphics& gfx, float size)
 	model.SetNormalsIndependentFlat();//构造模型每个顶点的法向量
 
 	const auto geometryTag = "$cube." + std::to_string(size);
+	/* 1. 绘制普通的物体*/
 	AddBind(VertexBuffer::Resolve(gfx, geometryTag, model.vertices));//顶点缓存
 	AddBind(IndexBuffer::Resolve(gfx, geometryTag, model.indices));//索引缓存
 
@@ -44,7 +45,8 @@ TestCube::TestCube(Graphics& gfx, float size)
 	AddBind(tcbdb);
 	// 正常绘制的时候,使用写入模式,因为这些描边特效绑定物也会被写进mask
 	AddBind(std::make_shared<Stencil>(gfx, Stencil::Mode::Write));
-
+	
+	/* 2. 描边效果的各种绑定(在启用写入mask的情况下)*/ 
 	outlineEffect.push_back(VertexBuffer::Resolve(gfx, geometryTag, model.vertices));
 	outlineEffect.push_back(IndexBuffer::Resolve(gfx, geometryTag, model.indices));
 	pvs = VertexShader::Resolve(gfx, "SolidVS.cso");
