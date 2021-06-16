@@ -2,6 +2,8 @@
 #include "Graphics.h"
 #include "ConditionalNoexcept.h"
 
+class Drawable;
+
 namespace Bind
 {
 	class Bindable
@@ -9,6 +11,9 @@ namespace Bind
 	public:
 		// 让绑定物子类各自绑定到各自的流水线
 		virtual void Bind(Graphics& gfx) noexcept = 0;
+
+		virtual void InitializeParentReference(const Drawable&) noexcept
+		{}
 		virtual ~Bindable() = default;
 
 		// 允许派生类重载;获取UID，若拿不到就返回空字符串

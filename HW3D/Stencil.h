@@ -21,12 +21,16 @@ namespace Bind
 		};
 		/* 构造器,负责创建出"深度模板缓存状态",需要指定1个使用模式*/
 		Stencil(Graphics& gfx, Mode mode)
+			:
+			mode(mode)
 		{
 			D3D11_DEPTH_STENCIL_DESC dsDesc = CD3D11_DEPTH_STENCIL_DESC{ CD3D11_DEFAULT{} };
 
 			// 写入模式在这里 把几何体像素写进模板缓存
 			if (mode == Mode::Write)
 			{
+				dsDesc.DepthEnable = FALSE;
+				dsDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ZERO;
 				dsDesc.StencilEnable = TRUE;
 				dsDesc.StencilWriteMask = 0xFF;
 				dsDesc.FrontFace.StencilFunc = D3D11_COMPARISON_ALWAYS;// 比较函数设为永远通过,从而绘制到mask上,达到不影响RenderTarget的效果
@@ -35,6 +39,7 @@ namespace Bind
 			else if (mode == Mode::Mask)
 			{
 				dsDesc.DepthEnable = FALSE;// 禁用深度缓存,因为描边仅仅是一种特效,不是场景里的物体,不需要开zbuffer去干扰描边
+				dsDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ZERO;
 				dsDesc.StencilEnable = TRUE;// 仍然启用模板缓存,
 				dsDesc.StencilReadMask = 0xFF;// 无论读还是写,相应的mask都会作用到这个像素上,此处设置使用所有的bit
 				dsDesc.FrontFace.StencilFunc = D3D11_COMPARISON_NOT_EQUAL;// 这是一个比较选项,用以设置模板什么时候失败,(失败的话stencil就写不进renderTarget),这里设置为NOT_EQUAL,如果mask里的值和引用物体的值不匹配,就绘制
@@ -48,10 +53,33 @@ namespace Bind
 		{
 			GetContext(gfx)->OMSetDepthStencilState(pStencil.Get(), 0xFF);
 		}
-		//static std::shared_ptr<Stencil> Resolve( Graphics& gfx,bool blending,std::optional<float> factor = {} );
-		//static std::string GenerateUID( bool blending,std::optional<float> factor );
-		//std::string GetUID() const noexcept override;
+		
+		static std::shared_ptr<Stencil> Resolve(Graphics& gfx, Mode mode)
+		{
+			return Codex::Resolve<Stencil>(gfx, mode);
+		}
+		static std::string GenerateUID(Mode mode)
+		{
+			using namespace std::string_literals;
+			const auto modeName = [mode]() {
+				switch (mode) {
+					case Mode::Off:
+						return "off"s;
+					case Mode::Write:
+						return "write"s;
+					case Mode::Mask:
+						return "mask"s;
+				}
+				return "ERROR"s;
+			};
+			return typeid(Stencil).name() + "#"s + modeName();
+		}
+		std::string GetUID() const noexcept override
+		{
+			return GenerateUID(mode);
+		}
 	private:
+		Mode mode;
 		Microsoft::WRL::ComPtr<ID3D11DepthStencilState> pStencil;// 字段,深度模板缓存
 	};
 }

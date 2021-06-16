@@ -1,97 +1,59 @@
 ﻿#include "SolidSphere.h"
 #include "BindableCommon.h"
 #include "GraphicsThrowMacros.h"
-#include "Sphere.h"
 #include "Vertex.h"
+#include "Sphere.h"
 #include "Stencil.h"
 
-SolidSphere::SolidSphere( Graphics& gfx,float radius )
+
+SolidSphere::SolidSphere(Graphics& gfx, float radius)
 {
 	using namespace Bind;
 	namespace dx = DirectX;
 
-	//if( !IsStaticInitialized() )
-
-	/*struct Vertex
-	{*/
-		#pragma region ver1.0.39弃用
-		//auto model = Sphere::Make<Vertex>();
-		//model.Transform(dx::XMMatrixScaling(radius, radius, radius));
-		//AddBind(std::make_unique<VertexBuffer>(gfx, model.vertices));
-		//AddIndexBuffer(std::make_unique<IndexBuffer>(gfx, model.indices));
-
-		//auto pvs = std::make_unique<VertexShader>(gfx, L"SolidVS.cso");
-		//auto pvsbc = pvs->GetBytecode();
-		//AddStaticBind(std::move(pvs));
-
-		//AddStaticBind(std::make_unique<PixelShader>(gfx, L"SolidPS.cso"));
-
-		//struct PSColorConstant
-		//{
-		//	dx::XMFLOAT3 color = { 1.0f,1.0f,1.0f };
-		//	float padding;
-		//} colorConst;
-		//AddStaticBind(std::make_unique<PixelConstantBuffer<PSColorConstant>>(gfx, colorConst));
-
-		//const std::vector<D3D11_INPUT_ELEMENT_DESC> ied =
-		//{
-		//	{ "Position",0,DXGI_FORMAT_R32G32B32_FLOAT,0,0,D3D11_INPUT_PER_VERTEX_DATA,0 },
-		//};
-		//AddStaticBind(std::make_unique<InputLayout>(gfx, ied, pvsbc));
-
-		//AddStaticBind(std::make_unique<Topology>(gfx, D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST));
-		#pragma endregion ver1.0.39弃用
-
-		/*dx::XMFLOAT3 pos;
-	};*/
-
-
-	auto model = Sphere::Make(); //构造一个球形物
+	auto model = Sphere::Make();
 	model.Transform(dx::XMMatrixScaling(radius, radius, radius));
-
 	const auto geometryTag = "$sphere." + std::to_string(radius);
-	AddBind(Bind::VertexBuffer::Resolve(gfx, geometryTag, model.vertices));
-	AddBind(Bind::IndexBuffer::Resolve(gfx, geometryTag, model.indices));
+	pVertices = VertexBuffer::Resolve(gfx, geometryTag, model.vertices);
+	pIndices = IndexBuffer::Resolve(gfx, geometryTag, model.indices);
+	pTopology = Topology::Resolve(gfx, D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
+	{
+		Technique solid;
+		Step only(0);
 
-	auto pvs = Bind::VertexShader::Resolve(gfx, "SolidVS.cso");
-	auto pvsbc = static_cast<Bind::VertexShader&>(*pvs).GetBytecode();
-	AddBind(std::move(pvs));
+		auto pvs = VertexShader::Resolve(gfx, "SolidVS.cso");
+		auto pvsbc = pvs->GetBytecode();
+		only.AddBindable(std::move(pvs));
 
-	AddBind(Bind::PixelShader::Resolve(gfx, "SolidPS.cso"));
+		only.AddBindable(PixelShader::Resolve(gfx, "SolidPS.cso"));
 
-	struct PSColorConstant
-	{		
-		dx::XMFLOAT3 color = { 1.0f,1.0f,1.0f };
-		float padding;
-	} colorConst;
-	AddBind(Bind::PixelConstantBuffer<PSColorConstant>::Resolve(gfx, colorConst, 1u));//注意绑定到1号插槽
+		struct PSColorConstant
+		{
+			dx::XMFLOAT3 color = { 1.0f,1.0f,1.0f };
+			float padding;
+		} colorConst;
+		only.AddBindable(PixelConstantBuffer<PSColorConstant>::Resolve(gfx, colorConst, 1u));
 
-	//const std::vector<D3D11_INPUT_ELEMENT_DESC> ied =
-	//{
-	//	{ "Position",0,DXGI_FORMAT_R32G32B32_FLOAT,0,0,D3D11_INPUT_PER_VERTEX_DATA,0 },
-	//};
-	//AddBind(std::make_shared<InputLayout>(gfx, ied, pvsbc));
+		only.AddBindable(InputLayout::Resolve(gfx, model.vertices.GetLayout(), pvsbc));
 
-	AddBind(Bind::InputLayout::Resolve(gfx, model.vertices.GetLayout(), pvsbc));
+		only.AddBindable(std::make_shared<TransformCbuf>(gfx));
 
-	AddBind(Bind::Topology::Resolve(gfx, D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST));
+		only.AddBindable(Blender::Resolve(gfx, false));
 
-	AddBind(std::make_shared<TransformCbuf>(gfx, *this));
+		only.AddBindable(Rasterizer::Resolve(gfx, false));
 
-	AddBind(Bind::Blender::Resolve(gfx, false));
-
-	AddBind(Bind::Rasterizer::Resolve(gfx, false));
-
-	AddBind(std::make_shared<Stencil>(gfx, Stencil::Mode::Off));
+		solid.AddStep(std::move(only));
+		AddTechnique(std::move(solid));
+	}
 }
 
-void SolidSphere::SetPos( DirectX::XMFLOAT3 pos ) noexcept
+void SolidSphere::SetPos(DirectX::XMFLOAT3 pos) noexcept
 {
 	this->pos = pos;
 }
 
 DirectX::XMMATRIX SolidSphere::GetTransformXM() const noexcept
 {
-	return DirectX::XMMatrixTranslation( pos.x,pos.y,pos.z );
+	return DirectX::XMMatrixTranslation(pos.x, pos.y, pos.z);
 }

@@ -17,22 +17,8 @@ public:
 	/* 生成TestCube模型 的IMGUI窗口*/
 	void SpawnControlWindow(Graphics& gfx, const char* name) noexcept;
 
-	/* 绘制"具备描边特效"的管线绑定物*/
-	void DrawOutline(Graphics& gfx) noxnd
-	{
-		outlining = true;
-		// 把每个描边特效绑定物 绑定到管线 并使用 DrawIndexed进行绘制
-		for (auto& b : outlineEffect)
-		{
-			b->Bind(gfx);
-		}
-		gfx.DrawIndexed(QueryBindable<Bind::IndexBuffer>()->GetCount());//在这里拿到<索引缓存>型绑定物,并进一步拿取数量执行绘制
-		outlining = false;
-	}
 private:
 	std::vector<std::shared_ptr<Bind::Bindable>> outlineEffect;// 一组管线绑定物,它们有别于普通的绑定物,它们是描边效果
-
-	bool outlining = false;//字段, 描边特效启用开关
 
 	struct PSMaterialConstant
 	{

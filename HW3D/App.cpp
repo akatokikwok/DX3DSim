@@ -68,7 +68,8 @@ App::App(const std::string& commandLine)
 	//}
 
 	TestDynamicConstant();
-
+	cube.SetPos({ 4.0f,0.0f,0.0f });
+	cube2.SetPos({ 0.0f,4.0f,0.0f });
 	//wall.SetRootTransform(dx::XMMatrixTranslation(-12.0f, 0.0f, 0.0f));//设置墙模型的根节点Transform
 	//tp.SetPos({ 12.0f,0.0f,0.0f });									//设置TestPlane绘制物的位置
 	//gobber.SetRootTransform(dx::XMMatrixTranslation(0.0f, 0.0f, -4.0f));
@@ -107,17 +108,15 @@ void App::DoFrame()
 	//gobber.Draw(wnd.Gfx());
 
 	//nano2.Draw(wnd.Gfx());
-	light.Draw(wnd.Gfx());//注意此处灯光被覆写，所以下一步绘制plane模型时候保留了插槽0，所以会渲染失败，故要在着色器里将灯光着色器绑定至下一个插槽1
-	
-	sponza.Draw(wnd.Gfx());
 
-	cube.Draw(wnd.Gfx());// 绘制普通cube
-	cube2.Draw(wnd.Gfx());// 绘制普通cube2
+	light.Submit(fc);
+	//sponza.Draw( wnd.Gfx() );
+	cube.Submit(fc);
+	cube2.Submit(fc);
 
-	cube.DrawOutline(wnd.Gfx());// 绘制cube1的描边特效
-	cube2.DrawOutline(wnd.Gfx());// 绘制cube2的描边特效
 	//bluePlane.Draw(wnd.Gfx());
 	//redPlane.Draw( wnd.Gfx() );
+	fc.Execute(wnd.Gfx());
 
 	while (const auto e = wnd.kbd.ReadKey())
 	{
@@ -197,7 +196,7 @@ void App::DoFrame()
 	cube.SpawnControlWindow(wnd.Gfx(), "Cube 1");
 	cube2.SpawnControlWindow(wnd.Gfx(), "Cube 2");
 	
-	sponza.ShowWindow(wnd.Gfx(), "Sponza");
+	//sponza.ShowWindow(wnd.Gfx(), "Sponza");
 
 	// 展示模型IMGUI窗口
 	//nano.ShowWindow("Model 1");
@@ -213,6 +212,8 @@ void App::DoFrame()
 	//redPlane.SpawnControlWindow(wnd.Gfx(), "Red Plane");
 	// present
 	wnd.Gfx().EndFrame();
+
+	fc.Reset();
 }
 
 void App::ShowImguiDemoWindow()

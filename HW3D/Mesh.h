@@ -29,12 +29,17 @@ private:
 class Mesh : public Drawable
 {
 public:
+	using Drawable::Drawable;
+
 	// 构造函数,需要图形对象＼管线绑定物集合
-	Mesh(Graphics& gfx, std::vector<std::shared_ptr<Bind::Bindable>> bindPtrs);
+	//Mesh(Graphics& gfx, std::vector<std::shared_ptr<Bind::Bindable>> bindPtrs);
 	/* 存累计变化矩阵并绘制被绘制物*/
-	void Draw(Graphics& gfx, DirectX::FXMMATRIX accumulatedTransform) const noxnd;
+	//void Draw(Graphics& gfx, DirectX::FXMMATRIX accumulatedTransform) const noxnd;
+
 	/* 获得累计变化矩阵*/
 	DirectX::XMMATRIX GetTransformXM() const noexcept override;
+
+	void Submit(FrameCommander& frame, DirectX::FXMMATRIX accumulatedTranform) const noxnd;
 private:
 	mutable DirectX::XMFLOAT4X4 transform;// 用于统计"累计矩阵变化"的4x4
 };
@@ -78,8 +83,10 @@ public:
 	// 构造函数,用参数Mesh集合初始化自己的Mesh集合,并保存参数变换
 	//Node(std::vector<Mesh*> meshPtrs, const DirectX::XMMATRIX& transform) noxnd;
 	Node(int id, const std::string& name, std::vector<Mesh*> meshPtrs, const DirectX::XMMATRIX& transform) noxnd;
-	/* 用于递归绘制单节点的Meshes*/
-	void Draw(Graphics& gfx, DirectX::FXMMATRIX accumulatedTransform) const noxnd;
+
+	void Submit(FrameCommander& frame, DirectX::FXMMATRIX accumulatedTransform) const noxnd;
+	///* 用于递归绘制单节点的Meshes*/
+	//void Draw(Graphics& gfx, DirectX::FXMMATRIX accumulatedTransform) const noxnd;
 	/* 用来设置最终被应用的变换*/
 	void SetAppliedTransform(DirectX::FXMMATRIX transform) noexcept;
 	/* 获取最终应用的变换*/
@@ -150,8 +157,8 @@ public:
 	//	return false;
 	//}
 
-	const Dcb::Buffer* GetMaterialConstants() const noxnd;
-	void SetMaterialConstants(const Dcb::Buffer&) noxnd;
+	//const Dcb::Buffer* GetMaterialConstants() const noxnd;
+	//void SetMaterialConstants(const Dcb::Buffer&) noxnd;
 private:
 	// 添加子节点,仅供Model类实例使用,因为Model类是Node类的友元
 	void AddChild(std::unique_ptr<Node> pChild) noxnd;	
@@ -176,7 +183,7 @@ public:
 	Model(Graphics& gfx, const std::string& pathString, float scale = 1.0f);
 	/* 为模型根节点绘制所有网格*/
 	//void Draw(Graphics& gfx, DirectX::FXMMATRIX transform) const;
-	void Draw(Graphics& gfx) const noxnd;
+	void Submit(FrameCommander& frame) const noxnd;
 	/* 用于展示Model的IMGUI窗口*/
 	void ShowWindow(Graphics& gfx, const char* windowName = nullptr) noexcept;
 	/* 设置模型根节点的变换*/

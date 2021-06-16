@@ -11,6 +11,7 @@
 #include "ScriptCommander.h"
 #include "TestCube.h"
 #include "Stencil.h"
+#include "FrameCommander.h"
 
 class App
 {
@@ -36,6 +37,8 @@ private:
 	ChiliTimer timer;
 	float speed_factor = 1.0f;
 	Camera cam;// 摄像机
+
+	FrameCommander fc;
 	PointLight light;//点光源
 	//Model nano{ wnd.Gfx(),"Models\\nanosuit.obj" };// 指定一个 纳米服 模型
 	//Model nano{ wnd.Gfx(),"Models\\nano_textured\\nanosuit.obj" };// 换成带层级表示的gltf模型
@@ -48,7 +51,7 @@ private:
 	//TestPlane tp{ wnd.Gfx(),6.0 };
 	//Model nano{ wnd.Gfx(),"Models\\nano_textured\\nanosuit.obj",2.0f };
 
-	Model sponza{ wnd.Gfx(), "Models\\sponza\\sponza.obj",1.0f / 20.0f };	
+	//Model sponza{ wnd.Gfx(), "Models\\sponza\\sponza.obj",1.0f / 20.0f };	
 	//TestPlane bluePlane{ wnd.Gfx(),6.0f,{ 0.3f,0.3f,1.0f,0.0f } };
 	//TestPlane redPlane{ wnd.Gfx(),6.0f,{ 1.0f,0.3f,0.3f,0.0f } };
 	TestCube cube{ wnd.Gfx(),4.0f };

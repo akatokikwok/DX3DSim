@@ -20,10 +20,12 @@ namespace Bind
 		};
 	public:
 		/* 设置成员绘制物,并构造一个顶点常数缓存指针*/
-		TransformCbuf(Graphics& gfx, const Drawable& parent, UINT slot = 0u);
+		TransformCbuf(Graphics& gfx, UINT slot = 0u);
 
 		/* 调用UpdateBindImpl函数;*/
 		void Bind(Graphics& gfx) noexcept override;
+
+		void InitializeParentReference(const Drawable& parent) noexcept override;
 
 	protected:
 		/* 以入参tf 按Map映射方式更新VSConstantBuffer,再把VSConstantBuffer设置到管线上 */
@@ -32,6 +34,6 @@ namespace Bind
 		Transforms GetTransforms(Graphics& gfx) noexcept;
 	private:
 		static std::unique_ptr<VertexConstantBuffer<Transforms>> pVcbuf;// 顶点常数缓存
-		const Drawable& parent;// 绘制物引用
+		const Drawable* pParent = nullptr;
 	};
 }

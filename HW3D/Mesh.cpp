@@ -40,45 +40,11 @@ const std::string& ModelException::GetNote() const noexcept
 
 /// //////////////////////////////////////////////////////////////////////////
 
-// 绑定图元、若符合索引缓存则添加并最后构造顶点shader常量缓存
-Mesh::Mesh(Graphics& gfx, std::vector<std::shared_ptr<Bind::Bindable>> bindPtrs)
+// Mesh
+void Mesh::Submit(FrameCommander& frame, dx::FXMMATRIX accumulatedTranform) const noxnd
 {
-	//if (!IsStaticInitialized())
-	//{
-	//	// 没初始化就绑定三角形列表图元
-	//	AddStaticBind(std::make_unique<Bind::Topology>(gfx, D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST));
-	//}
-
-	// 绑定图元:三角形列表至资源集合
-	AddBind(Bind::Topology::Resolve(gfx, D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST));
-
-	for (auto& pb : bindPtrs)
-	{
-		#pragma region ver1.0.39弃用
-       //if (auto pi = dynamic_cast<Bind::IndexBuffer*>(pb.get()))
-		//{
-		//	// 如果绑定物是索引缓存,就添加索引缓存并释放管线绑定物；
-		//	AddIndexBuffer(std::unique_ptr<Bind::IndexBuffer>{ pi });
-		//	// 这里对Pi指针又使用了一次unique_ptr，故现存2个指针指向了同一个对象，需要释放
-		//	pb.release();
-		//}
-		//else
-		//{
-		//	AddBind(std::move(pb));
-		//}
-        #pragma endregion ver1.0.39弃用
-
-		AddBind(std::move(pb));
-	}
-
-	// 每个Mesh构造的时候就需要添加1个顶点着色器常量缓存,因为每一个Mesh需要的顶点变换都不同
-	AddBind(std::make_shared<Bind::TransformCbuf>(gfx, *this));	//创建出顶点常数缓存
-}
-
-void Mesh::Draw(Graphics& gfx, DirectX::FXMMATRIX accumulatedTransform/*累计的矩阵变换*/) const noxnd
-{
-	DirectX::XMStoreFloat4x4(&transform, accumulatedTransform);// 把参数矩阵存起来
-	Drawable::Draw(gfx);// 绑定到管线并按索引绘制 
+	dx::XMStoreFloat4x4(&transform, accumulatedTranform);
+	Drawable::Submit(frame);
 }
 
 DirectX::XMMATRIX Mesh::GetTransformXM() const noexcept
@@ -98,7 +64,7 @@ Node::Node(int id, const std::string& name, std::vector<Mesh*> meshPtrs, const D
 	dx::XMStoreFloat4x4(&appliedTransform, dx::XMMatrixIdentity());
 }
 
-void Node::Draw(Graphics& gfx, DirectX::FXMMATRIX accumulatedTransform) const noxnd
+void Node::Submit(FrameCommander& frame, DirectX::FXMMATRIX accumulatedTransform) const noxnd
 {
 	
 	// 取得 从imgui配置文件里的变换*最终应用的变换*从父节点传过来的变换
@@ -110,12 +76,12 @@ void Node::Draw(Graphics& gfx, DirectX::FXMMATRIX accumulatedTransform) const no
 	// 将上述应用到自己的Meshes上,然后对自己的子节点也是如此
 	for (const auto pm : meshPtrs)
 	{
-		pm->Mesh::Draw(gfx, built);
+		pm->Submit(frame, accumulatedTransform);
 	}
 	for (const auto& pc : childPtrs)
 	{
 		// 套娃
-		pc->Node::Draw(gfx, built);
+		pc->Submit(frame, accumulatedTransform);
 	}
 }
 
@@ -175,22 +141,22 @@ void Node::ShowTree(/*std::optional<int>& selectedIndex, */Node*& pSelectedNode)
 	}
 }
 
-const Dcb::Buffer* Node::GetMaterialConstants() const noxnd
-{
-	if (meshPtrs.size() == 0)
-	{
-		return nullptr;
-	}
-	auto pBindable = meshPtrs.front()->QueryBindable<Bind::CachingPixelConstantBufferEX>();
-	return &pBindable->GetBuffer();
-}
-
-void Node::SetMaterialConstants(const Dcb::Buffer& buf_in) noxnd
-{
-	auto pcb = meshPtrs.front()->QueryBindable<Bind::CachingPixelConstantBufferEX>();
-	assert(pcb != nullptr);
-	pcb->SetBuffer(buf_in);
-}
+//const Dcb::Buffer* Node::GetMaterialConstants() const noxnd
+//{
+//	if (meshPtrs.size() == 0)
+//	{
+//		return nullptr;
+//	}
+//	auto pBindable = meshPtrs.front()->QueryBindable<Bind::CachingPixelConstantBufferEX>();
+//	return &pBindable->GetBuffer();
+//}
+//
+//void Node::SetMaterialConstants(const Dcb::Buffer& buf_in) noxnd
+//{
+//	auto pcb = meshPtrs.front()->QueryBindable<Bind::CachingPixelConstantBufferEX>();
+//	assert(pcb != nullptr);
+//	pcb->SetBuffer(buf_in);
+//}
 //void Node::ControlMeDaddy(Graphics& gfx, PSMaterialConstantFullmonte& c)
 //{
 //	if (meshPtrs.empty())// 没mesh就直接错误返回
@@ -239,131 +205,131 @@ public:
 	// 封装的方法，用于分两列展示各个模型的细节控制
 	void Show(Graphics& gfx, const char* windowName, const Node& root) noexcept
 	{
-		// window name defaults to "Model"
-		windowName = windowName ? windowName : "Model";
-		// need an ints to track node indices and selected node
-		int nodeIndexTracker = 0;
-		if (ImGui::Begin(windowName))
-		{
-			ImGui::Columns(2, nullptr, true);
-			root.ShowTree( pSelectedNode);
+		//// window name defaults to "Model"
+		//windowName = windowName ? windowName : "Model";
+		//// need an ints to track node indices and selected node
+		//int nodeIndexTracker = 0;
+		//if (ImGui::Begin(windowName))
+		//{
+		//	ImGui::Columns(2, nullptr, true);
+		//	root.ShowTree( pSelectedNode);
 
-			ImGui::NextColumn();
-			
-			// 如果存在有被选中状态的节点,就可以使用IMGUI去控制
-			if (pSelectedNode != nullptr)
-			{
-				const auto id = pSelectedNode->GetId();//拿到点中节点的ID
-				auto i = transforms.find(id);//查表，从无序map里拿出相应的TransformParameters
-				if (i == transforms.end())//如果查表查到了最后没查到，就自己创建一个并从里面加载这些参数
-				{
-					// 拿到最终应用变换即这个矩阵的欧拉角和位移
-					const auto& applied = pSelectedNode->GetAppliedTransform();
-					const auto angles = ExtractEulerAngles(applied);
-					const auto translation = ExtractTranslation(applied);
-					// 应用上面的数据
-					TransformParameters tp;
-					tp.roll = angles.z;
-					tp.pitch = angles.x;
-					tp.yaw = angles.y;
-					tp.x = translation.x;
-					tp.y = translation.y;
-					tp.z = translation.z;
-					
-					auto pMatConst = pSelectedNode->GetMaterialConstants();
-					auto buf = pMatConst != nullptr ? std::optional<Dcb::Buffer>{ *pMatConst } : std::optional<Dcb::Buffer>{};
-					std::tie(i, std::ignore) = transforms.insert({ id,{ tp,false,std::move(buf),false } });//std::tie会将变量的引用整合成一个tuple，从而实现批量赋值
-				}
+		//	ImGui::NextColumn();
+		//	
+		//	// 如果存在有被选中状态的节点,就可以使用IMGUI去控制
+		//	if (pSelectedNode != nullptr)
+		//	{
+		//		const auto id = pSelectedNode->GetId();//拿到点中节点的ID
+		//		auto i = transforms.find(id);//查表，从无序map里拿出相应的TransformParameters
+		//		if (i == transforms.end())//如果查表查到了最后没查到，就自己创建一个并从里面加载这些参数
+		//		{
+		//			// 拿到最终应用变换即这个矩阵的欧拉角和位移
+		//			const auto& applied = pSelectedNode->GetAppliedTransform();
+		//			const auto angles = ExtractEulerAngles(applied);
+		//			const auto translation = ExtractTranslation(applied);
+		//			// 应用上面的数据
+		//			TransformParameters tp;
+		//			tp.roll = angles.z;
+		//			tp.pitch = angles.x;
+		//			tp.yaw = angles.y;
+		//			tp.x = translation.x;
+		//			tp.y = translation.y;
+		//			tp.z = translation.z;
+		//			
+		//			auto pMatConst = pSelectedNode->GetMaterialConstants();
+		//			auto buf = pMatConst != nullptr ? std::optional<Dcb::Buffer>{ *pMatConst } : std::optional<Dcb::Buffer>{};
+		//			std::tie(i, std::ignore) = transforms.insert({ id,{ tp,false,std::move(buf),false } });//std::tie会将变量的引用整合成一个tuple，从而实现批量赋值
+		//		}
 
-				{
-					auto& transform = i->second.tranformParams;;//继续查找下一个TransformParameter
-					// dirty check
-					auto& dirty = i->second.transformParamsDirty;
-					const auto dcheck = [&dirty](bool changed) {dirty = dirty || changed; };
-					//auto& transform = transforms[ pSelectedNode->GetId() ];//根据被选中的索引从无序map里取出对应的数据组
+		//		{
+		//			auto& transform = i->second.tranformParams;;//继续查找下一个TransformParameter
+		//			// dirty check
+		//			auto& dirty = i->second.transformParamsDirty;
+		//			const auto dcheck = [&dirty](bool changed) {dirty = dirty || changed; };
+		//			//auto& transform = transforms[ pSelectedNode->GetId() ];//根据被选中的索引从无序map里取出对应的数据组
 
-					// IMGUI widgets
-					ImGui::Text("Orientation");
-					dcheck(ImGui::SliderAngle("Roll", &transform.roll, -180.0f, 180.0f));
-					dcheck(ImGui::SliderAngle("Pitch", &transform.pitch, -180.0f, 180.0f));
-					dcheck(ImGui::SliderAngle("Yaw", &transform.yaw, -180.0f, 180.0f));
-					ImGui::Text("Position");
-					dcheck(ImGui::SliderFloat("X", &transform.x, -20.0f, 20.0f));
-					dcheck(ImGui::SliderFloat("Y", &transform.y, -20.0f, 20.0f));
-					dcheck(ImGui::SliderFloat("Z", &transform.z, -20.0f, 20.0f));
-				}
-				
-				//pSelectedNode->ControlMeDaddy(gfx, mc);	//控制且更新材质常数缓存
+		//			// IMGUI widgets
+		//			ImGui::Text("Orientation");
+		//			dcheck(ImGui::SliderAngle("Roll", &transform.roll, -180.0f, 180.0f));
+		//			dcheck(ImGui::SliderAngle("Pitch", &transform.pitch, -180.0f, 180.0f));
+		//			dcheck(ImGui::SliderAngle("Yaw", &transform.yaw, -180.0f, 180.0f));
+		//			ImGui::Text("Position");
+		//			dcheck(ImGui::SliderFloat("X", &transform.x, -20.0f, 20.0f));
+		//			dcheck(ImGui::SliderFloat("Y", &transform.y, -20.0f, 20.0f));
+		//			dcheck(ImGui::SliderFloat("Z", &transform.z, -20.0f, 20.0f));
+		//		}
+		//		
+		//		//pSelectedNode->ControlMeDaddy(gfx, mc);	//控制且更新材质常数缓存
 
-				/// pSelectedNode->ControlMeDaddy(gfx, skinMaterial)返回真表明当前选中的节点为皮肤;返回假则表面它是耳环
-				//if ( !( pSelectedNode->ControlMeDaddy(gfx, skinMaterial)) )
-				//{
-				//	pSelectedNode->ControlMeDaddy(gfx, ringMaterial);//对耳环应用材质ringMaterial
-				//}
+		//		/// pSelectedNode->ControlMeDaddy(gfx, skinMaterial)返回真表明当前选中的节点为皮肤;返回假则表面它是耳环
+		//		//if ( !( pSelectedNode->ControlMeDaddy(gfx, skinMaterial)) )
+		//		//{
+		//		//	pSelectedNode->ControlMeDaddy(gfx, ringMaterial);//对耳环应用材质ringMaterial
+		//		//}
 
-				// link imgui ctrl to our cached material params
-				if (i->second.materialCbuf)
-				{
-					auto& mat = *i->second.materialCbuf;
-					// dirty check
-					auto& dirty = i->second.materialCbufDirty;
-					// check行为的Lambda表达式定义
-					const auto dcheck = [&dirty](bool changed) {
-						dirty = dirty || changed; 
-					};
-					// IMGUI widgets
-					ImGui::Text("Material");
-					if (auto v = mat["normalMapEnabled"]; v.Exists())
-					{
-						dcheck(ImGui::Checkbox("Norm Map", &v));
-					}
-					if (auto v = mat["specularMapEnabled"]; v.Exists())
-					{
-						dcheck(ImGui::Checkbox("Spec Map", &v));
-					}
-					if (auto v = mat["hasGlossMap"]; v.Exists())
-					{
-						dcheck(ImGui::Checkbox("Gloss Map", &v));
-					}
-					if (auto v = mat["materialColor"]; v.Exists())
-					{
-						dcheck(ImGui::ColorPicker3("Diff Color", reinterpret_cast<float*>(&static_cast<dx::XMFLOAT3&>(v))));
-					}
-					if (auto v = mat["specularPower"]; v.Exists())
-					{
-						dcheck(ImGui::SliderFloat("Spec Power", &v, 0.0f, 100.0f, "%.1f", 1.5f));
-					}
-					if (auto v = mat["specularColor"]; v.Exists())
-					{
-						dcheck(ImGui::ColorPicker3("Spec Color", reinterpret_cast<float*>(&static_cast<dx::XMFLOAT3&>(v))));
-					}
-					if (auto v = mat["specularMapWeight"]; v.Exists())
-					{
-						dcheck(ImGui::SliderFloat("Spec Weight", &v, 0.0f, 4.0f));
-					}
-					if (auto v = mat["specularIntensity"]; v.Exists())
-					{
-						dcheck(ImGui::SliderFloat("Spec Intens", &v, 0.0f, 1.0f));
-					}
-				}
+		//		// link imgui ctrl to our cached material params
+		//		if (i->second.materialCbuf)
+		//		{
+		//			auto& mat = *i->second.materialCbuf;
+		//			// dirty check
+		//			auto& dirty = i->second.materialCbufDirty;
+		//			// check行为的Lambda表达式定义
+		//			const auto dcheck = [&dirty](bool changed) {
+		//				dirty = dirty || changed; 
+		//			};
+		//			// IMGUI widgets
+		//			ImGui::Text("Material");
+		//			if (auto v = mat["normalMapEnabled"]; v.Exists())
+		//			{
+		//				dcheck(ImGui::Checkbox("Norm Map", &v));
+		//			}
+		//			if (auto v = mat["specularMapEnabled"]; v.Exists())
+		//			{
+		//				dcheck(ImGui::Checkbox("Spec Map", &v));
+		//			}
+		//			if (auto v = mat["hasGlossMap"]; v.Exists())
+		//			{
+		//				dcheck(ImGui::Checkbox("Gloss Map", &v));
+		//			}
+		//			if (auto v = mat["materialColor"]; v.Exists())
+		//			{
+		//				dcheck(ImGui::ColorPicker3("Diff Color", reinterpret_cast<float*>(&static_cast<dx::XMFLOAT3&>(v))));
+		//			}
+		//			if (auto v = mat["specularPower"]; v.Exists())
+		//			{
+		//				dcheck(ImGui::SliderFloat("Spec Power", &v, 0.0f, 100.0f, "%.1f", 1.5f));
+		//			}
+		//			if (auto v = mat["specularColor"]; v.Exists())
+		//			{
+		//				dcheck(ImGui::ColorPicker3("Spec Color", reinterpret_cast<float*>(&static_cast<dx::XMFLOAT3&>(v))));
+		//			}
+		//			if (auto v = mat["specularMapWeight"]; v.Exists())
+		//			{
+		//				dcheck(ImGui::SliderFloat("Spec Weight", &v, 0.0f, 4.0f));
+		//			}
+		//			if (auto v = mat["specularIntensity"]; v.Exists())
+		//			{
+		//				dcheck(ImGui::SliderFloat("Spec Intens", &v, 0.0f, 1.0f));
+		//			}
+		//		}
 
-			}
-		}
-		ImGui::End();
+		//	}
+		//}
+		//ImGui::End();
 	}
 
 	void ApplyParameters() noxnd
 	{
-		if (TransformDirty())
-		{
-			pSelectedNode->SetAppliedTransform(GetTransform());
-			ResetTransformDirty();
-		}
-		if (MaterialDirty())
-		{
-			pSelectedNode->SetMaterialConstants(GetMaterial());
-			ResetMaterialDirty();
-		}
+		//if (TransformDirty())
+		//{
+		//	pSelectedNode->SetAppliedTransform(GetTransform());
+		//	ResetTransformDirty();
+		//}
+		//if (MaterialDirty())
+		//{
+		//	pSelectedNode->SetMaterialConstants(GetMaterial());
+		//	ResetMaterialDirty();
+		//}
 	}
 
 private:
@@ -469,7 +435,7 @@ Model::Model(Graphics& gfx, const std::string& pathString, const float scale)
 	pRoot = ParseNode(nextId, *pScene->mRootNode);
 }
 
-void Model::Draw(Graphics& gfx) const noxnd
+void Model::Submit(FrameCommander& frame) const noxnd
 {
 	//const auto transform = DirectX::XMMatrixRotationRollPitchYaw(pos.roll, pos.pitch, pos.yaw) *
 	//	DirectX::XMMatrixTranslation(pos.x, pos.y, pos.z);
@@ -478,7 +444,7 @@ void Model::Draw(Graphics& gfx) const noxnd
 
 	
 	pWindow->ApplyParameters();
-	pRoot->Node::Draw(gfx, dx::XMMatrixIdentity());
+	pRoot->Submit(frame, dx::XMMatrixIdentity());
 }
 
 void Model::ShowWindow(Graphics& gfx, const char* windowName) noexcept
@@ -521,472 +487,474 @@ std::unique_ptr<Mesh> Model::ParseMesh(Graphics& gfx, const aiMesh& mesh,
 	float scale
 )
 {
-	using namespace std::string_literals;
-	using Dvtx::VertexLayout;
-	using namespace Bind;
-	//// material变量是单片mesh的材质; 一个模型有多个mesh和仅1个材质数组，单片mesh有自己的材质索引，材质索引负责从材质数组里取材质
-	//auto& material = *pMaterials[mesh.mMaterialIndex];
-	//// 遍历单片mesh的材质里的所有属性，并拿取这个属性的引用
-	//for (int i=0; i<material.mNumProperties; i++)
+	//using namespace std::string_literals;
+	//using Dvtx::VertexLayout;
+	//using namespace Bind;
+	////// material变量是单片mesh的材质; 一个模型有多个mesh和仅1个材质数组，单片mesh有自己的材质索引，材质索引负责从材质数组里取材质
+	////auto& material = *pMaterials[mesh.mMaterialIndex];
+	////// 遍历单片mesh的材质里的所有属性，并拿取这个属性的引用
+	////for (int i=0; i<material.mNumProperties; i++)
+	////{
+	////	auto& prop = *material.mProperties[i];
+	////	int qqq = 90;
+	////}
+
+	//const auto rootPath = path.parent_path().string() + "\\";//比如 c:\Temp\SB.png ;拿到c:\\Temp\\
+
+	//std::vector<std::shared_ptr<Bind::Bindable>> bindablePtrs;/* 声明管线上所有绑定物的集合*/
+	//
+	////const auto base = "Models\\brick_wall\\"s;	//自定义一个具体路径base = "Models\\brick_wall\\"s;存储贴图的路径
+	////const auto base = "Models\\gobber\\"s;	//自定义一个具体路径"Models\\gobber\\"s;存储哥布林模型的纹理的路径
+
+	//bool hasSpecularMap = false;//高光纹理开关;默认不带有高光贴图
+	//bool hasAlphaGloss = false;	//高光纹理的透明通道开关
+	//bool hasAlphaDiffuse = false;//检查漫反射贴图是否携带Alpha通道
+	//bool hasNormalMap = false;	//法线纹理开关,默认关闭
+	//bool hasDiffuseMap = false;	//漫反射纹理开关,默认关闭
+	//float shininess = 2.0f;	//自定义一个高光功率系数，默认为2.0f
+	//dx::XMFLOAT4 specularColor = { 0.18f,0.18f,0.18f,1.0f };//自定义镜面光颜色
+	//dx::XMFLOAT4 diffuseColor = { 0.45f,0.45f,0.85f,1.0f };//自定义漫反射光颜色
+
+	///// 从硬盘里读各种贴图并创建出Texture绑定物，同时更新各类纹理开关为打开，最后创建采样器
+	//if (mesh.mMaterialIndex >= 0)
 	//{
-	//	auto& prop = *material.mProperties[i];
-	//	int qqq = 90;
+	//	auto& material = *pMaterials[mesh.mMaterialIndex];	// 拿到当前mesh的材质		
+	//	aiString texFileName;								// 创建一个aiString变量用于存储纹理文件的路径
+
+	//	//material.GetTexture(aiTextureType_DIFFUSE, 0, &texFileName); // 拿到第一张漫反射纹理存到上面那个字符串里
+	//	//bindablePtrs.push_back(Bind::Texture::Resolve(gfx,     /*Surface::FromFile*/(base + texFileName.C_Str()), 0 )); // 创建(实际上是Reslove泛型方法按给定参数查找并获得了)1个漫反射纹理, 位于插槽0 ，表示第[0]个纹理
+	//	
+	//	/// 读硬盘里漫反射纹理
+	//	if (material.GetTexture(aiTextureType_DIFFUSE, 0, &texFileName) == aiReturn_SUCCESS)	//检查是否在硬盘上持有漫反射纹理
+	//	{
+	//		//bindablePtrs.push_back(Bind::Texture::Resolve(gfx, (rootPath + texFileName.C_Str()), 0 ));	// 创建(实际上是Reslove泛型方法按给定参数查找并获得了)1个漫反射纹理, 位于插槽0 ，表示第[0]个纹理
+	//		auto tex = Texture::Resolve(gfx, rootPath + texFileName.C_Str());
+	//		hasAlphaDiffuse = tex->HasAlpha();
+	//		bindablePtrs.push_back(std::move(tex));
+	//		hasDiffuseMap = true;																// 若查到漫反射纹理就打开漫反射开关
+	//	}		
+	//	else/* 若硬盘里不存在漫反射贴图*/
+	//	{
+	//		material.Get(AI_MATKEY_COLOR_DIFFUSE, reinterpret_cast<aiColor3D&>(diffuseColor));// 就使用自定义的漫反射光颜色
+	//	}
+
+
+	//	/// 读硬盘里镜面光纹理(有可能存在读不到的情况)
+	//	if (material.GetTexture(aiTextureType_SPECULAR, 0, &texFileName) == aiReturn_SUCCESS) //若该mesh确实在硬盘里持有高光贴图资源,拿一张镜面光纹理存到字符串里
+	//	{
+	//		//bindablePtrs.push_back(Bind::Texture::Resolve(gfx, (base + texFileName.C_Str()), 1 )); // 创建(实际上是Reslove泛型方法按给定参数查找并获得了)1个镜面光纹理，位于插槽1， 表示第[1]个纹理
+	//		auto tex = Bind::Texture::Resolve(gfx, rootPath + texFileName.C_Str(), 1); 
+	//		hasAlphaGloss = tex->HasAlpha();			// 透明通道开关由解析出来的纹理决定
+	//		bindablePtrs.push_back(std::move(tex));		//创建(实际上是Reslove泛型方法按给定参数查找并获得了)1个镜面光纹理，位于插槽1， 表示第[1]个纹理
+	//		
+	//		hasSpecularMap = true;																// 若能在硬盘里读到高光贴图，就开启高光开关
+	//	}
+	//	else/* 若硬盘里不存在高光贴图*/
+	//	{
+	//		material.Get(AI_MATKEY_COLOR_SPECULAR, reinterpret_cast<aiColor3D&>(specularColor));// 就使用自定义的高光颜色
+	//	}
+
+	//	///若硬盘里没读到高光贴图资源且未开启alpha通道
+	//	if (!hasAlphaGloss) 
+	//	{
+	//		material.Get(AI_MATKEY_SHININESS, shininess); //若没查找到高光贴图，就让当面材质读取上面自定义的高光参数
+	//	}
+
+	//	//material.GetTexture(aiTextureType_NORMALS, 0, &texFileName);  //读法线贴图
+	//	//bindablePtrs.push_back(Texture::Resolve(gfx, (base + texFileName.C_Str()), 2)); 
+
+	//	/// 读硬盘里的法线纹理
+	//	if (material.GetTexture(aiTextureType_NORMALS, 0, &texFileName) == aiReturn_SUCCESS)
+	//	{
+	//		//bindablePtrs.push_back(Texture::Resolve(gfx, base + texFileName.C_Str(), 2));	// 创建(实际上是Reslove泛型方法按给定参数查找并获得了)1个镜面光纹理，位于插槽1， 表示第[2]个纹理
+	//		auto tex = Bind::Texture::Resolve(gfx, rootPath + texFileName.C_Str(), 2);
+	//		hasAlphaGloss = tex->HasAlpha();
+	//		bindablePtrs.push_back(std::move(tex));
+
+	//		hasNormalMap = true;
+	//	}
+
+	//	///只有在三种贴图至少持有一种的时候才会创建采样器
+	//	if (hasDiffuseMap || hasSpecularMap || hasNormalMap)	
+	//	{
+	//		bindablePtrs.push_back(Bind::Sampler::Resolve(gfx));// 创建采样器
+	//	}
 	//}
 
-	const auto rootPath = path.parent_path().string() + "\\";//比如 c:\Temp\SB.png ;拿到c:\\Temp\\
+	//const auto meshTag = path.string() + "%" + mesh.mName.C_Str();	
+	////const float scale = 6.0f;
 
-	std::vector<std::shared_ptr<Bind::Bindable>> bindablePtrs;/* 声明管线上所有绑定物的集合*/
-	
-	//const auto base = "Models\\brick_wall\\"s;	//自定义一个具体路径base = "Models\\brick_wall\\"s;存储贴图的路径
-	//const auto base = "Models\\gobber\\"s;	//自定义一个具体路径"Models\\gobber\\"s;存储哥布林模型的纹理的路径
+	///// 依次开启漫反射纹理、高光纹理、法线纹理，并加载它 高光的纹理像素着色器(带法线版本)
+	//if (hasDiffuseMap && hasNormalMap && hasSpecularMap)
+	//{		
+	//	// 为了加载动态布局系统并拿到真实的顶点数据; 要动态创建(即Append)顶点布局 、指定带位置、法线的顶点缓存、切线T、切线B、纹理
+	//	Dvtx::VertexBuffer vbuf(std::move(
+	//		VertexLayout{}
+	//		.Append(VertexLayout::Position3D)
+	//		.Append(VertexLayout::Normal)
+	//		.Append(VertexLayout::Tangent)
+	//		.Append(VertexLayout::Bitangent)
+	//		.Append(VertexLayout::Texture2D)
+	//	));
 
-	bool hasSpecularMap = false;//高光纹理开关;默认不带有高光贴图
-	bool hasAlphaGloss = false;	//高光纹理的透明通道开关
-	bool hasAlphaDiffuse = false;//检查漫反射贴图是否携带Alpha通道
-	bool hasNormalMap = false;	//法线纹理开关,默认关闭
-	bool hasDiffuseMap = false;	//漫反射纹理开关,默认关闭
-	float shininess = 2.0f;	//自定义一个高光功率系数，默认为2.0f
-	dx::XMFLOAT4 specularColor = { 0.18f,0.18f,0.18f,1.0f };//自定义镜面光颜色
-	dx::XMFLOAT4 diffuseColor = { 0.45f,0.45f,0.85f,1.0f };//自定义漫反射光颜色
+	//	// 遍历参数网格的所有顶点,存储 顶点位置和法线、T切线、B切线、纹理
+	//	for (unsigned int i = 0; i < mesh.mNumVertices; i++)
+	//	{
+	//		/* 使用EmplaceBack方法往顶点缓存末端构建一个顶点*/
+	//		vbuf.EmplaceBack(
+	//			dx::XMFLOAT3(mesh.mVertices[i].x * scale, mesh.mVertices[i].y * scale, mesh.mVertices[i].z * scale),//注意这里尺寸会缩放
+	//			*reinterpret_cast<dx::XMFLOAT3*>(&mesh.mNormals[i]),
+	//			*reinterpret_cast<dx::XMFLOAT3*>(&mesh.mTangents[i]),
+	//			*reinterpret_cast<dx::XMFLOAT3*>(&mesh.mBitangents[i]),
+	//			*reinterpret_cast<dx::XMFLOAT2*>(&mesh.mTextureCoords[0][i]) //由于模型顶点对于不同的纹理可能显示出不同的纹理坐标;所以这里理解为顶点i的[0]号坐标
+	//		);
+	//	}
 
-	/// 从硬盘里读各种贴图并创建出Texture绑定物，同时更新各类纹理开关为打开，最后创建采样器
-	if (mesh.mMaterialIndex >= 0)
-	{
-		auto& material = *pMaterials[mesh.mMaterialIndex];	// 拿到当前mesh的材质		
-		aiString texFileName;								// 创建一个aiString变量用于存储纹理文件的路径
+	//	// 确定索引数组三角面;为每个三角面存储顶点索引
+	//	std::vector<unsigned short> indices;
+	//	indices.reserve(mesh.mNumFaces * 3);
+	//	for (unsigned int i = 0; i < mesh.mNumFaces; i++)
+	//	{
+	//		const auto& face = mesh.mFaces[i];	//拿到mesh的每个面
+	//		assert(face.mNumIndices == 3);		// 确保每个面都是三角面
+	//		// 用每个面的索引[0][1][2]填充 索引数组
+	//		indices.push_back(face.mIndices[0]);	
+	//		indices.push_back(face.mIndices[1]);
+	//		indices.push_back(face.mIndices[2]);
+	//	}
 
-		//material.GetTexture(aiTextureType_DIFFUSE, 0, &texFileName); // 拿到第一张漫反射纹理存到上面那个字符串里
-		//bindablePtrs.push_back(Bind::Texture::Resolve(gfx,     /*Surface::FromFile*/(base + texFileName.C_Str()), 0 )); // 创建(实际上是Reslove泛型方法按给定参数查找并获得了)1个漫反射纹理, 位于插槽0 ，表示第[0]个纹理
-		
-		/// 读硬盘里漫反射纹理
-		if (material.GetTexture(aiTextureType_DIFFUSE, 0, &texFileName) == aiReturn_SUCCESS)	//检查是否在硬盘上持有漫反射纹理
-		{
-			//bindablePtrs.push_back(Bind::Texture::Resolve(gfx, (rootPath + texFileName.C_Str()), 0 ));	// 创建(实际上是Reslove泛型方法按给定参数查找并获得了)1个漫反射纹理, 位于插槽0 ，表示第[0]个纹理
-			auto tex = Texture::Resolve(gfx, rootPath + texFileName.C_Str());
-			hasAlphaDiffuse = tex->HasAlpha();
-			bindablePtrs.push_back(std::move(tex));
-			hasDiffuseMap = true;																// 若查到漫反射纹理就打开漫反射开关
-		}		
-		else/* 若硬盘里不存在漫反射贴图*/
-		{
-			material.Get(AI_MATKEY_COLOR_DIFFUSE, reinterpret_cast<aiColor3D&>(diffuseColor));// 就使用自定义的漫反射光颜色
-		}
+	//	bindablePtrs.push_back(Bind::VertexBuffer::Resolve(gfx, meshTag, vbuf));	//创建顶点缓存
 
+	//	bindablePtrs.push_back(Bind::IndexBuffer::Resolve(gfx, meshTag, indices));	//创建索引缓存
 
-		/// 读硬盘里镜面光纹理(有可能存在读不到的情况)
-		if (material.GetTexture(aiTextureType_SPECULAR, 0, &texFileName) == aiReturn_SUCCESS) //若该mesh确实在硬盘里持有高光贴图资源,拿一张镜面光纹理存到字符串里
-		{
-			//bindablePtrs.push_back(Bind::Texture::Resolve(gfx, (base + texFileName.C_Str()), 1 )); // 创建(实际上是Reslove泛型方法按给定参数查找并获得了)1个镜面光纹理，位于插槽1， 表示第[1]个纹理
-			auto tex = Bind::Texture::Resolve(gfx, rootPath + texFileName.C_Str(), 1); 
-			hasAlphaGloss = tex->HasAlpha();			// 透明通道开关由解析出来的纹理决定
-			bindablePtrs.push_back(std::move(tex));		//创建(实际上是Reslove泛型方法按给定参数查找并获得了)1个镜面光纹理，位于插槽1， 表示第[1]个纹理
-			
-			hasSpecularMap = true;																// 若能在硬盘里读到高光贴图，就开启高光开关
-		}
-		else/* 若硬盘里不存在高光贴图*/
-		{
-			material.Get(AI_MATKEY_COLOR_SPECULAR, reinterpret_cast<aiColor3D&>(specularColor));// 就使用自定义的高光颜色
-		}
+	//	auto pvs = VertexShader::Resolve(gfx, "PhongVSNormalMap.cso");
+	//	//auto pvsbc = static_cast<VertexShader&>(*pvs).GetBytecode();
+	//	auto pvsbc = pvs->GetBytecode();
+	//	bindablePtrs.push_back(std::move(pvs));	 // 创建顶点shader
+	//
+	//	//创建像素shader，依据贴图的alpha 来绑定遮罩版两面纹理着色器或是高光法线着色器
+	//	bindablePtrs.push_back(PixelShader::Resolve(gfx,
+	//		hasAlphaDiffuse ? "PhongPSSpecNormalMask.cso" : "PhongPSSpecNormalMap.cso"
+	//	));
 
-		///若硬盘里没读到高光贴图资源且未开启alpha通道
-		if (!hasAlphaGloss) 
-		{
-			material.Get(AI_MATKEY_SHININESS, shininess); //若没查找到高光贴图，就让当面材质读取上面自定义的高光参数
-		}
+	//	bindablePtrs.push_back(Bind::InputLayout::Resolve(gfx, vbuf.GetLayout()/*.GetD3DLayout()*/, pvsbc)); // 创建输入布局
+	//	
+	//	//Node::PSMaterialConstantFullmonte pmc;	//PSMaterialConstantFullmonte结构体数据位于头文件里
+	//	//pmc.specularPower = shininess;	//材质里高光由外部高光参数更新									
+	//	//pmc.hasGlossMap = hasAlphaGloss ? TRUE : FALSE;		//材质里透明通道由外部透明更新
+	//	//bindablePtrs.push_back(PixelConstantBuffer<Node::PSMaterialConstantFullmonte>::Resolve(gfx, pmc, 1u));			//创建像素常量缓存<材质>
+	//	
+	//	// 创建布局RawLayout,并给布局指定类型
+	//	Dcb::RawLayout lay;
+	//	lay.Add<Dcb::Bool>("normalMapEnabled");
+	//	lay.Add<Dcb::Bool>("specularMapEnabled");
+	//	lay.Add<Dcb::Bool>("hasGlossMap");
+	//	lay.Add<Dcb::Float>("specularPower");
+	//	lay.Add<Dcb::Float3>("specularColor");
+	//	lay.Add<Dcb::Float>("specularMapWeight");
+	//	//写入缓存buf数据
+	//	auto buf = Dcb::Buffer(std::move(lay));
+	//	buf["normalMapEnabled"] = true;
+	//	buf["specularMapEnabled"] = true;
+	//	buf["hasGlossMap"] = hasAlphaGloss;
+	//	buf["specularPower"] = shininess;
+	//	buf["specularColor"] = dx::XMFLOAT3{ 0.75f,0.75f,0.75f };
+	//	buf["specularMapWeight"] = 0.671f;
 
-		//material.GetTexture(aiTextureType_NORMALS, 0, &texFileName);  //读法线贴图
-		//bindablePtrs.push_back(Texture::Resolve(gfx, (base + texFileName.C_Str()), 2)); 
-
-		/// 读硬盘里的法线纹理
-		if (material.GetTexture(aiTextureType_NORMALS, 0, &texFileName) == aiReturn_SUCCESS)
-		{
-			//bindablePtrs.push_back(Texture::Resolve(gfx, base + texFileName.C_Str(), 2));	// 创建(实际上是Reslove泛型方法按给定参数查找并获得了)1个镜面光纹理，位于插槽1， 表示第[2]个纹理
-			auto tex = Bind::Texture::Resolve(gfx, rootPath + texFileName.C_Str(), 2);
-			hasAlphaGloss = tex->HasAlpha();
-			bindablePtrs.push_back(std::move(tex));
-
-			hasNormalMap = true;
-		}
-
-		///只有在三种贴图至少持有一种的时候才会创建采样器
-		if (hasDiffuseMap || hasSpecularMap || hasNormalMap)	
-		{
-			bindablePtrs.push_back(Bind::Sampler::Resolve(gfx));// 创建采样器
-		}
-	}
-
-	const auto meshTag = path.string() + "%" + mesh.mName.C_Str();	
-	//const float scale = 6.0f;
-
-	/// 依次开启漫反射纹理、高光纹理、法线纹理，并加载它 高光的纹理像素着色器(带法线版本)
-	if (hasDiffuseMap && hasNormalMap && hasSpecularMap)
-	{		
-		// 为了加载动态布局系统并拿到真实的顶点数据; 要动态创建(即Append)顶点布局 、指定带位置、法线的顶点缓存、切线T、切线B、纹理
-		Dvtx::VertexBuffer vbuf(std::move(
-			VertexLayout{}
-			.Append(VertexLayout::Position3D)
-			.Append(VertexLayout::Normal)
-			.Append(VertexLayout::Tangent)
-			.Append(VertexLayout::Bitangent)
-			.Append(VertexLayout::Texture2D)
-		));
-
-		// 遍历参数网格的所有顶点,存储 顶点位置和法线、T切线、B切线、纹理
-		for (unsigned int i = 0; i < mesh.mNumVertices; i++)
-		{
-			/* 使用EmplaceBack方法往顶点缓存末端构建一个顶点*/
-			vbuf.EmplaceBack(
-				dx::XMFLOAT3(mesh.mVertices[i].x * scale, mesh.mVertices[i].y * scale, mesh.mVertices[i].z * scale),//注意这里尺寸会缩放
-				*reinterpret_cast<dx::XMFLOAT3*>(&mesh.mNormals[i]),
-				*reinterpret_cast<dx::XMFLOAT3*>(&mesh.mTangents[i]),
-				*reinterpret_cast<dx::XMFLOAT3*>(&mesh.mBitangents[i]),
-				*reinterpret_cast<dx::XMFLOAT2*>(&mesh.mTextureCoords[0][i]) //由于模型顶点对于不同的纹理可能显示出不同的纹理坐标;所以这里理解为顶点i的[0]号坐标
-			);
-		}
-
-		// 确定索引数组三角面;为每个三角面存储顶点索引
-		std::vector<unsigned short> indices;
-		indices.reserve(mesh.mNumFaces * 3);
-		for (unsigned int i = 0; i < mesh.mNumFaces; i++)
-		{
-			const auto& face = mesh.mFaces[i];	//拿到mesh的每个面
-			assert(face.mNumIndices == 3);		// 确保每个面都是三角面
-			// 用每个面的索引[0][1][2]填充 索引数组
-			indices.push_back(face.mIndices[0]);	
-			indices.push_back(face.mIndices[1]);
-			indices.push_back(face.mIndices[2]);
-		}
-
-		bindablePtrs.push_back(Bind::VertexBuffer::Resolve(gfx, meshTag, vbuf));	//创建顶点缓存
-
-		bindablePtrs.push_back(Bind::IndexBuffer::Resolve(gfx, meshTag, indices));	//创建索引缓存
-
-		auto pvs = VertexShader::Resolve(gfx, "PhongVSNormalMap.cso");
-		//auto pvsbc = static_cast<VertexShader&>(*pvs).GetBytecode();
-		auto pvsbc = pvs->GetBytecode();
-		bindablePtrs.push_back(std::move(pvs));	 // 创建顶点shader
-	
-		//创建像素shader，依据贴图的alpha 来绑定遮罩版两面纹理着色器或是高光法线着色器
-		bindablePtrs.push_back(PixelShader::Resolve(gfx,
-			hasAlphaDiffuse ? "PhongPSSpecNormalMask.cso" : "PhongPSSpecNormalMap.cso"
-		));
-
-		bindablePtrs.push_back(Bind::InputLayout::Resolve(gfx, vbuf.GetLayout()/*.GetD3DLayout()*/, pvsbc)); // 创建输入布局
-		
-		//Node::PSMaterialConstantFullmonte pmc;	//PSMaterialConstantFullmonte结构体数据位于头文件里
-		//pmc.specularPower = shininess;	//材质里高光由外部高光参数更新									
-		//pmc.hasGlossMap = hasAlphaGloss ? TRUE : FALSE;		//材质里透明通道由外部透明更新
-		//bindablePtrs.push_back(PixelConstantBuffer<Node::PSMaterialConstantFullmonte>::Resolve(gfx, pmc, 1u));			//创建像素常量缓存<材质>
-		
-		// 创建布局RawLayout,并给布局指定类型
-		Dcb::RawLayout lay;
-		lay.Add<Dcb::Bool>("normalMapEnabled");
-		lay.Add<Dcb::Bool>("specularMapEnabled");
-		lay.Add<Dcb::Bool>("hasGlossMap");
-		lay.Add<Dcb::Float>("specularPower");
-		lay.Add<Dcb::Float3>("specularColor");
-		lay.Add<Dcb::Float>("specularMapWeight");
-		//写入缓存buf数据
-		auto buf = Dcb::Buffer(std::move(lay));
-		buf["normalMapEnabled"] = true;
-		buf["specularMapEnabled"] = true;
-		buf["hasGlossMap"] = hasAlphaGloss;
-		buf["specularPower"] = shininess;
-		buf["specularColor"] = dx::XMFLOAT3{ 0.75f,0.75f,0.75f };
-		buf["specularMapWeight"] = 0.671f;
-
-		bindablePtrs.push_back(std::make_shared<CachingPixelConstantBufferEX>(gfx, buf, 1u));// 将缓存buf传给需要的地方,比如这里的CachingPixelConstantBufferEX
-	
-	}
-	/// 只开启漫反射、法线贴图，没有高光贴图
-	else if(hasDiffuseMap && hasNormalMap)// 不存在高光纹理就加载默认的漫反射纹理像素着色器(带法线版本)
-	{
-		Dvtx::VertexBuffer vbuf(std::move(
-			VertexLayout{}
-			.Append(VertexLayout::Position3D)
-			.Append(VertexLayout::Normal)
-			.Append(VertexLayout::Tangent)
-			.Append(VertexLayout::Bitangent)
-			.Append(VertexLayout::Texture2D)
-		));
-
-		for (unsigned int i = 0; i < mesh.mNumVertices; i++)
-		{
-			vbuf.EmplaceBack(
-				dx::XMFLOAT3(mesh.mVertices[i].x * scale, mesh.mVertices[i].y * scale, mesh.mVertices[i].z * scale),
-				*reinterpret_cast<dx::XMFLOAT3*>(&mesh.mNormals[i]),
-				*reinterpret_cast<dx::XMFLOAT3*>(&mesh.mTangents[i]),
-				*reinterpret_cast<dx::XMFLOAT3*>(&mesh.mBitangents[i]),
-				*reinterpret_cast<dx::XMFLOAT2*>(&mesh.mTextureCoords[0][i])
-			);
-		}
-
-		std::vector<unsigned short> indices;
-		indices.reserve(mesh.mNumFaces * 3);
-		for (unsigned int i = 0; i < mesh.mNumFaces; i++)
-		{
-			const auto& face = mesh.mFaces[i];
-			assert(face.mNumIndices == 3);
-			indices.push_back(face.mIndices[0]);
-			indices.push_back(face.mIndices[1]);
-			indices.push_back(face.mIndices[2]);
-		}
-
-		bindablePtrs.push_back(VertexBuffer::Resolve(gfx, meshTag, vbuf));
-
-		bindablePtrs.push_back(IndexBuffer::Resolve(gfx, meshTag, indices));
-
-		auto pvs = VertexShader::Resolve(gfx, "PhongVSNormalMap.cso");
-		auto pvsbc = pvs->GetBytecode();
-		bindablePtrs.push_back(std::move(pvs));		
-		
-		bindablePtrs.push_back(PixelShader::Resolve(gfx, "PhongPSNormalMap.cso"));	////创建像素shader，指定以PhongPSNormalMap
-		bindablePtrs.push_back(InputLayout::Resolve(gfx, vbuf.GetLayout(), pvsbc)); // 创建输入布局
-		
-		//struct PSMaterialConstantDiffnorm// 自定义 材质常量struct 并添加进绑定物集合
-		//{
-		//	//DirectX::XMFLOAT3 color = { 0.6f,0.6f,0.8f }; // 由于模型已经有漫反射纹理了，所以这里不再使用自定义的颜色
-		//	float specularIntensity /*= 0.18f*/; //高光强度
-		//	float specularPower;			//高光功率
-		//	BOOL  normalMapEnabled = TRUE;
-		//	float padding[1];
-		//} pmc;
-		//pmc.specularPower = shininess; // 注意这里结构体的成员高光功率由之前定义好的高光参数决定
-		//pmc.specularIntensity = (specularColor.x + specularColor.y + specularColor.z) / 3.0f; //高光强度等于高光颜色各分量和的三分之一
-		//bindablePtrs.push_back(Bind::PixelConstantBuffer<PSMaterialConstantDiffnorm>::Resolve(gfx, pmc, 1u));//创建出像素常数缓存<材质>
-
-		Dcb::RawLayout layout;
-
-		layout.Add<Dcb::Float>("specularIntensity");
-		layout.Add<Dcb::Float>("specularPower");
-		layout.Add<Dcb::Bool>("normalMapEnabled");
-		//bool loaded = false;
-		//auto tag = "diff&nrm";
-		//if (LayoutCodex::Has(tag))
-		//{
-		//	layout = LayoutCodex::Load(tag);
-		//	loaded = true;
-		//}
-		//else
-		//{
-		//	layout.Add<Dcb::Float>("specularIntensity");
-		//	layout.Add<Dcb::Float>("specularPower");
-		//	layout.Add<Dcb::Bool>("normalMapEnabled");
-		//}
-		//layout.Add<Dcb::Float>("padding");
-
-		auto cbuf = Dcb::Buffer(std::move(layout));
-		cbuf["specularIntensity"] = (specularColor.x + specularColor.y + specularColor.z) / 3.0f;
-		cbuf["specularPower"] = shininess;
-		cbuf["normalMapEnabled"] = true;
-		bindablePtrs.push_back(std::make_shared<CachingPixelConstantBufferEX>(gfx, cbuf, 1u));
-
-		//if (!loaded)
-		//{
-		//	LayoutCodex::Store(tag, layout);
-		//}
-	}
-	/// 只开启漫反射、高光纹理，没有法线纹理
-	else if (hasDiffuseMap && !hasNormalMap && hasSpecularMap)
-	{
-		Dvtx::VertexBuffer vbuf(std::move(
-			VertexLayout{}
-			.Append(VertexLayout::Position3D)
-			.Append(VertexLayout::Normal)
-			.Append(VertexLayout::Texture2D)
-		));
-
-		for (unsigned int i = 0; i < mesh.mNumVertices; i++)
-		{
-			vbuf.EmplaceBack(
-				dx::XMFLOAT3(mesh.mVertices[i].x * scale, mesh.mVertices[i].y * scale, mesh.mVertices[i].z * scale),
-				*reinterpret_cast<dx::XMFLOAT3*>(&mesh.mNormals[i]),
-				*reinterpret_cast<dx::XMFLOAT2*>(&mesh.mTextureCoords[0][i])
-			);
-		}
-
-		std::vector<unsigned short> indices;
-		indices.reserve(mesh.mNumFaces * 3);
-		for (unsigned int i = 0; i < mesh.mNumFaces; i++)
-		{
-			const auto& face = mesh.mFaces[i];
-			assert(face.mNumIndices == 3);
-			indices.push_back(face.mIndices[0]);
-			indices.push_back(face.mIndices[1]);
-			indices.push_back(face.mIndices[2]);
-		}
-
-		bindablePtrs.push_back(VertexBuffer::Resolve(gfx, meshTag, vbuf));
-
-		bindablePtrs.push_back(IndexBuffer::Resolve(gfx, meshTag, indices));
-
-		auto pvs = VertexShader::Resolve(gfx, "PhongVS.cso");
-		auto pvsbc = pvs->GetBytecode();
-		bindablePtrs.push_back(std::move(pvs));
-
-		bindablePtrs.push_back(PixelShader::Resolve(gfx, "PhongPSSpec.cso"));
-
-		bindablePtrs.push_back(InputLayout::Resolve(gfx, vbuf.GetLayout(), pvsbc));
-
-		//struct PSMaterialConstantDiffuseSpec
+	//	bindablePtrs.push_back(std::make_shared<CachingPixelConstantBufferEX>(gfx, buf, 1u));// 将缓存buf传给需要的地方,比如这里的CachingPixelConstantBufferEX
+	//
+	//}
+	///// 只开启漫反射、法线贴图，没有高光贴图
+	//else if(hasDiffuseMap && hasNormalMap)// 不存在高光纹理就加载默认的漫反射纹理像素着色器(带法线版本)
 	//{
-	//	float specularPowerConst;
-	//	BOOL hasGloss;
-	//	float specularMapWeight;
-	//	float padding;
-	//} pmc;
-	//pmc.specularPowerConst = shininess;
-	//pmc.hasGloss = hasAlphaGloss ? TRUE : FALSE;
-	//pmc.specularMapWeight = 1.0f;
-	//// this is CLEARLY an issue... all meshes will share same mat const, but may have different
-	//// Ns (specular power) specified for each in the material properties... bad conflict
-	//bindablePtrs.push_back(PixelConstantBuffer<PSMaterialConstantDiffuseSpec>::Resolve(gfx, pmc, 1u));
+	//	Dvtx::VertexBuffer vbuf(std::move(
+	//		VertexLayout{}
+	//		.Append(VertexLayout::Position3D)
+	//		.Append(VertexLayout::Normal)
+	//		.Append(VertexLayout::Tangent)
+	//		.Append(VertexLayout::Bitangent)
+	//		.Append(VertexLayout::Texture2D)
+	//	));
 
-		Dcb::RawLayout lay;
-		lay.Add<Dcb::Float>("specularPower");
-		lay.Add<Dcb::Bool>("hasGloss");
-		lay.Add<Dcb::Float>("specularMapWeight");
+	//	for (unsigned int i = 0; i < mesh.mNumVertices; i++)
+	//	{
+	//		vbuf.EmplaceBack(
+	//			dx::XMFLOAT3(mesh.mVertices[i].x * scale, mesh.mVertices[i].y * scale, mesh.mVertices[i].z * scale),
+	//			*reinterpret_cast<dx::XMFLOAT3*>(&mesh.mNormals[i]),
+	//			*reinterpret_cast<dx::XMFLOAT3*>(&mesh.mTangents[i]),
+	//			*reinterpret_cast<dx::XMFLOAT3*>(&mesh.mBitangents[i]),
+	//			*reinterpret_cast<dx::XMFLOAT2*>(&mesh.mTextureCoords[0][i])
+	//		);
+	//	}
 
-		auto buf = Dcb::Buffer(std::move(lay));
-		buf["specularPower"] = shininess;
-		buf["hasGloss"] = hasAlphaGloss;
-		buf["specularMapWeight"] = 1.0f;
+	//	std::vector<unsigned short> indices;
+	//	indices.reserve(mesh.mNumFaces * 3);
+	//	for (unsigned int i = 0; i < mesh.mNumFaces; i++)
+	//	{
+	//		const auto& face = mesh.mFaces[i];
+	//		assert(face.mNumIndices == 3);
+	//		indices.push_back(face.mIndices[0]);
+	//		indices.push_back(face.mIndices[1]);
+	//		indices.push_back(face.mIndices[2]);
+	//	}
 
-		bindablePtrs.push_back(std::make_unique<Bind::CachingPixelConstantBufferEX>(gfx, buf, 1u));
-	}
-	/// 若只开启漫反射
-	else if (hasDiffuseMap)
-	{
-		Dvtx::VertexBuffer vbuf(std::move(
-			VertexLayout{}
-			.Append(VertexLayout::Position3D)
-			.Append(VertexLayout::Normal)
-			.Append(VertexLayout::Texture2D)
-		));
+	//	bindablePtrs.push_back(VertexBuffer::Resolve(gfx, meshTag, vbuf));
 
-		for (unsigned int i = 0; i < mesh.mNumVertices; i++)
-		{
-			vbuf.EmplaceBack(
-				dx::XMFLOAT3(mesh.mVertices[i].x * scale, mesh.mVertices[i].y * scale, mesh.mVertices[i].z * scale),
-				*reinterpret_cast<dx::XMFLOAT3*>(&mesh.mNormals[i]),
-				*reinterpret_cast<dx::XMFLOAT2*>(&mesh.mTextureCoords[0][i])
-			);
-		}
+	//	bindablePtrs.push_back(IndexBuffer::Resolve(gfx, meshTag, indices));
 
-		std::vector<unsigned short> indices;
-		indices.reserve(mesh.mNumFaces * 3);
-		for (unsigned int i = 0; i < mesh.mNumFaces; i++)
-		{
-			const auto& face = mesh.mFaces[i];
-			assert(face.mNumIndices == 3);
-			indices.push_back(face.mIndices[0]);
-			indices.push_back(face.mIndices[1]);
-			indices.push_back(face.mIndices[2]);
-		}
+	//	auto pvs = VertexShader::Resolve(gfx, "PhongVSNormalMap.cso");
+	//	auto pvsbc = pvs->GetBytecode();
+	//	bindablePtrs.push_back(std::move(pvs));		
+	//	
+	//	bindablePtrs.push_back(PixelShader::Resolve(gfx, "PhongPSNormalMap.cso"));	////创建像素shader，指定以PhongPSNormalMap
+	//	bindablePtrs.push_back(InputLayout::Resolve(gfx, vbuf.GetLayout(), pvsbc)); // 创建输入布局
+	//	
+	//	//struct PSMaterialConstantDiffnorm// 自定义 材质常量struct 并添加进绑定物集合
+	//	//{
+	//	//	//DirectX::XMFLOAT3 color = { 0.6f,0.6f,0.8f }; // 由于模型已经有漫反射纹理了，所以这里不再使用自定义的颜色
+	//	//	float specularIntensity /*= 0.18f*/; //高光强度
+	//	//	float specularPower;			//高光功率
+	//	//	BOOL  normalMapEnabled = TRUE;
+	//	//	float padding[1];
+	//	//} pmc;
+	//	//pmc.specularPower = shininess; // 注意这里结构体的成员高光功率由之前定义好的高光参数决定
+	//	//pmc.specularIntensity = (specularColor.x + specularColor.y + specularColor.z) / 3.0f; //高光强度等于高光颜色各分量和的三分之一
+	//	//bindablePtrs.push_back(Bind::PixelConstantBuffer<PSMaterialConstantDiffnorm>::Resolve(gfx, pmc, 1u));//创建出像素常数缓存<材质>
 
-		bindablePtrs.push_back(VertexBuffer::Resolve(gfx, meshTag, vbuf));
-		bindablePtrs.push_back(IndexBuffer::Resolve(gfx, meshTag, indices));
-		auto pvs = VertexShader::Resolve(gfx, "PhongVS.cso");
-		auto pvsbc = pvs->GetBytecode();
-		bindablePtrs.push_back(std::move(pvs));
-		bindablePtrs.push_back(PixelShader::Resolve(gfx, "PhongPS.cso"));
-		bindablePtrs.push_back(InputLayout::Resolve(gfx, vbuf.GetLayout(), pvsbc));
+	//	Dcb::RawLayout layout;
 
-		//struct PSMaterialConstantDiffuse
-		//{
-		//	float specularIntensity /*= 0.18f*/;
-		//	float specularPower;
-		//	float padding[2];
-		//} pmc;
-		//pmc.specularPower = shininess;
-		//pmc.specularIntensity = (specularColor.x + specularColor.y + specularColor.z) / 3.0f;
-		//// this is CLEARLY an issue... all meshes will share same mat const, but may have different
-		//// Ns (specular power) specified for each in the material properties... bad conflict
-		//bindablePtrs.push_back(PixelConstantBuffer<PSMaterialConstantDiffuse>::Resolve(gfx, pmc, 1u));
+	//	layout.Add<Dcb::Float>("specularIntensity");
+	//	layout.Add<Dcb::Float>("specularPower");
+	//	layout.Add<Dcb::Bool>("normalMapEnabled");
+	//	//bool loaded = false;
+	//	//auto tag = "diff&nrm";
+	//	//if (LayoutCodex::Has(tag))
+	//	//{
+	//	//	layout = LayoutCodex::Load(tag);
+	//	//	loaded = true;
+	//	//}
+	//	//else
+	//	//{
+	//	//	layout.Add<Dcb::Float>("specularIntensity");
+	//	//	layout.Add<Dcb::Float>("specularPower");
+	//	//	layout.Add<Dcb::Bool>("normalMapEnabled");
+	//	//}
+	//	//layout.Add<Dcb::Float>("padding");
 
-		Dcb::RawLayout lay;
-		lay.Add<Dcb::Float>("specularIntensity");
-		lay.Add<Dcb::Float>("specularPower");
+	//	auto cbuf = Dcb::Buffer(std::move(layout));
+	//	cbuf["specularIntensity"] = (specularColor.x + specularColor.y + specularColor.z) / 3.0f;
+	//	cbuf["specularPower"] = shininess;
+	//	cbuf["normalMapEnabled"] = true;
+	//	bindablePtrs.push_back(std::make_shared<CachingPixelConstantBufferEX>(gfx, cbuf, 1u));
 
-		auto buf = Dcb::Buffer(std::move(lay));
-		buf["specularIntensity"] = (specularColor.x + specularColor.y + specularColor.z) / 3.0f;
-		buf["specularPower"] = shininess;
-		buf["specularMapWeight"] = 1.0f;
+	//	//if (!loaded)
+	//	//{
+	//	//	LayoutCodex::Store(tag, layout);
+	//	//}
+	//}
+	///// 只开启漫反射、高光纹理，没有法线纹理
+	//else if (hasDiffuseMap && !hasNormalMap && hasSpecularMap)
+	//{
+	//	Dvtx::VertexBuffer vbuf(std::move(
+	//		VertexLayout{}
+	//		.Append(VertexLayout::Position3D)
+	//		.Append(VertexLayout::Normal)
+	//		.Append(VertexLayout::Texture2D)
+	//	));
 
-		bindablePtrs.push_back(std::make_unique<Bind::CachingPixelConstantBufferEX>(gfx, buf, 1u));
-	}
-	/// 若没在硬盘里读到任何纹理
-	else if (!hasDiffuseMap && !hasNormalMap && !hasSpecularMap)
-	{
-		Dvtx::VertexBuffer vbuf(std::move(
-			VertexLayout{}
-			.Append(VertexLayout::Position3D)
-			.Append(VertexLayout::Normal)
-		));
+	//	for (unsigned int i = 0; i < mesh.mNumVertices; i++)
+	//	{
+	//		vbuf.EmplaceBack(
+	//			dx::XMFLOAT3(mesh.mVertices[i].x * scale, mesh.mVertices[i].y * scale, mesh.mVertices[i].z * scale),
+	//			*reinterpret_cast<dx::XMFLOAT3*>(&mesh.mNormals[i]),
+	//			*reinterpret_cast<dx::XMFLOAT2*>(&mesh.mTextureCoords[0][i])
+	//		);
+	//	}
 
-		for (unsigned int i = 0; i < mesh.mNumVertices; i++)
-		{
-			vbuf.EmplaceBack(
-				dx::XMFLOAT3(mesh.mVertices[i].x * scale, mesh.mVertices[i].y * scale, mesh.mVertices[i].z * scale),
-				*reinterpret_cast<dx::XMFLOAT3*>(&mesh.mNormals[i])
-			);
-		}
+	//	std::vector<unsigned short> indices;
+	//	indices.reserve(mesh.mNumFaces * 3);
+	//	for (unsigned int i = 0; i < mesh.mNumFaces; i++)
+	//	{
+	//		const auto& face = mesh.mFaces[i];
+	//		assert(face.mNumIndices == 3);
+	//		indices.push_back(face.mIndices[0]);
+	//		indices.push_back(face.mIndices[1]);
+	//		indices.push_back(face.mIndices[2]);
+	//	}
 
-		std::vector<unsigned short> indices;
-		indices.reserve(mesh.mNumFaces * 3);
-		for (unsigned int i = 0; i < mesh.mNumFaces; i++)
-		{
-			const auto& face = mesh.mFaces[i];
-			assert(face.mNumIndices == 3);
-			indices.push_back(face.mIndices[0]);
-			indices.push_back(face.mIndices[1]);
-			indices.push_back(face.mIndices[2]);
-		}
+	//	bindablePtrs.push_back(VertexBuffer::Resolve(gfx, meshTag, vbuf));
 
-		bindablePtrs.push_back(VertexBuffer::Resolve(gfx, meshTag, vbuf));
+	//	bindablePtrs.push_back(IndexBuffer::Resolve(gfx, meshTag, indices));
 
-		bindablePtrs.push_back(IndexBuffer::Resolve(gfx, meshTag, indices));
+	//	auto pvs = VertexShader::Resolve(gfx, "PhongVS.cso");
+	//	auto pvsbc = pvs->GetBytecode();
+	//	bindablePtrs.push_back(std::move(pvs));
 
-		auto pvs = VertexShader::Resolve(gfx, "PhongVSNotex.cso");
-		auto pvsbc = pvs->GetBytecode();
-		bindablePtrs.push_back(std::move(pvs));
+	//	bindablePtrs.push_back(PixelShader::Resolve(gfx, "PhongPSSpec.cso"));
 
-		bindablePtrs.push_back(PixelShader::Resolve(gfx, "PhongPSNotex.cso"));
+	//	bindablePtrs.push_back(InputLayout::Resolve(gfx, vbuf.GetLayout(), pvsbc));
 
-		bindablePtrs.push_back(InputLayout::Resolve(gfx, vbuf.GetLayout(), pvsbc));
+	//	//struct PSMaterialConstantDiffuseSpec
+	////{
+	////	float specularPowerConst;
+	////	BOOL hasGloss;
+	////	float specularMapWeight;
+	////	float padding;
+	////} pmc;
+	////pmc.specularPowerConst = shininess;
+	////pmc.hasGloss = hasAlphaGloss ? TRUE : FALSE;
+	////pmc.specularMapWeight = 1.0f;
+	////// this is CLEARLY an issue... all meshes will share same mat const, but may have different
+	////// Ns (specular power) specified for each in the material properties... bad conflict
+	////bindablePtrs.push_back(PixelConstantBuffer<PSMaterialConstantDiffuseSpec>::Resolve(gfx, pmc, 1u));
 
-		//Node::PSMaterialConstantNotex pmc;//定义在头文件Node类下
-		//pmc.specularPower = shininess;		
-		//pmc.specularColor = specularColor;//结构体成员更新为自定义的镜面光颜色
-		//pmc.materialColor = diffuseColor;
-		//bindablePtrs.push_back(PixelConstantBuffer<Node::PSMaterialConstantNotex>::Resolve(gfx, pmc, 1u));
+	//	Dcb::RawLayout lay;
+	//	lay.Add<Dcb::Float>("specularPower");
+	//	lay.Add<Dcb::Bool>("hasGloss");
+	//	lay.Add<Dcb::Float>("specularMapWeight");
 
-		Dcb::RawLayout lay;
-		lay.Add<Dcb::Float4>("materialColor");
-		lay.Add<Dcb::Float4>("specularColor");
-		lay.Add<Dcb::Float>("specularPower");
+	//	auto buf = Dcb::Buffer(std::move(lay));
+	//	buf["specularPower"] = shininess;
+	//	buf["hasGloss"] = hasAlphaGloss;
+	//	buf["specularMapWeight"] = 1.0f;
 
-		auto buf = Dcb::Buffer(std::move(lay));
-		buf["specularPower"] = shininess;
-		buf["specularColor"] = specularColor;
-		buf["materialColor"] = diffuseColor;
+	//	bindablePtrs.push_back(std::make_unique<Bind::CachingPixelConstantBufferEX>(gfx, buf, 1u));
+	//}
+	///// 若只开启漫反射
+	//else if (hasDiffuseMap)
+	//{
+	//	Dvtx::VertexBuffer vbuf(std::move(
+	//		VertexLayout{}
+	//		.Append(VertexLayout::Position3D)
+	//		.Append(VertexLayout::Normal)
+	//		.Append(VertexLayout::Texture2D)
+	//	));
 
-		bindablePtrs.push_back(std::make_unique<Bind::CachingPixelConstantBufferEX>(gfx, buf, 1u));
-	}
-	else
-	{
-		throw std::runtime_error("terrible combination of textures in material smh");
-	}
-	// 每个材质有alpha状态,但是否启用混合取决于"hasAlphaDiffuse"这个标签;
-	//bindablePtrs.push_back(Blender::Resolve(gfx, hasAlphaDiffuse));//此处先注释,因为不做alpha混合,而是先执行alpha测试
+	//	for (unsigned int i = 0; i < mesh.mNumVertices; i++)
+	//	{
+	//		vbuf.EmplaceBack(
+	//			dx::XMFLOAT3(mesh.mVertices[i].x * scale, mesh.mVertices[i].y * scale, mesh.mVertices[i].z * scale),
+	//			*reinterpret_cast<dx::XMFLOAT3*>(&mesh.mNormals[i]),
+	//			*reinterpret_cast<dx::XMFLOAT2*>(&mesh.mTextureCoords[0][i])
+	//		);
+	//	}
 
-	bindablePtrs.push_back(Bind::Rasterizer::Resolve(gfx, hasAlphaDiffuse));//光栅化阶段执行,依据硬盘里的漫反射贴图alpha通道来执行是否双面渲染
+	//	std::vector<unsigned short> indices;
+	//	indices.reserve(mesh.mNumFaces * 3);
+	//	for (unsigned int i = 0; i < mesh.mNumFaces; i++)
+	//	{
+	//		const auto& face = mesh.mFaces[i];
+	//		assert(face.mNumIndices == 3);
+	//		indices.push_back(face.mIndices[0]);
+	//		indices.push_back(face.mIndices[1]);
+	//		indices.push_back(face.mIndices[2]);
+	//	}
 
-	bindablePtrs.push_back(Bind::Blender::Resolve( gfx,false ) );
+	//	bindablePtrs.push_back(VertexBuffer::Resolve(gfx, meshTag, vbuf));
+	//	bindablePtrs.push_back(IndexBuffer::Resolve(gfx, meshTag, indices));
+	//	auto pvs = VertexShader::Resolve(gfx, "PhongVS.cso");
+	//	auto pvsbc = pvs->GetBytecode();
+	//	bindablePtrs.push_back(std::move(pvs));
+	//	bindablePtrs.push_back(PixelShader::Resolve(gfx, "PhongPS.cso"));
+	//	bindablePtrs.push_back(InputLayout::Resolve(gfx, vbuf.GetLayout(), pvsbc));
 
-	bindablePtrs.push_back(std::make_shared<Stencil>(gfx, Stencil::Mode::Off));
+	//	//struct PSMaterialConstantDiffuse
+	//	//{
+	//	//	float specularIntensity /*= 0.18f*/;
+	//	//	float specularPower;
+	//	//	float padding[2];
+	//	//} pmc;
+	//	//pmc.specularPower = shininess;
+	//	//pmc.specularIntensity = (specularColor.x + specularColor.y + specularColor.z) / 3.0f;
+	//	//// this is CLEARLY an issue... all meshes will share same mat const, but may have different
+	//	//// Ns (specular power) specified for each in the material properties... bad conflict
+	//	//bindablePtrs.push_back(PixelConstantBuffer<PSMaterialConstantDiffuse>::Resolve(gfx, pmc, 1u));
 
-	return std::make_unique<Mesh>(gfx, std::move(bindablePtrs));
+	//	Dcb::RawLayout lay;
+	//	lay.Add<Dcb::Float>("specularIntensity");
+	//	lay.Add<Dcb::Float>("specularPower");
+
+	//	auto buf = Dcb::Buffer(std::move(lay));
+	//	buf["specularIntensity"] = (specularColor.x + specularColor.y + specularColor.z) / 3.0f;
+	//	buf["specularPower"] = shininess;
+	//	buf["specularMapWeight"] = 1.0f;
+
+	//	bindablePtrs.push_back(std::make_unique<Bind::CachingPixelConstantBufferEX>(gfx, buf, 1u));
+	//}
+	///// 若没在硬盘里读到任何纹理
+	//else if (!hasDiffuseMap && !hasNormalMap && !hasSpecularMap)
+	//{
+	//	Dvtx::VertexBuffer vbuf(std::move(
+	//		VertexLayout{}
+	//		.Append(VertexLayout::Position3D)
+	//		.Append(VertexLayout::Normal)
+	//	));
+
+	//	for (unsigned int i = 0; i < mesh.mNumVertices; i++)
+	//	{
+	//		vbuf.EmplaceBack(
+	//			dx::XMFLOAT3(mesh.mVertices[i].x * scale, mesh.mVertices[i].y * scale, mesh.mVertices[i].z * scale),
+	//			*reinterpret_cast<dx::XMFLOAT3*>(&mesh.mNormals[i])
+	//		);
+	//	}
+
+	//	std::vector<unsigned short> indices;
+	//	indices.reserve(mesh.mNumFaces * 3);
+	//	for (unsigned int i = 0; i < mesh.mNumFaces; i++)
+	//	{
+	//		const auto& face = mesh.mFaces[i];
+	//		assert(face.mNumIndices == 3);
+	//		indices.push_back(face.mIndices[0]);
+	//		indices.push_back(face.mIndices[1]);
+	//		indices.push_back(face.mIndices[2]);
+	//	}
+
+	//	bindablePtrs.push_back(VertexBuffer::Resolve(gfx, meshTag, vbuf));
+
+	//	bindablePtrs.push_back(IndexBuffer::Resolve(gfx, meshTag, indices));
+
+	//	auto pvs = VertexShader::Resolve(gfx, "PhongVSNotex.cso");
+	//	auto pvsbc = pvs->GetBytecode();
+	//	bindablePtrs.push_back(std::move(pvs));
+
+	//	bindablePtrs.push_back(PixelShader::Resolve(gfx, "PhongPSNotex.cso"));
+
+	//	bindablePtrs.push_back(InputLayout::Resolve(gfx, vbuf.GetLayout(), pvsbc));
+
+	//	//Node::PSMaterialConstantNotex pmc;//定义在头文件Node类下
+	//	//pmc.specularPower = shininess;		
+	//	//pmc.specularColor = specularColor;//结构体成员更新为自定义的镜面光颜色
+	//	//pmc.materialColor = diffuseColor;
+	//	//bindablePtrs.push_back(PixelConstantBuffer<Node::PSMaterialConstantNotex>::Resolve(gfx, pmc, 1u));
+
+	//	Dcb::RawLayout lay;
+	//	lay.Add<Dcb::Float4>("materialColor");
+	//	lay.Add<Dcb::Float4>("specularColor");
+	//	lay.Add<Dcb::Float>("specularPower");
+
+	//	auto buf = Dcb::Buffer(std::move(lay));
+	//	buf["specularPower"] = shininess;
+	//	buf["specularColor"] = specularColor;
+	//	buf["materialColor"] = diffuseColor;
+
+	//	bindablePtrs.push_back(std::make_unique<Bind::CachingPixelConstantBufferEX>(gfx, buf, 1u));
+	//}
+	//else
+	//{
+	//	throw std::runtime_error("terrible combination of textures in material smh");
+	//}
+	//// 每个材质有alpha状态,但是否启用混合取决于"hasAlphaDiffuse"这个标签;
+	////bindablePtrs.push_back(Blender::Resolve(gfx, hasAlphaDiffuse));//此处先注释,因为不做alpha混合,而是先执行alpha测试
+
+	//bindablePtrs.push_back(Bind::Rasterizer::Resolve(gfx, hasAlphaDiffuse));//光栅化阶段执行,依据硬盘里的漫反射贴图alpha通道来执行是否双面渲染
+
+	//bindablePtrs.push_back(Bind::Blender::Resolve( gfx,false ) );
+
+	//bindablePtrs.push_back(std::make_shared<Stencil>(gfx, Stencil::Mode::Off));
+
+	//return std::make_unique<Mesh>(gfx, std::move(bindablePtrs));
+
+	return {};
 }
 
 std::unique_ptr<Node> Model::ParseNode(int& nextId, const aiNode& node) noexcept
