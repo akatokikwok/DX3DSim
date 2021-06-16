@@ -108,15 +108,14 @@ void App::DoFrame()
 
 	//nano2.Draw(wnd.Gfx());
 	light.Draw(wnd.Gfx());//注意此处灯光被覆写，所以下一步绘制plane模型时候保留了插槽0，所以会渲染失败，故要在着色器里将灯光着色器绑定至下一个插槽1
-	//plane.Draw(wnd.Gfx());
-	//cube.Draw(wnd.Gfx());
+	
+	sponza.Draw(wnd.Gfx());
 
 	cube.Draw(wnd.Gfx());// 绘制普通cube
 	cube2.Draw(wnd.Gfx());// 绘制普通cube2
 
 	cube.DrawOutline(wnd.Gfx());// 绘制cube1的描边特效
 	cube2.DrawOutline(wnd.Gfx());// 绘制cube2的描边特效
-	//sponza.Draw(wnd.Gfx());
 	//bluePlane.Draw(wnd.Gfx());
 	//redPlane.Draw( wnd.Gfx() );
 
@@ -197,6 +196,8 @@ void App::DoFrame()
 
 	cube.SpawnControlWindow(wnd.Gfx(), "Cube 1");
 	cube2.SpawnControlWindow(wnd.Gfx(), "Cube 2");
+	
+	sponza.ShowWindow(wnd.Gfx(), "Sponza");
 
 	// 展示模型IMGUI窗口
 	//nano.ShowWindow("Model 1");
@@ -208,7 +209,6 @@ void App::DoFrame()
 	//tp.SpawnControlWindow(wnd.Gfx());
 	//nano.ShowWindow(wnd.Gfx(), "Nano");
 
-	//sponza.ShowWindow(wnd.Gfx(), "Sponza");
 	//bluePlane.SpawnControlWindow(wnd.Gfx(), "Blue Plane");
 	//redPlane.SpawnControlWindow(wnd.Gfx(), "Red Plane");
 	// present
